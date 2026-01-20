@@ -22,6 +22,8 @@ class Config(collections.Mapping):
 
     def __init__(self, _class, verbose=True, savepath=None, device=None, **kwargs):
         self._class = import_class(_class)
+
+        # import ipdb; ipdb.set_trace()
         self._device = device
         self._dict = {}
 

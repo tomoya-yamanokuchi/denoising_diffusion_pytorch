@@ -1,0 +1,40 @@
+name     : conditional_image_diffusion
+
+USER_NAME: user
+device   : "cuda:0"
+
+dataset:
+  name: celeba
+  path: /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+  min : -1
+  max : 1
+  h   : 32
+  type: pattern
+  p   : 0.2
+  image_size: 64
+
+diffusion:
+  # _target_          : denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2.GaussianDiffusion
+  beta_schedule     : sigmoid
+  timesteps         : 1000
+  sampling_timesteps: 20
+
+model:
+  # _target_: denoising_diffusion_pytorch.models.unet_2d_simple_devel2.Unet
+  dim: 64
+  dim_mults: [1, 2, 4, 8]
+  flash_attn: true
+  self_condition: false
+
+trainer:
+  # _target_                 : denoising_diffusion_pytorch.trainer.diffusion_conditional_image_trainer.Trainer
+  train_batch_size         : 96
+  train_lr                 : 8e-5
+  train_num_steps          : 800000
+  save_and_sample_every    : 2000
+  gradient_accumulate_every: 2
+  ema_decay                : 0.995
+  amp                      : true
+  calculate_fid            : false
+
+

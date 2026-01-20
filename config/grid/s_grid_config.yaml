@@ -1,0 +1,4 @@
+grid_config:
+  s_grid_config:
+    bounds     : [-0.05, 0.05, -0.05, 0.05, -0.05, 0.05]
+    side_length: 16

@@ -5,14 +5,8 @@ import os
 
 
 
-import torch
-
-
 from denoising_diffusion_pytorch.utils.setup import Parser as parser
 from denoising_diffusion_pytorch.utils.config import Config
-
-torch.cuda.empty_cache()
-torch.cuda.ipc_collect()
 
 
 class Parser(parser):
@@ -22,8 +16,7 @@ class Parser(parser):
 #---------------------------------- setup ----------------------------------#
 
 
-args = Parser().parse_args('conditional_image_diffusion')
-
+args = Parser().parse_args('diffusion')
 
 #-----------------------------------------------------------------------------#
 #---------------------------------- dataset ----------------------------------#
@@ -32,29 +25,32 @@ args = Parser().parse_args('conditional_image_diffusion')
 dataset_config = Config(
     args.loader,
     savepath   = (args.savepath, 'dataset_config.pkl'),
-    cfg        = args.dataset_config,
-    image_size  = args.image_size
+    folder     = args.dataset_path,
+    image_size = args.image_size,
+    augment_horizontal_flip = args.horizontal_flip,
+    convert_image_to = args.convert_image_to
 )
+
+
 
 dataset = dataset_config()
 image_size = dataset.image_size
 
 
+
 model_config = Config(
     args.model,
     savepath=(args.savepath, 'model_config.pkl'),
-    # dim       = 128, # changed for H100 with 344 dim #default 64
-    # dim       = 64, # default 64
-    dim       = args.init_dim,
+    # dim       = image_size,
+    dim       = 128, ## changed for H100 with 512 dim #default 64
+    # dim       = 64, ## changed for H100 with 512 dim #default 64
     dim_mults = args.dim_mults,
-    mask_dim = image_size,
     flash_attn = args.flash_attn,
     self_condition = args.self_condition,
     device    = args.device,
 )
 
 
-# import ipdb;ipdb.set_trace()
 
 
 
@@ -68,7 +64,6 @@ diffusion_config = Config(
     device = args.device
 )
 
-# import ipdb;ipdb.set_trace()
 
 
 
@@ -78,7 +73,6 @@ trainer_config  = Config(
     train_batch_size = args.batch_size,
     train_lr         = args.learning_rate,
     train_num_steps  = args.train_step,         # total training steps
-    save_and_sample_every  = args.save_and_sample_every,
     gradient_accumulate_every = args.gradient_accumulate_every,    # gradient accumulation steps
     ema_decay                 = args.ema_decay,                # exponential moving average decay
     amp                       = args.amp,                       # turn on mixed precision
@@ -91,10 +85,7 @@ trainer_config  = Config(
 
 model       = model_config()
 diffusion   = diffusion_config(model)
-
-# import ipdb; ipdb.set_trace()
 trainer     = trainer_config(diffusion_model = diffusion, dataset = dataset)
-
 
 
 original_config_path = args.savepath

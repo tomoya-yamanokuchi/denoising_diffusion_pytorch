@@ -1,0 +1,48 @@
+usecase:
+  name: train
+grid:
+  grid_config:
+    s_grid_config:
+      bounds:
+      - -0.05
+      - 0.05
+      - -0.05
+      - 0.05
+      - -0.05
+      - 0.05
+      side_length: 16
+method:
+  name: conditional_image_diffusion
+  USER_NAME: user
+  device: cuda:0
+  dataset:
+    name: celeba
+    path: /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+    min: -1
+    max: 1
+    h: 32
+    type: pattern
+    p: 0.2
+    image_size: 64
+  diffusion:
+    beta_schedule: sigmoid
+    timesteps: 1000
+    sampling_timesteps: 20
+  model:
+    dim: 64
+    dim_mults:
+    - 1
+    - 2
+    - 4
+    - 8
+    flash_attn: true
+    self_condition: false
+  trainer:
+    train_batch_size: 96
+    train_lr: 8.0e-05
+    train_num_steps: 800000
+    save_and_sample_every: 2000
+    gradient_accumulate_every: 2
+    ema_decay: 0.995
+    amp: true
+    calculate_fid: false

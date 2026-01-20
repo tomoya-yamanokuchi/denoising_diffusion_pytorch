@@ -36,6 +36,7 @@ dataset_config = Config(
     image_size  = args.image_size
 )
 
+
 dataset = dataset_config()
 image_size = dataset.image_size
 
@@ -91,10 +92,7 @@ trainer_config  = Config(
 
 model       = model_config()
 diffusion   = diffusion_config(model)
-
-# import ipdb; ipdb.set_trace()
 trainer     = trainer_config(diffusion_model = diffusion, dataset = dataset)
-
 
 
 original_config_path = args.savepath

@@ -221,7 +221,8 @@ base = {
 
     'conditional_image_diffusion': {
         # 'USER_NAME'         : "haxhi",
-        'USER_NAME'         : "user",
+        # 'USER_NAME'         : "user",
+        'USER_NAME'         : "dev",
 
         ## model
         # 'model'             : 'models.unet_2d.Unet',
@@ -317,6 +318,7 @@ base = {
         'device'             :'cuda:0'
     },
 
+
     'cvae': {
         'USER_NAME'         : "haxhi",
         'device'             :'cuda',
@@ -362,6 +364,7 @@ base = {
         'n_samples'          : 16,
         'n_epoch'            : 1000,
     },
+
 
     'vaeac' : {
 
@@ -435,6 +438,9 @@ base = {
         # 'tag'               : "H100_real_models_dataset_v2_2",
         'exp_name'          : watch(vaeac_train_args_to_watch),
     },
+
+
+
 
     'diffusion_plan': {
         # 'USER_NAME'         : "haxhi",
@@ -662,6 +668,8 @@ base = {
 
     },
 }
+
+
 
 
 Reacher_v2 = {

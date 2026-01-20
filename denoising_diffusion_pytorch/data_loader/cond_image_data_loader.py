@@ -88,7 +88,7 @@ class Cond_image_dataloader(Dataset):
         pattern_mask (self._get_pattern_mask): The pattern mask used for generating pattern-based masks.
         files (list): A list of image file paths to be used in the dataset.
     """
-    
+
     def __init__(self, cfg, image_size):
         """
         Initializes the dataset with configuration settings and prepares the list of image files.
@@ -100,15 +100,16 @@ class Cond_image_dataloader(Dataset):
         """
         super(Cond_image_dataloader, self).__init__()
         # self.mode = mode
-        self.path = cfg['dataset']['path']
-        self.height = cfg['dataset']['h']
-        self.type = cfg['dataset'].get('type', None)
-        self.p = cfg['dataset'].get('p', 1)
-        self.image_size = image_size
+        self.path         = cfg['dataset']['path']
+        self.height       = cfg['dataset']['h']
+        self.type         = cfg['dataset'].get('type', None)
+        self.p            = cfg['dataset'].get('p', 1)
+        # ---
+        self.image_size   = image_size
         self.pattern_mask = self._get_pattern_mask()
         # assert (mode in ['train', 'val']), 'mode in {} should be train/val'.format(self.__name__)
         self._get_files()
-        
+
         self.transform = T.Compose([
             T.Resize(image_size,interpolation=InterpolationMode.NEAREST),
             T.ToTensor()  # 最後に Tensor 化
@@ -130,7 +131,7 @@ class Cond_image_dataloader(Dataset):
         image = np.random.rand(600, 600)
         if self.image_size == 344:
             image = cv2.resize(image, (10000*dim_scale, 10000*dim_scale), cv2.INTER_CUBIC) # for 344 dim setting
-        else:    
+        else:
             image = cv2.resize(image, (10000, 10000), cv2.INTER_CUBIC) # for 64 dim setting
         image = (image > 0.25).astype(float)# for 64 dim setting
         # image = (image > 0.45).astype(float)# for 343 dim setting # H100_real_models_dataset_v2_4
@@ -141,7 +142,7 @@ class Cond_image_dataloader(Dataset):
         """
         Samples a patch of the pattern mask for use as a mask on the image.
 
-        This method selects a random region from the precomputed `pattern_mask` of size `self.image_size` x `self.image_size`. 
+        This method selects a random region from the precomputed `pattern_mask` of size `self.image_size` x `self.image_size`.
         It ensures that the fraction of dropped pixels (i.e., pixels with a value of 0) is between 5% and 90%.
 
         The fraction of dropped pixels is calculated by taking the mean value of the mask.
@@ -308,11 +309,11 @@ class Cond_image_dataloader(Dataset):
         # original_image = cv2.resize(image, (self.image_size, self.image_size))
 
         # image_ = self._RandomHorizontalFlip(image_=original_image)
-        
+
         # image_2 = self._RandomVerticalFlip(image_=image_1)
         # image_ = self._RandomRotation90(image_=image_2)
-        
-        
+
+
         # image_ = original_image
 
         image = (image_[:, :, ::-1]/255.0)*2 - 1
