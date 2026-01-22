@@ -46,14 +46,13 @@ class Trainer(object):
         super().__init__()
 
 
-        model                            = init_weights(model, cfg)
-        optim                            = get_optimizers(model, cfg)
-        self.loss_fn                     = get_losses(cfg)
-        self.model, self.optim, metadata = load_ckpt(model, optim, cfg.trainer)
-        self.dataset                     = dataset
-        self.gradient_accumulate_every   = cfg.trainer["train"]["gradient_accumulate_every"]
-        # ----
-        self.config                      = cfg
+        model    = init_weights(model, cfg.model_config)
+        optim    = get_optimizers(model, cfg.model_config)
+        self.loss_fn  = get_losses(cfg.model_config)
+        self.model, self.optim, metadata = load_ckpt(model, optim, cfg.train_config)
+        self.dataset = dataset
+        self.config  = cfg
+        self.gradient_accumulate_every = self.config.train_config["train"]["gradient_accumulate_every"]
         # Set up random seeds
         seed = np.random.randint(2**32)
         self.step = 0
@@ -62,7 +61,7 @@ class Trainer(object):
             self.step = metadata['ckpt']
 
         # Get schedulers after getting checkpoints
-        self.scheduler = get_schedulers(self.optim, cfg, self.step)
+        self.scheduler = get_schedulers(self.optim, cfg.model_config, self.step)
         # Print optimizer state
         print(self.optim)
 
@@ -74,7 +73,7 @@ class Trainer(object):
             torch.cuda.manual_seed_all(seed)
 
 
-        train_batch_size = self.config.trainer["train"]["batch_size"]
+        train_batch_size = self.config.train_config["train"]["batch_size"]
         data_samples = len(self.dataset)
         train_size   = int(len(self.dataset) * 0.9)
         val_size     = data_samples - train_size

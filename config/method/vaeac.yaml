@@ -1,60 +1,72 @@
+name     : vaeac
+
 USER_NAME: user
 device: "cuda:0"
 
 dataset:
-  _target_: denoising_diffusion_pytorch.data_loader.vaeac_data_loader.VAEAC_dataloader
-  cfg:
-    dataset:
-      name: celeba
-      path: /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
-      min: -1
-      max: 1
-      h: 32
-      type: pattern
-      p: 0.2
+  # _target_: denoising_diffusion_pytorch.data_loader.vaeac_data_loader.VAEAC_dataloader
+  # cfg:
+  # dataset:
+  class     : Image_diffusion_2D
+  name      : celeba
+  path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+  min       : -1
+  max       : 1
+  h         : 32
+  type      : pattern
+  p         : 0.2
   image_size: 64
 
 model:
-  _target_: denoising_diffusion_pytorch.models.vaeac.vaeac.EncoderDecoder
-  model_config:
-    model:
-      name: EncoderDecoderNet
-      last_layer: tanh
-      inp_channels: 3
-      n_hidden: 32
-      fc_hidden: 100
-      fc_out: 50
-      optimizer: adam
-      lr: 0.00005
-      beta1: 0.9
-      beta2: 0.999
-      scheduler: step
-      decay-steps: 500
-      decay-factor: 0.995
-      weight-decay: 0.00001
-      init: orthogonal
-      loss: mse
-      lr_override: false
-    reg:
-      lambda_kl: 1
-      lambda_reg: 1
-      sigma_m: 10000
-      sigma_s: 0.0001
-      apply_reg: true
+  # _target_: denoising_diffusion_pytorch.models.vaeac.vaeac.EncoderDecoder
+  # model_config:
+    # model:
+  name: EncoderDecoderNet
+  last_layer: tanh
+  inp_channels: 3
+  n_hidden: 32
+  fc_hidden: 100
+  fc_out: 50
+  optimizer: adam
+  lr: 0.00005
+  beta1: 0.9
+  beta2: 0.999
+  scheduler: step
+  decay-steps: 500
+  decay-factor: 0.995
+  weight-decay: 0.00001
+  init: orthogonal
+  loss: mse
+  lr_override: false
+  reg:
+    lambda_kl: 1
+    lambda_reg: 1
+    sigma_m: 10000
+    sigma_s: 0.0001
+    apply_reg: true
 
 trainer:
-  _target_    : denoising_diffusion_pytorch.trainer.vaeac_trainer.Trainer
-  train_config:
-    pretrained  : null
-    train       :
-      train_step               : 800000
-      batch_size               : 96
-      gradient_accumulate_every: 2
-      shuffle                  : true
-      step-log                 : 5
-      peek-validation          : 10000
+  # _target_    : denoising_diffusion_pytorch.trainer.vaeac_trainer.Trainer
+  # train_config:
+  pretrained  : null
+  train       :
+    train_step               : 800000
+    batch_size               : 96
+    gradient_accumulate_every: 2
+    shuffle                  : true
+    step-log                 : 5
+    peek-validation          : 10000
 
-logbase: logs
-prefix: vaeac/
-tag: H100_simple_models_dataset_13901k_v1
-exp_name: null
+log:
+  logbase : logs
+  prefix  : vaeac/
+  tag     : H100_simple_models_dataset_13901k_v1
+  exp_name: null
+  layout  : "dataset"
+  suffix  :
+
+# config/task/vaeac.yaml など
+watch:
+  - { key: log.prefix, label: "" }
+  - { key: dataset.image_size, label: "D" }
+  - { key: log.tag, label: "" }

@@ -72,12 +72,12 @@ class EncoderDecoder(nn.Module):
                  activation=F.leaky_relu,
                 ):
         super(EncoderDecoder, self).__init__()
-        model_cfg = cfg['model']
-        n_hidden = model_cfg['n_hidden']
-        fc_hidden = model_cfg['fc_hidden']
-        fc_out = model_cfg['fc_out']
+        model_cfg    = cfg['model']
+        n_hidden     = model_cfg['n_hidden']
+        fc_hidden    = model_cfg['fc_hidden']
+        fc_out       = model_cfg['fc_out']
         inp_channels = model_cfg['inp_channels']
-        last_layer = model_cfg['last_layer']
+        last_layer   = model_cfg['last_layer']
 
         # Store the last layer activation
         if last_layer == 'tanh':

@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from ..builder import Builder
 
 
-class ConditionalImageDiffusionBuilder:
+class VAEACBuilder:
     def __init__(self, builder: Builder):
         self.builder = builder
         self.cfg     = builder.cfg
@@ -20,36 +20,34 @@ class ConditionalImageDiffusionBuilder:
         )
 
     def build_model(self):
-        from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
-        model = Unet(
-            dim            = self.cfg.model.dim,
-            dim_mults      = self.cfg.model.dim_mults,
-            mask_dim       = self.cfg.dataset.image_size,
-            flash_attn     = self.cfg.model.flash_attn,
-            self_condition = self.cfg.model.self_condition,
+        from denoising_diffusion_pytorch.models.vaeac.vaeac import EncoderDecoder
+        model = EncoderDecoder(
+            cfg = self.cfg,
         )
         self.model = self._maybe_to_device(model)
         return self.model
 
 
     def build_method(self) -> Any:
-        from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
-        method = GaussianDiffusion(
-            model      = self.model,
-            image_size = self.cfg.dataset.image_size,
-            **self.cfg.diffusion,
-        )
-        self.method = self._maybe_to_device(method)
-        return self.method
+        # from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
+        # method = GaussianDiffusion(
+        #     model      = self.model,
+        #     image_size = self.cfg.dataset.image_size,
+        #     # **self.cfg.diffusion,
+        # )
+        # self.method = self._maybe_to_device(method)
+        # self.method = self.model
+        # return self.method
+        return
 
 
     def build_trainer(self) -> Any:
-        from denoising_diffusion_pytorch.trainer.diffusion_conditional_image_trainer import Trainer
+        from denoising_diffusion_pytorch.trainer.vaeac_trainer import Trainer
 
         self.trainer = Trainer(
-            diffusion_model = self.method,
+            model   = self.model,
             dataset = self.dataset,
-            **self.cfg.trainer,
+            cfg     = self.cfg,
         )
 
         return self.trainer

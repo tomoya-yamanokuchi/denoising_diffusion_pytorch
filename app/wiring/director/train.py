@@ -17,16 +17,22 @@ class TrainDirector:
         b = Builder(BuildContext(cfg_method, run_dir))
         b.validate()
 
-        dataset    = b.build_dataset()
-        image_size = b.infer_image_size(dataset)
+        # dataset    = b.build_dataset()
+        # image_size = b.infer_image_size(dataset)
+
+
+        b.build_exp_name()
+
+        b.build_run_dir_planner()
+
         b.build_method()
 
         c = Components(
-            dataset    = dataset,
+            dataset    = b.dataset,
             model      = b.model,
             method     = b.method,
             device     = str(cfg_method.device),
-            image_size = image_size,
+            image_size = b.image_size,
             run_dir    =  run_dir,
         )
         # trainer = b.build_trainer(algorithm=algorithm, dataset=dataset)

@@ -30,7 +30,7 @@ LOSS_DICT = {
 }
 
 def vaeac_validate(model= None, data = None):
-    
+
     outputs = model(data)
 
     N, _, H, W = outputs['out'].shape
@@ -208,6 +208,7 @@ def init_weights(model, cfg):
 
     # Get sub configs and update
     subcfg = cfg['model']
+    # subcfg = cfg
     # Get init
     init_helper(model, subcfg)
     return model
@@ -232,7 +233,7 @@ def re_normalize(image, cfg):
 #         - Output of the VAEAC
 #     '''
 #     import ipdb;ipdb.set_trace()
-    
+
 #     if cfg['model']['inp_channels'] == 1:
 #         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
 #             data['image'][0, 0].data.cpu().numpy())

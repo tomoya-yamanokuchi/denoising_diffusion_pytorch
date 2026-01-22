@@ -1,6 +1,3 @@
-
-
-
 import os
 
 
@@ -101,9 +98,9 @@ original_config_path = args.savepath
 original_config_path = os.path.join(original_config_path,"original_configs_backup.py")
 args.save_config_file(original_config_path)
 
-print(args.savepath)
+print("args.savepath = ", args.savepath)
 
-# import ipdb;ipdb.set_trace()
+import ipdb;ipdb.set_trace()
 
 trainer.train()
 

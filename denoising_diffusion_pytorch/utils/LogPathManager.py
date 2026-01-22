@@ -31,13 +31,52 @@ class MyEncoder(json.JSONEncoder):
 
 
 
-# def set_seed(seed):
-#     random.seed(seed)
-#     np.random.seed(seed)
-#     torch.manual_seed(seed)
-#     torch.cuda.manual_seed_all(seed)
+# denoising_diffusion_pytorch/utils/LogPathManager.py
+from omegaconf import OmegaConf, DictConfig, ListConfig
+
+def _normalize_args_to_watch(args_to_watch):
+    """
+    Accepts:
+      - [(key, label), ...]                         # legacy python tuples
+      - [{"key": key, "label": label}, ...]         # yaml-friendly dict
+      - [DictConfig(...), ...]                      # hydra/omegaconf dict nodes
+      - [[key, label], ...]                         # yaml-friendly list pairs
+    Returns:
+      - [(key, label), ...]
+    """
+    norm = []
+    for item in args_to_watch or []:
+
+        # ✅ Hydra/OmegaConf の DictConfig/ListConfig を通常コンテナへ
+        if isinstance(item, (DictConfig, ListConfig)):
+            item = OmegaConf.to_container(item, resolve=True)
+
+        # legacy: tuple/list of len=2
+        if isinstance(item, (list, tuple)) and len(item) == 2 and not isinstance(item, dict):
+            key, label = item
+            norm.append((str(key), "" if label is None else str(label)))
+            continue
+
+        # yaml: dict
+        if isinstance(item, dict):
+            key = item.get("key", None)
+            if key is None:
+                raise KeyError("watch spec item must have 'key'")
+            label = item.get("label", "")
+            norm.append((str(key), "" if label is None else str(label)))
+            continue
+
+        raise TypeError(f"Unsupported watch spec item: {type(item)}: {item}")
+
+    return norm
+
+
+
 
 def watch(args_to_watch):
+
+    args_to_watch = _normalize_args_to_watch(args_to_watch)
+
     def _fn(args):
         exp_name = []
         for key, label in args_to_watch:
@@ -47,21 +86,26 @@ def watch(args_to_watch):
             if type(val) == dict:
                 val = '_'.join(f'{k}-{v}' for k, v in val.items())
             exp_name.append(f'{label}{val}')
-
-
         exp_name = '_'.join(exp_name)
         exp_name = exp_name.replace('/_', '/')
         exp_name = exp_name.replace('(', '').replace(')', '')
         exp_name = exp_name.replace(', ', '-')
 
+        import ipdb; ipdb.set_trace()
+
         return exp_name
     return _fn
+
 
 def lazy_fstring(template, args):
     ## https://stackoverflow.com/a/53671539
     return eval(f"f'{template}'")
 
-class Parser(Tap):
+
+class LogPathManager(Tap):
+    def __init__(self):
+        self.dataset: str = 'Image_diffusion_2D'
+        self.config : str = 'config.vae'
 
     def save(self):
         fullpath = os.path.join(self.savepath, 'args.json')
@@ -179,9 +223,6 @@ class Parser(Tap):
                 args.savepath = os.path.join(args.savepath, args.suffix)
             if mkdir(args.savepath):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
-
-
-            import ipdb; ipdb.set_trace()
             self.save()
             self.save2(args)
 
