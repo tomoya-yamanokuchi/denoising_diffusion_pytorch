@@ -24,24 +24,27 @@ class TrainBuilder:
     学習用の構築を担当。
     build_* の結果を self.xxx に保持して、Director が Components を作れるようにする。
     """
+    # --- input ----
     cfg       : DictConfig
+    # --- output ----
     run_dir   : Optional[Path] = None
     exp_name  : Optional[str]  = None
-    dataset   : Any           = None
-    model     : Any           = None
-    method    : Any           = None
-    trainer   : Any           = None
-    image_size: Optional[int] = None
+    dataset   : Any            = None
+    model     : Any            = None
+    method    : Any            = None
+    trainer   : Any            = None
+    image_size: Optional[int]  = None
 
     def build_config_validator(self):
         self.validator = ConfigValidator()
 
     def validate_config(self) -> None:
+        # train に最低限必要なキー（trainerなどが重要）
         self.validator.require_keys(self.cfg, ["device", "dataset", "model", "trainer"])
 
     def set_important_params(self):
         self.image_size = int(OmegaConf.select(self.cfg, "dataset.image_size") or 0)
-        self.device     = str(OmegaConf.select(self.cfg, "dataset.image_size") or "cuda:0")
+        self.device     = str(OmegaConf.select(self.cfg, "device") or "cuda:0")
 
     def build_run_dir_manager(self):
         from denoising_diffusion_pytorch.utils.RunDirPlanner import RunDirPlanner
@@ -73,3 +76,10 @@ class TrainBuilder:
         self.trainer    = sub.build_trainer()
 
 
+    def build_all(self) -> None:
+        self.build_config_validator()
+        self.validate_config()
+        self.set_important_params()
+        self.build_run_dir_manager()
+        self.plan_and_initialize_run_dir()
+        self.build_method()
