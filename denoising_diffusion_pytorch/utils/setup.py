@@ -181,9 +181,11 @@ class Parser(Tap):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
 
 
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             self.save()
             self.save2(args)
+
+            # import ipdb; ipdb.set_trace()
 
 
     def get_commit(self, args):

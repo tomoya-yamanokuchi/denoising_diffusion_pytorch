@@ -3,20 +3,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 import hydra
-from omegaconf import DictConfig
-from ..builder import Builder
-
+# from omegaconf import DictConfig
+# from .. builder.train_builder import TrainBuilder
 
 class VAEACBuilder:
-    def __init__(self, builder: Builder):
-        self.builder = builder
-        self.cfg     = builder.cfg
+    def __init__(self, train_builder):
+        self.builder = train_builder
+        self.cfg     = train_builder.cfg
 
     def build_dataset(self) -> Any:
         from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
         self.dataset = Cond_image_dataloader(
             cfg        = self.cfg,
-            image_size = self.builder.image_size,
+            image_size = self.cfg.dataset.image_size,
         )
 
     def build_model(self):
@@ -29,36 +28,28 @@ class VAEACBuilder:
 
 
     def build_method(self) -> Any:
-        # from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
-        # method = GaussianDiffusion(
-        #     model      = self.model,
-        #     image_size = self.cfg.dataset.image_size,
-        #     # **self.cfg.diffusion,
-        # )
-        # self.method = self._maybe_to_device(method)
-        # self.method = self.model
-        # return self.method
-        return
+        return self.model
 
 
     def build_trainer(self) -> Any:
         from denoising_diffusion_pytorch.trainer.vaeac_trainer import Trainer
-
         self.trainer = Trainer(
             model   = self.model,
             dataset = self.dataset,
             cfg     = self.cfg,
+            savepath = self.builder.run_dir,
         )
-
         return self.trainer
 
-    # def build_evaluator(self, algorithm: Any, dataset: Any) -> Any:
-    #     return hydra.utils.instantiate(
-    #         self.cfg.evaluator,
-    #         algorithm=algorithm,
-    #         dataset=dataset,
-    #         results_folder=self.ctx.run_dir,
-    #     )
+    def build_evaluator(self, algorithm: Any, dataset: Any) -> Any:
+        from denoising_diffusion_pytorch.trainer.vaeac_trainer import Trainer
+        self.trainer = Trainer(
+            model   = self.model,
+            dataset = self.dataset,
+            cfg     = self.cfg,
+            savepath = self.builder.run_dir,
+        )
+        return self.trainer
 
     def _maybe_to_device(self, obj: Any) -> Any:
         dev = str(self.cfg.device) if "device" in self.cfg else None

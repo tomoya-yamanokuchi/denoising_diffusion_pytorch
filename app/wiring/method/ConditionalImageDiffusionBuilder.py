@@ -4,19 +4,19 @@ from dataclasses import dataclass
 from typing import Any
 import hydra
 from omegaconf import DictConfig
-from ..builder import Builder
+# from  builder.train_builder import TrainBuilder
 
 
 class ConditionalImageDiffusionBuilder:
-    def __init__(self, builder: Builder):
-        self.builder = builder
-        self.cfg     = builder.cfg
+    def __init__(self, train_builder):
+        self.builder = train_builder
+        self.cfg     = train_builder.cfg
 
     def build_dataset(self) -> Any:
         from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
         self.dataset = Cond_image_dataloader(
             cfg        = self.cfg,
-            image_size = self.builder.image_size,
+            image_size = self.cfg.dataset.image_size,
         )
 
     def build_model(self):

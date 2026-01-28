@@ -1,53 +1,40 @@
+defaults:
+  - /dataset: celeba
+  - _self_
+
 name     : vaeac
-
 USER_NAME: user
-device: "cuda:0"
-
-dataset:
-  # _target_: denoising_diffusion_pytorch.data_loader.vaeac_data_loader.VAEAC_dataloader
-  # cfg:
-  # dataset:
-  class     : Image_diffusion_2D
-  name      : celeba
-  path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
-  min       : -1
-  max       : 1
-  h         : 32
-  type      : pattern
-  p         : 0.2
-  image_size: 64
+device   : "cuda:0"
 
 model:
-  # _target_: denoising_diffusion_pytorch.models.vaeac.vaeac.EncoderDecoder
-  # model_config:
-    # model:
-  name: EncoderDecoderNet
-  last_layer: tanh
+  name        : EncoderDecoderNet
+  last_layer  : tanh
   inp_channels: 3
-  n_hidden: 32
-  fc_hidden: 100
-  fc_out: 50
-  optimizer: adam
-  lr: 0.00005
-  beta1: 0.9
-  beta2: 0.999
-  scheduler: step
-  decay-steps: 500
+  n_hidden    : 32
+  fc_hidden   : 100
+  fc_out      : 50
+  optimizer   : adam
+  lr          : 0.00005
+  beta1       : 0.9
+  beta2       : 0.999
+  scheduler   : step
+  decay-steps : 500
   decay-factor: 0.995
   weight-decay: 0.00001
-  init: orthogonal
-  loss: mse
-  lr_override: false
-  reg:
-    lambda_kl: 1
-    lambda_reg: 1
-    sigma_m: 10000
-    sigma_s: 0.0001
-    apply_reg: true
+  init        : orthogonal
+  loss        : mse
+  lr_override : false
+
+# regularization parameter in model training
+reg:
+  lambda_kl : 1
+  lambda_reg: 1
+  sigma_m   : 10000
+  sigma_s   : 0.0001
+  apply_reg : true
+
 
 trainer:
-  # _target_    : denoising_diffusion_pytorch.trainer.vaeac_trainer.Trainer
-  # train_config:
   pretrained  : null
   train       :
     train_step               : 800000

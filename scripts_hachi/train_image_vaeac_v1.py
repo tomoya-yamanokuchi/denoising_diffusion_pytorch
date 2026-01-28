@@ -46,8 +46,14 @@ trainer_config = Config(
     cfg                 = args
 )
 
+
+import ipdb; ipdb.set_trace()
+
 model       = model_config()
+
+
 trainer     = trainer_config(model = model, dataset = dataset)
+                            #  savepath=(args.savepath, 'trainer_config.pkl'))
 
 trainer.train()
 # import ipdb;ipdb.set_trace()

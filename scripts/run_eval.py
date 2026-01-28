@@ -3,13 +3,12 @@ import os
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from app.wiring.director.train import TrainDirector
-from app.wiring.director.eval import EvalDirector
+from app.wiring.director.train import EvalRecipe
 from app.wiring.runner import run_train, run_eval
 
 USECASE = {
-    "train": TrainDirector(),
-    "eval": EvalDirector(),
+    # "train": TrainDirector(),
+    "eval": EvalRecipe(),
 }
 
 @hydra.main(version_base=None, config_path="../config", config_name="config")

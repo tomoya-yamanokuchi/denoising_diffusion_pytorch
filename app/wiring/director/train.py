@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Protocol
 from omegaconf import DictConfig
-from ..builder import Builder, BuildContext
+from ..builder.context import BuildContext
+from ..builder.train_builder import TrainBuilder
 from ..experiment import Components, TrainExperiment
 
 class Recipe(Protocol):
@@ -13,18 +14,15 @@ class TrainDirector:
     name = "train"
 
     def build(self, cfg_method: DictConfig, run_dir: str) -> TrainExperiment:
-
-        b = Builder(BuildContext(cfg_method, run_dir))
-        b.validate()
-
-        # dataset    = b.build_dataset()
-        # image_size = b.infer_image_size(dataset)
-
-
-        b.build_exp_name()
-
-        b.build_run_dir_planner()
-
+        b = TrainBuilder(cfg_method)
+        # ---
+        b.build_config_validator()
+        b.validate_config()
+        b.set_important_params()
+        # ---
+        b.build_run_dir_manager()
+        b.plan_and_initialize_run_dir()
+        # ---
         b.build_method()
 
         c = Components(
@@ -33,9 +31,7 @@ class TrainDirector:
             method     = b.method,
             device     = str(cfg_method.device),
             image_size = b.image_size,
-            run_dir    =  run_dir,
+            run_dir    = run_dir,
         )
-        # trainer = b.build_trainer(algorithm=algorithm, dataset=dataset)
-        # return TrainExperiment(c=c, trainer=trainer)
         return TrainExperiment(c=c, trainer=b.trainer)
 

@@ -1,0 +1,6 @@
+defaults:
+  - /eval   : image_diffusion_v7
+  - /method : conditional_image_diffusion  # ここは評価対象のアルゴリズム
+  # - /dataset: celeba
+
+name: eval

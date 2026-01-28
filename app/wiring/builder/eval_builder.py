@@ -10,37 +10,11 @@ class BuildContext:
     cfg_task: DictConfig
     run_dir: str
 
-class Builder:
+class EvalBuilder:
     def __init__(self, ctx: BuildContext):
         self.ctx = ctx
         self.cfg = ctx.cfg_task
-        # self._set_params()
 
-    def _set_params(self):
-
-        self.image_size = self.cfg.dataset.image_size
-
-        from denoising_diffusion_pytorch.utils import make_save_path
-        from denoising_diffusion_pytorch.utils.LogPathManager import watch
-
-
-
-        self.save_path = make_save_path(
-            logbase = self.cfg.log.logbase,
-            dataset = 'Image_diffusion_2D',
-            exp_name = watch(self.cfg.watch),
-        )
-
-        import ipdb; ipdb.set_trace()
-
-
-    def build_exp_name(self):
-        '''
-            configの情報から実験ディレクトリの名前とパスを生成するためのオブジェクト
-        '''
-        from denoising_diffusion_pytorch.utils.ExperimentNamer import ExperimentNamer
-        self.namer    = ExperimentNamer.from_cfg(self.cfg.watch)
-        self.exp_name = self.namer.make(self.cfg)  # cfg は DictConfig のままでOK
 
     def build_run_dir_planner(self):
         '''
@@ -48,9 +22,9 @@ class Builder:
         '''
         from denoising_diffusion_pytorch.utils.RunDirPlanner import RunDirPlanner
         self.planner = RunDirPlanner.from_cfg(self.cfg)
-        run_dir, exp_name = self.planner.plan(self.cfg)
+        self.run_dir, self.exp_name = self.planner.plan(self.cfg)
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
     def validate(self) -> None:
         # for k in ["dataset", "model", "diffusion", "device"]:
@@ -95,7 +69,7 @@ class Builder:
             b = VAEACBuilder(self)
             self.dataset = b.build_dataset()
             self.model   = b.build_model()
-            # self.method  = b.build_method()
+            self.method  = b.build_method()
             self.trainer = b.build_trainer()
 
 

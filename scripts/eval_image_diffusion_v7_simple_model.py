@@ -40,32 +40,6 @@ print(torch.cuda.is_available())
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-# def get_eval_data(data_source_dir):
-
-#     eval_folders    = get_folder_name(data_source_dir)[:3]
-#     eval_data       = {}
-#     for i in range(len(eval_folders)):
-#         dataset_path                =  f"{data_source_dir}"+f"/{eval_folders[i]}"
-#         mesh_config_path            =  f"{dataset_path}/generated_configs_w_multi_color.yaml"
-#         mesh_config                 = load_yaml(mesh_config_path)
-
-#         mesh_components = {}
-#         for  idx, val in enumerate(mesh_config["inner_box"]):
-#             if  "Component" in val:
-#                 mesh_path   = f"{dataset_path}/blend/Boxy_0_cut0_{val}.stl"
-#                 mesh        = pv.read(mesh_path)
-#                 data        = { val:{"mesh" :mesh,
-#                                     "color" :mesh_config["inner_box"][val]['color']}
-#                                 }
-#                 print(f"load: mesh_path | {mesh_path}, color | {data[val]['color']}")
-#                 mesh_components.update(data)
-#             else:
-#                 pass
-#         eval_data.update({f"{eval_folders[i]}":mesh_components})
-
-#     return eval_data
-
-
 
 def get_eval_data(data_source_dir):
 
@@ -88,6 +62,9 @@ def get_eval_data(data_source_dir):
             pass
 
     return mesh_components
+
+
+
 
 if __name__ == '__main__':
 
@@ -113,6 +90,7 @@ if __name__ == '__main__':
 
     ## diffusion model load
     if  args.policy_config["infer_model"] == 'vaeac':
+        # import ipdb; ipdb.set_trace()
         diffusion_experiment    = load_vaeac(args.diffusion_loadpath, epoch=args.diffusion_epoch)
     elif args.policy_config["infer_model"] == 'diffusion' or args.policy_config["infer_model"] == 'diffusion_1D' or args.policy_config["infer_model"] == 'conditional_diffusion':
         diffusion_experiment    = load_diffusion(args.diffusion_loadpath, epoch=args.diffusion_epoch)

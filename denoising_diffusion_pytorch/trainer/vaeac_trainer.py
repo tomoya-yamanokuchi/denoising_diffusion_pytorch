@@ -42,6 +42,7 @@ class Trainer(object):
         model,
         dataset,
         cfg,
+        savepath,
     ):
         super().__init__()
 
@@ -86,7 +87,8 @@ class Trainer(object):
             val_dataset, batch_size=1, num_workers=1, shuffle=True))
 
         # create summary writer save folder
-        self.sw_savepath = os.path.join(self.config.savepath, f'summary_writer')
+        # self.sw_savepath = os.path.join(self.config.savepath, f'summary_writer')
+        self.sw_savepath = os.path.join(savepath, f'summary_writer')
         os.makedirs(self.sw_savepath, exist_ok=True)
         # # Get loss file handle to dump logs to
         # if not os.path.exists(self.config.savepath):
@@ -105,9 +107,9 @@ class Trainer(object):
         # if self.step is not None:
         self.writer = SummaryWriter(log_dir=self.sw_savepath)
 
-        with tqdm(initial = self.step, total = self.config.train_config["train"]["train_step"]) as pbar:
+        with tqdm(initial = self.step, total = self.config.trainer["train"]["train_step"]) as pbar:
 
-            while self.step < self.config.train_config["train"]["train_step"]:
+            while self.step < self.config.trainer["train"]["train_step"]:
                 # self.model.train()
                 # self.optim.zero_grad()
                 # data = next(self.train_dl)
@@ -144,7 +146,8 @@ class Trainer(object):
 
                     # Get all outputs
                     outputs = self.model(data)
-                    loss_val = self.loss_fn(outputs, data, self.config.model_config)
+                    # import ipdb; ipdb.set_trace()
+                    loss_val = self.loss_fn(outputs, data, self.config)
 
                     # Normalize loss for accumulation
                     loss_val = loss_val / self.gradient_accumulate_every
@@ -160,8 +163,8 @@ class Trainer(object):
                 # import ipdb;ipdb.set_trace()
 
                 # Log into the file after some epochs
-                # if self.step % self.config.train_config['train']['step-log'] == 0:
-                if self.config.train_config['train']['step-log'] is not None:
+                # if self.step % self.config.trainer['train']['step-log'] == 0:
+                if self.config.trainer['train']['step-log'] is not None:
                     ## selossesfile.write('Epoch: {}, step: {}, loss: {}\n'.format(
                     ##     epoch, ckpt, loss_val.data.cpu().numpy()
                     ## ))
@@ -169,7 +172,7 @@ class Trainer(object):
                     # print('step: {}, loss: {}'.format(self.step, loss_val.data.cpu().numpy()))
                     self.writer.add_scalar("Train_loss",loss_val,self.step)
 
-                if self.step % self.config.train_config["train"]['peek-validation'] == 0:
+                if self.step % self.config.trainer["train"]['peek-validation'] == 0:
                 # if self.step % 10 == 0:
                 # if self.step >2:
                     self.model.eval()
@@ -195,5 +198,5 @@ class Trainer(object):
                     self.writer.add_images('target_image', val_data["image"], self.step,  dataformats='NCHW')
                     self.model.train()
                     # Save checkpoint
-                    save_ckpt((self.model, self.optim), self.config.train_config, self.step, 0 ,override=False, save_path=self.config.savepath)
+                    save_ckpt((self.model, self.optim), self.config.trainer, self.step, 0 ,override=False, save_path=self.config.savepath)
                 pbar.update(1)

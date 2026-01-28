@@ -12,19 +12,19 @@ grid:
       - 0.05
       side_length: 16
 method:
-  name: vaeac
-  USER_NAME: user
-  device: cuda:0
   dataset:
-    class: Image_diffusion_2D
     name: celeba
     path: /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+    class: Image_diffusion_2D
     min: -1
     max: 1
     h: 32
     type: pattern
     p: 0.2
     image_size: 64
+  name: vaeac
+  USER_NAME: user
+  device: cuda:0
   model:
     name: EncoderDecoderNet
     last_layer: tanh
@@ -43,12 +43,12 @@ method:
     init: orthogonal
     loss: mse
     lr_override: false
-    reg:
-      lambda_kl: 1
-      lambda_reg: 1
-      sigma_m: 10000
-      sigma_s: 0.0001
-      apply_reg: true
+  reg:
+    lambda_kl: 1
+    lambda_reg: 1
+    sigma_m: 10000
+    sigma_s: 0.0001
+    apply_reg: true
   trainer:
     pretrained: null
     train:
@@ -64,6 +64,7 @@ method:
     tag: H100_simple_models_dataset_13901k_v1
     exp_name: null
     layout: dataset
+    suffix: null
   watch:
   - key: log.prefix
     label: ''

@@ -58,6 +58,13 @@ vaeac_train_args_to_watch = [
     ('tag', ''),
 ]
 
+point_e_diffusion_train_args_to_watch = [
+    ('prefix', ''),
+    ('n_diffusion_step',  'T'),
+    ('sampling_timestep', 'S'),
+    ('image_size', 'D'),
+    ('tag', ''),
+]
 
 base = {
 
@@ -68,7 +75,7 @@ base = {
     'diffusion': {
         # 'USER_NAME'         : "haxhi",
         'USER_NAME'         : "user",
-
+        
         ## model
         'model'             : 'models.unet_2d.Unet',
         'dim_mults'         : (1, 2, 4, 8),
@@ -106,7 +113,7 @@ base = {
         # 'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v1/cast_images',
         # 'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v1/cast_images_kw_256',
         # 'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v1/cast_images_49',
-        'dataset_path'      : 'f:/home/dev/workspace/nedo-dismantling-PyBlender/voxel_images_w_multi_color_v2_',
+        'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_z_49',
         # 'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/flower-image/train_concat',
         # 'horizontal_flip'   : True,
         'horizontal_flip'   : False,
@@ -158,13 +165,13 @@ base = {
     'diffusion_1d': {
         # 'USER_NAME'         : "haxhi",
         'USER_NAME'         : "user",
-
+        
         ## model
         'model'             : 'models.unet_1d.Unet1D',
         # 'dim'               : 64, # default
-        'dim'               : 128,  # simple model setting?
-        # 'dim_mults'         : (1, 2, 2, 4, 8), # simple model setting
-        'dim_mults'         : (1, 2, 4, 8), # simple model setting
+        'dim'               : 128,  # real model setting?
+        # 'dim_mults'         : (1, 2, 2, 4, 8), # simple model setting or (1, 2, 4, 8)?
+        'dim_mults'         : (1, 2, 4, 8), # real model setting
         'self_condition'    : False,
         'flash_attn'        : True,
         # 'self_condition'    : True,
@@ -182,10 +189,11 @@ base = {
         # 'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1',
         'dataset_path'      : 'f:/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_z_49',
         # 'image_size'        : 64, # simple model setting
-        'image_size'        : 343,
+        'image_size'        : 343, 
         # 'grid_3dim'         : 16, # simple model setting
         'grid_3dim'         : 49,
-        'is_shuffle'        : True,
+        # 'is_shuffle'        : True,
+        'is_shuffle'        : False,
         'horizontal_flip'   : False,
         'convert_image_to'  : None,
 
@@ -201,8 +209,8 @@ base = {
         # 'tag'               : "dataset_4142435161_13900k_v8",
         # 'tag'               : "dataset_4142435161_13901k_v2/",
         # 'tag'               : "dataset_41435161_13900k_v1",
-        'tag'               : "H100_real_models_dataset_v2_1",
-
+        'tag'               : "H100_real_models_dataset_v2_2",
+        
 
         'exp_name'          : watch(diffusion_1d_train_args_to_watch),
 
@@ -219,6 +227,8 @@ base = {
         'device'             :'cuda:0'
     },
 
+
+
     'conditional_image_diffusion': {
         # 'USER_NAME'         : "haxhi",
         'USER_NAME'         : "user",
@@ -234,14 +244,14 @@ base = {
 
         'init_dim'          : 64,
         # 'init_dim'          : 128,
-
+        
 
         # 'diffusion'         : 'models.conditional_image_diffusion.GaussianDiffusion',
         # 'diffusion'         : 'models.conditional_image_diffusion_simple_devel.GaussianDiffusion',
         # 'diffusion'         : 'models.conditional_image_diffusion_cfg_devel.GaussianDiffusion',
         'diffusion'         : 'models.conditional_image_diffusion_cfg_devel2.GaussianDiffusion',
-
-
+        
+        
         'beta_schedule'     : 'sigmoid', # default = 'sigmoid' ['sigmoid', 'cosine']
         'n_diffusion_step'  : 1000, # default = 1000
         'sampling_step'     : 20,
@@ -250,7 +260,7 @@ base = {
         ## dataset
         "loader":"data_loader.cond_image_data_loader.Cond_image_dataloader",
         "dataset_config": {"dataset" : {"name": "celeba",
-                                        "path": "/home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1",
+                                        "path": "/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1",
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_x_49',
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_wo_body_x_49',
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_wo_body_z_49',
@@ -261,7 +271,7 @@ base = {
                                         "type": "pattern",
                                         "p": 0.2} # only effects 'type=random'
                            },
-
+    
         'image_size' : 64,
         # 'image_size' : 344,
 
@@ -273,10 +283,10 @@ base = {
         # 'tag'               : "dataset_13901k_v11",
         # 'tag'               : "H100_real_models_dataset_v2_18",
         # 'tag'               : "4090b_real_models_dataset_v2_tmp18_3",
-
-
+        
+        
         # v2_5 : data loader 64dimと同じ，　mask_label = (mask == 1).float()  # shape: (B, 1, H, W)　にして未観測部分のみのloss を取ろうとしたが逆
-        # v2_6 : data loader 64dimと同じ，　mask_label = (mask == -1).float()  # shape: (B, 1, H, W)　にして未観測部分のみ(mask=-1が未観測，mask=1が観測済み)
+        # v2_6 : data loader 64dimと同じ，　mask_label = (mask == -1).float()  # shape: (B, 1, H, W)　にして未観測部分のみ(mask=-1が未観測，mask=1が観測済み)        
         # v2_7 : data loader 64dimと同じ，　mask cond random を0.5にした lossの計算も全体に変更．v2_6はlossの計算をマスクの部分のみ．
         # v2_8 : data loader　ランダムサンプルする割合を5倍に．mask cond random を廃止. lossの計算も全体に変更．
         # v2_9 : data loader　ランダムサンプルする割合を5倍に．mask cond random を廃止. lossの計算も全体に変更． horizontal flip をtrueに
@@ -285,7 +295,7 @@ base = {
         # v2_12 : data loader　ランダムサンプルする割合を6倍に．mask cond random 廃止 . lossの計算をマスク部分のみに． horizontal flip をtrueに, binary mask cond mode　にネットワークを変更
         # dataset_13901k_v9: dataloader 64dim設定．mask cond random = None, loss マスク部分のみ, horizontal flip = True, binary mask cond style
 
-
+        
         # "4090b_real_models_dataset_v2_2": 64dim設定．mask cond random なし， loss の計算をマスク部分のみに適用．horizontal flip true
         # "4090b_real_models_dataset_v2_3": 64dim設定．mask cond random=0.5， loss の計算をマスク部分のみに適用．horizontal flip true
         # "4090b_real_models_dataset_v2_4": 64dim設定．mask cond random なし， loss の計算をマスク部分のみに適用 あえてmask=1にして挙動確認．horizontal flip true
@@ -294,14 +304,14 @@ base = {
         # "4090b_real_models_dataset_v2_tmp6":今のbinarymask cond devel setting cast image x ,lr = 2e-5
         # "4090b_real_models_dataset_v2_tmp5":今のbinarymask cond devel setting cast image z ,lr = 2e-5 init dim  = 128
         # "4090b_real_models_dataset_v2_tmp7":今のbinarymask cond devel setting cast image z,lr = 8e-5  init_dim = 64
-
-
+        
+        
         'exp_name'          : watch(conditional_image_diffusion_train_args_to_watch),
 
         ## training
         'trainer'           : 'trainer.diffusion_conditional_image_trainer.Trainer',
         'batch_size'        : 96, # default
-        # 'batch_size'        : 32,
+        # 'batch_size'        : 32, 
         # 'batch_size'        : 18, # for 344
         'learning_rate'     : 8e-5, # default
         # 'learning_rate'     : 2e-5,
@@ -316,6 +326,7 @@ base = {
         'calculate_fid'      : False,
         'device'             :'cuda:0'
     },
+
 
     'cvae': {
         'USER_NAME'         : "haxhi",
@@ -363,18 +374,18 @@ base = {
         'n_epoch'            : 1000,
     },
 
+
     'vaeac' : {
 
         # 'USER_NAME'         : "haxhi",
-        'USER_NAME'         : "dev",
+        'USER_NAME'         : "user",
         'device'             :'cuda:0',
 
         ## dataset
         "loader":"data_loader.vaeac_data_loader.VAEAC_dataloader",
         "dataset_config": {"dataset" : {"name": "celeba",
-                                        # "path": "/home/dev/dataset/denoising_diffusion_pytorch/dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1",
+                                        "path": "/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1",
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_z_49',
-                                        "path": "/home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1",
                                         "min": -1,
                                         "max": 1,
                                         "h": 32,
@@ -382,7 +393,7 @@ base = {
                                         "p": 0.2}},
         'image_size' : 64,
         # 'image_size' : 344,
-
+        
 
         ### model
         "model" : 'models.vaeac.vaeac.EncoderDecoder',
@@ -414,7 +425,7 @@ base = {
                                 "apply_reg": True}
                         },
         ## trainer
-        'trainer' : 'trainer.vaeac_trainer_hachi.Trainer',
+        'trainer' : 'trainer.vaeac_trainer.Trainer',
         'train_config':{
                         "pretrained": None,
                         "train": {
@@ -437,50 +448,113 @@ base = {
         'exp_name'          : watch(vaeac_train_args_to_watch),
     },
 
+
+    "point_e_diffusion": {
+        # 'USER_NAME'         : "haxhi",
+        'USER_NAME'         : "user",
+        
+        ## model
+        'model'             : 'models.point_e.point_e_transformer.PointDiffusionTransformer',
+        "n_ctx"             :1024,           # 1サンプルあたりのトークン数（点数や系列長） 24576 117649
+        "width"             :512,            # Transformer 内のトークン埋め込み（特徴ベクトル）の次元数
+        "layers"            :6,              # Transformer ブロックの層数（Self-Attention + FFN のセット）深くするほど高次特徴が抽出可能
+        "heads"             :8,              #     # Multi-Head Attention のヘッド数（注意の並列分割） 各ヘッドは width/heads = 64 次元）
+        "time_token_cond"   :True,  # t を "special token" としてトークン列に追加するかどうか t 埋め込みをトークンとして先頭に追加（Transformer で直接処理される）
+
+
+        'diffusion'         : 'models.point_e.point_e_diffusion.GaussianDiffusion1D',
+        'beta_schedule'     : 'sigmoid', # default
+        # 'beta_schedule'     : 'cosine',
+        'n_diffusion_step'  : 1000,
+        # 'sampling_step'     : 500,
+        'sampling_step'     : 20,
+
+
+        ## dataset
+        'loader'            : "data_loader.image_data_loader.Dataset1D",
+        'dataset_path'      : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1',
+        # 'dataset_path'      : 'f:/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_z_49',
+        'image_size'        : 64, # simple model setting
+        # 'image_size'        : 343, 
+        'grid_3dim'         : 16, # simple model setting
+        # 'grid_3dim'         : 49,
+        # 'is_shuffle'        : True,
+        'is_shuffle'        : False,
+        'horizontal_flip'   : False,
+        'convert_image_to'  : None,
+
+
+        ## serialization
+        'logbase'           : 'logs',
+        'prefix'            : 'point_e_diffusion/',
+        'tag'               : "dataset_41435161_13900k_v1",
+        # 'tag'               : "H100_real_models_dataset_v2_2",
+        
+        'exp_name'          : watch(point_e_diffusion_train_args_to_watch),
+
+        ## training
+        'trainer'           : 'trainer.point_e_diffusion_trainer.Trainer1D',
+        'batch_size'        : 19,                # simple model setting
+        # 'batch_size'        : 2,                # real model setting
+        'learning_rate'     : 8e-5,
+        'train_step'        : 800000,           # total training steps
+        'save_and_sample_every':5000,
+        'gradient_accumulate_every' : 12,        # gradient accumulation steps # simple model setting
+        # 'gradient_accumulate_every' : 2,        # gradient accumulation steps # rea; model setting
+        
+        'ema_decay'          : 0.995,           # exponential moving average decay
+        'amp'                : True,            # turn on mixed precision
+        'device'             :'cuda:0'
+    },
+
+
+
+
     'diffusion_plan': {
         # 'USER_NAME'         : "haxhi",
-        'USER_NAME'         : "dev",
+        'USER_NAME'         : "user",
 
         # 'policy'            :'policy.cutting_surface_planner_v7.cutting_surface_planner',
-        # 'policy'            :'policy.cutting_surface_planner_v8.cutting_surface_planner', # for real model
-        'policy'            :'policy.cutting_surface_planner_v9.cutting_surface_planner', # for simple model
+        'policy'            :'policy.cutting_surface_planner_v8.cutting_surface_planner', # for real model
+        # 'policy'            :'policy.cutting_surface_planner_v9.cutting_surface_planner', # for simple model
         'batch_size'        : 32,  # diffusion default
-        # 'batch_size'        : 16, # for real model vaeac
+        # 'batch_size'        : 16, # for real model vaeac 
         # 'batch_size'        : 18,
         # 'batch_size'        : 64,
+
 
         ## policy_config
         'policy_config'     :{
                                 'ctrl_mode':"epsilon_greedy_00",
-                                # 'ctrl_mode':"prior_based_ep_00",
+                                # 'ctrl_mode':"prior_based_ep_00",                                
                                 # 'ctrl_mode':"epsilon_greedy_01",
                                 # 'ctrl_mode':"epsilon_greedy_05",
                                 # 'ctrl_mode':"random",
                                 # 'ctrl_mode':"no_cond",
                                 # 'ctrl_mode':"oracle_obs",
-                                "image_mask_config_b" : {"target_mask"  :np.asarray([0.2,0.8,0.8]),
-                                                        "target_mask_lb":np.asarray([0.2,0.8,0.8])-np.asarray([0.25,0.25,0.25]),
-                                                        "target_mask_ub":np.asarray([0.2,0.8,0.8])+np.asarray([0.25,0.25,0.25])}, #np.asarray([0.7,0.2,0.2]
-                                "image_mask_config_r": {"target_mask"   :np.asarray([0.8,0.2,0.2]),
-                                                        "target_mask_lb":np.asarray([0.8,0.2,0.2])-np.asarray([0.1,0.1,0.1]),
-                                                        "target_mask_ub":np.asarray([0.8,0.2,0.2])+np.asarray([0.2,0.2,0.2])}, #np.asarray([0.2,0.6,0.6])
-                                "image_mask_config_y": {"target_mask"   :np.asarray([0.8,0.8,0.2]),
-                                                        "target_mask_lb":np.asarray([0.8,0.8,0.2])-np.asarray([0.1,0.1,0.1]),
-                                                        "target_mask_ub":np.asarray([0.8,0.8,0.2])+np.asarray([0.2,0.2,0.6])},
-                                # "image_mask_config_b" : {"target_mask"  :np.asarray([0.0,0.0,1.0]),
-                                #                         "target_mask_lb":np.asarray([0.0,0.0,1.0])-np.asarray([0.1,0.1,0.1]),
-                                #                         "target_mask_ub":np.asarray([0.0,0.0,1.0])+np.asarray([0.1,0.1,0.0])}, #np.asarray([0.7,0.2,0.2]
-                                # "image_mask_config_r": {"target_mask"   :np.asarray([1.0,0.0,0.0]),
-                                #                         "target_mask_lb":np.asarray([1.0,0.0,0.0])-np.asarray([0.1,0.1,0.1]),
-                                #                         "target_mask_ub":np.asarray([1.0,0.0,0.0])+np.asarray([0.0,0.1,0.1])}, #np.asarray([0.2,0.6,0.6])
-                                # "image_mask_config_y": {"target_mask"   :np.asarray([0.0,1.0,0.0]),
-                                #                         "target_mask_lb":np.asarray([0.0,1.0,0.0])-np.asarray([0.1,0.1,0.1]),
-                                #                         "target_mask_ub":np.asarray([0.0,1.0,0.0])+np.asarray([0.1,0.0,0.1])},
-                                'infer_model':"vaeac",
+                                # "image_mask_config_b" : {"target_mask"  :np.asarray([0.2,0.8,0.8]),
+                                #                         "target_mask_lb":np.asarray([0.2,0.8,0.8])-np.asarray([0.25,0.25,0.25]),
+                                #                         "target_mask_ub":np.asarray([0.2,0.8,0.8])+np.asarray([0.25,0.25,0.25])}, #np.asarray([0.7,0.2,0.2]
+                                # "image_mask_config_r": {"target_mask"   :np.asarray([0.8,0.2,0.2]),
+                                #                         "target_mask_lb":np.asarray([0.8,0.2,0.2])-np.asarray([0.1,0.1,0.1]),
+                                #                         "target_mask_ub":np.asarray([0.8,0.2,0.2])+np.asarray([0.2,0.2,0.2])}, #np.asarray([0.2,0.6,0.6])
+                                # "image_mask_config_y": {"target_mask"   :np.asarray([0.8,0.8,0.2]),
+                                #                         "target_mask_lb":np.asarray([0.8,0.8,0.2])-np.asarray([0.1,0.1,0.1]),
+                                #                         "target_mask_ub":np.asarray([0.8,0.8,0.2])+np.asarray([0.2,0.2,0.6])},
+                                "image_mask_config_b" : {"target_mask"  :np.asarray([0.0,0.0,1.0]),
+                                                        "target_mask_lb":np.asarray([0.0,0.0,1.0])-np.asarray([0.1,0.1,0.1]),
+                                                        "target_mask_ub":np.asarray([0.0,0.0,1.0])+np.asarray([0.1,0.1,0.0])}, #np.asarray([0.7,0.2,0.2]
+                                "image_mask_config_r": {"target_mask"   :np.asarray([1.0,0.0,0.0]),
+                                                        "target_mask_lb":np.asarray([1.0,0.0,0.0])-np.asarray([0.1,0.1,0.1]),
+                                                        "target_mask_ub":np.asarray([1.0,0.0,0.0])+np.asarray([0.0,0.1,0.1])}, #np.asarray([0.2,0.6,0.6])
+                                "image_mask_config_y": {"target_mask"   :np.asarray([0.0,1.0,0.0]),
+                                                        "target_mask_lb":np.asarray([0.0,1.0,0.0])-np.asarray([0.1,0.1,0.1]),
+                                                        "target_mask_ub":np.asarray([0.0,1.0,0.0])+np.asarray([0.1,0.0,0.1])},
+                                # 'infer_model':"vaeac",
                                 # 'infer_model':"diffusion",
                                 # 'infer_model':"conditional_diffusion",
-                                # 'infer_model':"diffusion_1D",
-                                "decision_mode": {
+                                'infer_model':"diffusion_1D",
+                                "decision_mode": {  
                                                     # "remove_outliers_cal_cost_mean",
                                                     # "mode": "cal_cost_mean",
                                                     # "cal_cost_mode",
@@ -492,95 +566,149 @@ base = {
                                                     #          },
                                                     "mode": "clip_ucb_raw",
                                                     "param":{
-                                                            "ucb_lb":0.5,  # 1.0 or 0.99 or
-                                                            # "ucb_lb":1.0  # 1.0 or 0.99 or
+                                                            # "ucb_lb":1.0  
+                                                            # "ucb_lb":0.533  
+                                                            "ucb_lb":0.5    
+                                                            # "ucb_lb":0.6    
                                                              }
                                                     },
                                 "cfg_omega": 0.2,
                                 },
-        ## eval data loading
-        ## 'eval_data_path'    : 'f:/home/{USER_NAME}/workspace/nedo-dismantling-PyBlender/dataset_1/geom_eval/',
-        ## 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/nedo_dismantling_dataset/dataset_1/geom_eval/',
-        ## 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_1/geom_eval',
-        ## 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_2_12900k/geom_test',
-        ## 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test',
-        ## 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test_2',
-
+        ##eval data loading
+        # 'eval_data_path'    : 'f:/home/{USER_NAME}/workspace/nedo-dismantling-PyBlender/dataset_1/geom_eval/',
+        # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/nedo_dismantling_dataset/dataset_1/geom_eval/',
+        # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_1/geom_eval',
+        # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_2_12900k/geom_test',
+        # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test',
+        # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test_2',
         # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test_3',
         # 'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_5_12900k/geom_test_1',
-        'eval_data_path'    : 'f:/home/dev/workspace/dataset/nedo/dataset_4_12900k/geom_test_1',
-
-        'eval_data_lists'    : {
-                                # 'Object_1':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test_3/Boxy_0",
-                                # 'Object_2':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test_3/Boxy_1",
-                                # 'Object_3':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_4_12900k/geom_test_3/Boxy_2",
-                                # 'Object_4':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_5_12900k/geom_test_1/Boxy_0",
-                                # 'Object_5':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_5_12900k/geom_test_1/Boxy_1",
-                                # 'Object_6':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_5_12900k/geom_test_1/Boxy_2",
-                                # 'Object_7':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_6_13900k/geom_test_1/Boxy_0",
-                                # 'Object_8':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_6_13900k/geom_test_1/Boxy_1",
-                                # 'Object_9':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_6_13900k/geom_test_1/Boxy_2",
-
-                                'Object_1' : "/home/dev/workspace/dataset/nedo/dataset_4_12900k/geom_test_3/Boxy_0",
-
-                                },
+        'eval_data_path'    : 'f:/home/{USER_NAME}/dataset/denoising_diffusion_pytorch/dataset/dataset_6_13900k/geom_test_1',
 
 
+
+
+
+        ## loading
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising-diffusion-pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_v0',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_test_2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_2_12900k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_2_12900k_v2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_3_12900k_v2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4_12900k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4_12900k_v2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_5_12900k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_45_12900k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_41424351_12900k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_41424351_12900k_v4',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13900k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13900k_v2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13900k_v2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13900k_v5',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13900k_v7',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13900k_v8',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13901k_v1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_41435161_13900k_v1',
+        # 'diffusion_epoch'   : '40000',
+        # 'diffusion_epoch'   : '80000',
+        # 'diffusion_epoch'   : '600000',
+        # 'diffusion_epoch'   : '100',
+        # 'diffusion_epoch'   : '140000',
+        # 'diffusion_epoch'   : '190000',
+        # 'diffusion_epoch'   : '200000',
+        # 'diffusion_epoch'   : '400000',
+        # 'diffusion_epoch'   : '600000',
+        # 'diffusion_epoch'   : '800000',
+
+
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D64_dataset_4142435161_13901k_v1',
+        # 'diffusion_epoch'   : '200000',
+        # 'prefix'            : 'diffusion_plans/dataset_4142435161_13901k_v1/dataset_4_3_eval/',
+
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D256_H100_real_models_dataset_v1_3',
+        # 'diffusion_epoch'   : '102000',
+        # 'prefix'            : 'diffusion_plans/real_model/real_models_dataset_v1_3/dataset_4_3_eval/',
+
+
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D512_H100_real_models_dataset_v1_1',
+        # 'diffusion_epoch'   : '81000',
+        # # 'diffusion_epoch'   : '50000',
+        # 'prefix'            : 'diffusion_plans/real_model/real_models_dataset_v1_1/dataset_4_3_eval/',
+        
+
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_1d/T1000_D64_dataset_4142435161_13901k_v1/',
+        # 'diffusion_epoch'   : '200000',
+        # 'prefix'            : 'diffusion_plans_1d/dataset_4142435161_13901k_v1/dataset_4_3_eval/',
+
+
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_image_align_celeba_s2',
+        # 'diffusion_epoch'   : '200000',
+        # 'prefix'            : 'vaeac_plans/dataset_4142435161_13901k_v1/dataset_4_3_eval/',
+
+
+
+        # # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D512_H100_real_models_dataset_v1_1',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion/T1000_D344_H100_real_models_dataset_v2_1',
+        # # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D344_H100_real_models_dataset_v2_2',
+        # # 'diffusion_epoch'   : '140000',
+        # # 'diffusion_epoch'   : '10000',
+        # 'diffusion_epoch'   : '70000',
+        # # 'diffusion_epoch'   : '50000',
+        # 'prefix'            : 'diffusion_plans/real_model/real_models_dataset_v2_1/dataset_SheetSander_024_eval/',
+
+
+
+
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion/T1000_D64_dataset_13901k_v9',
+        
 
         ##############################
         ## simple model prefix
         ###############################
-        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/point_e_diffusion/T1000_D64_dataset_41435161_13900k_v1/',
-        ## 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_1d/T1000_D64_dataset_4142435161_13901k_v1/',
-        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_1d/T1000_D64_dataset_4142435161_13901k_v3/',
+        # # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_1d/T1000_D64_dataset_4142435161_13901k_v1/',
         # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_dataset_13901k_v11',
-        ## 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v1/',
-        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v2/',
-        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v3/',
-        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_flower_image_v1/',
-
-        'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v1/',
-
-
-
-        # 'diffusion_epoch'   : '5000',
-        # 'diffusion_epoch'   : '16000',
-        'diffusion_epoch'   : '10000',
-        # 'diffusion_epoch'   : '40000',
-        # 'diffusion_epoch'   : '50000',
-        # 'diffusion_epoch'   : '100000',
+        # # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v1/',
+        # # 'diffusion_epoch'   : '16000',
+        # # 'diffusion_epoch'   : '60000',
+        # # 'diffusion_epoch'   : '100000',
+        # # 'diffusion_epoch'   : '160000',
         # 'diffusion_epoch'   : '200000',
-        # 'diffusion_epoch'   : '400000',
-        'prefix'            : 'diffusion_plans/dataset_4142435161_13901k_v1_2/',
+        # # 'diffusion_epoch'   : '400000',
+        # 'prefix'            : 'diffusion_plans/dataset_4142435161_13901k_v1/dataset_6_1_eval/',
 
-        ##############################
-        ## real model prefix
-        ###############################
+
+
+
         # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D344_H100_real_models_dataset_v2_19',
-        # # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D344_H100_real_models_dataset_v2_2',
-        # # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_4090b_real_models_dataset_v2_tmp18_2',
-        # # 'diffusion_epoch'   : '200000',
-        # # 'diffusion_epoch'   : '70000',
-        # # 'diffusion_epoch'   : '64000',
-        # # 'diffusion_epoch'   : '84000',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D344_H100_real_models_dataset_v2_20',
+        'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_1d/T1000_D343_H100_real_models_dataset_v2_2',
+        ## 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D344_H100_real_models_dataset_v2_2',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D344_H100_real_models_dataset_v2_4',
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_4090b_real_models_dataset_v2_tmp18_2',
+        # 'diffusion_epoch'   : '200000',
+        # 'diffusion_epoch'   : '194000',
+        'diffusion_epoch'   : '100000',
+        # 'diffusion_epoch'   : '70000',
+        # 'diffusion_epoch'   : '60000',
+        # 'diffusion_epoch'   : '84000',
         # 'diffusion_epoch'   : '98000',
-        # # 'diffusion_epoch'   : '32000',
-        # 'prefix'            : 'diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/',
-
-
-
+        # 'diffusion_epoch'   : '50000',
+        'prefix'            : 'diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/',
+        
+        
         'task_step' :8,
         # 'task_step' :10,
         # 'task_step' :15,
-
+        
         # 'start_action_idx':19,
         # 'start_action_idx':24, # or 17 or 73 for SheetSander_kwon
+        
         # 'start_action_idx':41, # for dataset_eval_4_3 -> action index = 41
         # 'start_action_idx':4,
 
         # "start_action_idx":{"Object_1":24,
         #                     "Object_2":73,
-        #                     "Object_3":70},
+        #                     "Object_3":70}, 
 
 
         # "start_action_idx":{
@@ -590,33 +718,17 @@ base = {
         #                     "Object_4":24,
         #                     "Object_5":127,
         #                     "Object_6":131,
-        #                     },
+        #                     },         
 
         "start_action_idx":{
-                            "obj_tag":"123456789",
-                            "Object_1":np.arange(47,41-1,-1), #41
-                            "Object_2":np.arange(47,41-1,-1), #41
-                            "Object_3":np.arange(47,41-1,-1), #41
-                            "Object_4":np.arange(0,4+1),   #4
-                            "Object_5":np.arange(0,4+1),   #4
-                            "Object_6":np.arange(0,4+1),   #4
-                            "Object_7":np.arange(0,4+1),   #4
-                            "Object_8":np.arange(0,4+1),   #4
-                            "Object_9":np.arange(0,4+1),   #4
-                            },
-
-        ####################
-        ## real model setting
-        #####################
-        # "start_action_idx":{
-        #                     "obj_tag":"123456",
-        #                     "Object_1":np.arange(48,24-1,-1), #24,
-        #                     "Object_2":np.arange(97,73-1,-1),# 73,
-        #                     "Object_3":np.arange(97,69-1,-1), # 69,
-        #                     "Object_4":np.arange(48,24-1,-1), #24,
-        #                     "Object_5":np.arange(98,126+1),   # 126
-        #                     "Object_6":np.arange(97,73-1,-1), # 73
-        #                     },
+                            "obj_tag":"123456",
+                            "Object_1":np.arange(48,25-1,-1), 
+                            "Object_2":np.arange(97,72-1,-1),# 72,
+                            "Object_3":np.arange(97,69-1,-1), 
+                            "Object_4":np.arange(48,25-1,-1), 
+                            "Object_5":np.arange(98,126+1),   # 126
+                            "Object_6":np.arange(97,73-1,-1), # 73
+                            },         
 
 
 
@@ -626,46 +738,46 @@ base = {
         'observation_mode'  : 'partial_obs',
         # 'observation_mode'  : 'full_obs',
         # 'observation_mode'  : 'both_cs_obs',
-        'iter'              : [0,6],
-        # 'iter'              : [2,6],
-        # 'iter'              : [0,2],
+        'iter'              : [0,4],
+        # 'iter'              : [0,3],
+        # 'iter'              : [3,6],
         # 'iter'              : [0,10],
         # 'tag'               : 'f:B{batch_size}_T{task_step}_fix_start_multi_step_partial_obs_a{start_action_idx}_{policy_config["infer_model"]}_{policy_config["decision_mode"]["mode"]}_v1_1',
         # 'tag'               : 'f:B{batch_size}_T{task_step}_fix_start_multi_step_{observation_mode}_a{start_action_idx}_{policy_config["infer_model"]}_{policy_config["decision_mode"]["mode"]}_v1_3',
         # 'tag'               : 'f:B{batch_size}_T{task_step}_fix_start_multi_step_{observation_mode}_a{start_action_idx}_{policy_config["infer_model"]}_{policy_config["decision_mode"]["mode"]}_v11_5',
         # 'tag'               : 'f:B{batch_size}_T{task_step}_{observation_mode}_a{start_action_idx["Object_1"]}a{start_action_idx["Object_2"]}a{start_action_idx["Object_3"]}_{policy_config["infer_model"]}_{policy_config["decision_mode"]["mode"]}_v11_7',
-        # 'tag'               : 'f:B{batch_size}_T{task_step}_{observation_mode}_{policy_config["infer_model"]}_a{start_action_idx["obj_tag"]}_{policy_config["decision_mode"]["mode"]}_{policy_config["decision_mode"]["param"]["ucb_lb"]}_v13_2-----',
-        'tag'               : 'f:B{batch_size}_T{task_step}_{observation_mode}_{policy_config["infer_model"]}_a{start_action_idx["obj_tag"]}_{policy_config["decision_mode"]["mode"]}_{policy_config["decision_mode"]["param"]["ucb_lb"]}_v12_1_for_paper_render',
-
+        'tag'               : 'f:B{batch_size}_T{task_step}_{observation_mode}_{policy_config["infer_model"]}_a{start_action_idx["obj_tag"]}_{policy_config["decision_mode"]["mode"]}_{policy_config["decision_mode"]["param"]["ucb_lb"]}_v14_1',
 
 
         'exp_name'          : watch(diffusion_plan_args_to_watch),
         'device': 'cuda:0',
-
+        
         ### tmp_8_1: Repaint version conditioning
-        ### tmp 8_2: hard conditioning
+        ### tmp 8_2: hard conditioning 
         ### tmp 8_3: Repaint version conditioning with disable clamp
-        ### tmp_8_4: tmp 8_3 setting with transforms.Resize((343, 343), interpolation=InterpolationMode.NEAREST),
-        ### tmp_8_5: tmp 8_2 setting with transforms.Resize((343, 343), interpolation=InterpolationMode.NEAREST),
-
-        ### tmp_9_4: Repaint version condition disabe clamp with transforms.Resize((512, 512), interpolation=InterpolationMode.NEAREST),
-        ### tmp_9_5: hard_conditioning with transforms.Resize((512, 512), interpolation=InterpolationMode.NEAREST),
-        ### tmp_9_6: 9_4 with sampling = 50,
-        ### tmp_9_7: 9_5 with sampling = 50,
-
+        ### tmp_8_4: tmp 8_3 setting with transforms.Resize((343, 343), interpolation=InterpolationMode.NEAREST), 
+        ### tmp_8_5: tmp 8_2 setting with transforms.Resize((343, 343), interpolation=InterpolationMode.NEAREST), 
+        
+        ### tmp_9_4: Repaint version condition disabe clamp with transforms.Resize((512, 512), interpolation=InterpolationMode.NEAREST), 
+        ### tmp_9_5: hard_conditioning with transforms.Resize((512, 512), interpolation=InterpolationMode.NEAREST), 
+        ### tmp_9_6: 9_4 with sampling = 50, 
+        ### tmp_9_7: 9_5 with sampling = 50, 
+        
         ### tmp_10_1 : tmp8_3 with 512 512 raw model
         ### tmp_10_2 : tmp8_2 with 512 512 raw model
-
+        
         # dataset_v1_3
         ## tmp_11_1 : tmp_8_3 with 256, transforms.Resize((model_img_train_dim,model_img_train_dim),interpolation=InterpolationMode.NEAREST), transforms.Resize((env_img_dim, env_img_dim), interpolation=InterpolationMode.NEAREST),  last 5 step cond is none
         ## tmp_11_2 : tmp_8_3 with 256, transforms.Resize((model_img_train_dim,model_img_train_dim),), transforms.Resize((env_img_dim, env_img_dim), interpolation=InterpolationMode.NEAREST),  last one step cond is none
         ## tmp_11_3 : tmp_8_3 with 256, transforms.Resize((model_img_train_dim,model_img_train_dim),), transforms.Resize((env_img_dim, env_img_dim), interpolation=InterpolationMode.NEAREST),  last 5 step cond is none
-
-
-
-
+        
+        
+        
+        
     },
 }
+
+
 
 
 Reacher_v2 = {

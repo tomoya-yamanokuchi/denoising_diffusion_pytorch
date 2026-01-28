@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Protocol
 from omegaconf import DictConfig
-from ..builder import Builder, BuildContext
+from ..train_builder import Builder, BuildContext
 from ..experiment import Components, TrainExperiment, EvalExperiment
 
 class Recipe(Protocol):

@@ -1,0 +1,10 @@
+name      : celeba
+path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+# ---
+class     : Image_diffusion_2D
+min       : -1
+max       : 1
+h         : 32
+type      : pattern
+p         : 0.2
+image_size: 64

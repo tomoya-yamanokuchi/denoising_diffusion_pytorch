@@ -128,6 +128,8 @@ def load_vaeac(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
     trainer_config      = load_config(*loadpath, 'trainer_config.pkl')
 
     model     = model_config()
+
+    # import ipdb; ipdb.set_trace()
     trainer   = trainer_config(model, dataset)
 
 
