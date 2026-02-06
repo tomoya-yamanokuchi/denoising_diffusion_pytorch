@@ -1,21 +1,17 @@
-defaults:
-  - /dataset: celeba
-  - _self_
-
 name     : conditional_image_diffusion
 USER_NAME: user
 device   : "cuda:0"
 
-dataset:
-  class     : Image_diffusion_2D
-  name      : celeba
-  path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
-  min       : -1
-  max       : 1
-  h         : 32
-  type      : pattern
-  p         : 0.2
-  image_size: 64
+# dataset:
+#   class     : Image_diffusion_2D
+#   name      : celeba
+#   path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+#   min       : -1
+#   max       : 1
+#   h         : 32
+#   type      : pattern
+#   p         : 0.2
+#   image_size: 64
 
 diffusion:
   # _target_          : denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2.GaussianDiffusion
@@ -41,12 +37,10 @@ trainer:
   amp                      : true
   calculate_fid            : false
 
+watch:
+  - { key: log.prefix, label: "" }
+  - { key: log.n_diffusion_step, label: "T" }
+  - { key: diffusion.sampling_timestep, label: "S" }
+  - { key: dataset.image_size, label: "D" }
+  - { key: log.tag, label: "" }
 
-
-log:
-  logbase : logs
-  prefix  : conditional_diffusion/
-  tag     : ""
-  exp_name: null
-  layout  : "dataset"
-  suffix  :

@@ -58,10 +58,11 @@ vaeac_train_args_to_watch = [
     ('tag', ''),
 ]
 
-
 base = {
 
-    'grid_config' : { 's_grid_config' : {"bounds":(-0.05,0.05,-0.05,0.05,-0.05,0.05), 'side_length':16}
+    'grid_config' : {
+            's_grid_config' :
+                {"bounds":(-0.05,0.05,-0.05,0.05,-0.05,0.05), 'side_length':16}
         },
 
 

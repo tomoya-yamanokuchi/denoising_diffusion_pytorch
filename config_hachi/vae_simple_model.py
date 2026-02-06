@@ -481,9 +481,9 @@ base = {
                                 # "image_mask_config_y": {"target_mask"   :np.asarray([0.0,1.0,0.0]),
                                 #                         "target_mask_lb":np.asarray([0.0,1.0,0.0])-np.asarray([0.1,0.1,0.1]),
                                 #                         "target_mask_ub":np.asarray([0.0,1.0,0.0])+np.asarray([0.1,0.0,0.1])},
-                                # 'infer_model':"vaeac",
+                                'infer_model':"vaeac",
                                 # 'infer_model':"diffusion",
-                                'infer_model':"conditional_diffusion",
+                                # 'infer_model':"conditional_diffusion",
                                 # 'infer_model':"diffusion_1D",
                                 "decision_mode": {
                                                     # "remove_outliers_cal_cost_mean",

@@ -1,6 +1,11 @@
 defaults:
-  - /eval   : image_diffusion_v7
+  - /path   : local
+  - /log    : eval
+  - /watch  : eval_base
   - /method : conditional_image_diffusion  # ここは評価対象のアルゴリズム
-  # - /dataset: celeba
+  - /eval   : default
+  - /env    : default
+  - /dataset: celeba
+  - _self_
 
 name: eval

@@ -1,5 +1,3 @@
 defaults:
   - usecase  : train
-  - grid     : s_grid_config
-  - method   : conditional_image_diffusion
   - _self_

@@ -23,6 +23,13 @@ class EpisodeRunner:
         eval_env   = ctx.envs.eval
         policy_env = ctx.envs.policy
 
+
+        env=env,
+        policy=policy,
+        start_action_idx=case.start_action_idx,
+        run_dir=run_dir,
+        case_name=case.name,
+
         obs, reward, done, info = eval_env.reset()
         policy_env.reset()
 

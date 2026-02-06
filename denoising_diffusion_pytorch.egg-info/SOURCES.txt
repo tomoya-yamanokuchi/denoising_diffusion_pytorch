@@ -11,6 +11,7 @@ denoising_diffusion_pytorch.egg-info/requires.txt
 denoising_diffusion_pytorch.egg-info/top_level.txt
 denoising_diffusion_pytorch/utils/ExperimentNamer.py
 denoising_diffusion_pytorch/utils/LogPathManager.py
+denoising_diffusion_pytorch/utils/RunDirInitializer.py
 denoising_diffusion_pytorch/utils/RunDirPlanner.py
 denoising_diffusion_pytorch/utils/__init__.py
 denoising_diffusion_pytorch/utils/arrays.py

@@ -21,22 +21,10 @@ def join_and_normalize(parts: list[Path]) -> Path:
 
 def build_exp_name_from_watch(cfg: DictConfig) -> str:
     from denoising_diffusion_pytorch.utils.ExperimentNamer import ExperimentNamer
-
-    watch = OmegaConf.select(cfg, "watch")
-    if watch is None:
-        # watch を cfg.log.watch に置く流儀でも対応できるようにしておく
-        watch = OmegaConf.select(cfg, "log.watch")
-
-    if watch is None:
-        # 最低限：method名だけでも返す（空にしない）
-        name = OmegaConf.select(cfg, "name")
-        return str(name) if name is not None else "exp"
-
-    namer = ExperimentNamer.from_cfg(watch)
+    watch    = OmegaConf.select(cfg, "watch.watch_base")
+    namer    = ExperimentNamer.from_cfg(watch)
     exp_name = namer.make(cfg)
-
     return exp_name if exp_name else "exp"
-
 
 
 @dataclass(frozen=True)
@@ -48,11 +36,11 @@ class RunDirPlanner:
     - logbase + exp_name (+ 任意で dataset/name/suffix) などのレイアウトを適用
     - mkdir はしない（RunDirInitializer に委譲）
     """
-    logbase_key     : str = "log.logbase"
-    exp_name_key    : str = "log.exp_name"
-    suffix_key      : str = "log.suffix"
-    layout_key      : str = "log.layout"    # optional
-    dataset_class_key: str = "dataset.class"  # optional
+    # logbase_key       : str = "log.logbase"
+    exp_name_key      : str = "log.exp_name"
+    suffix_key        : str = "log.suffix"
+    layout_key        : str = "log.layout"     # optional
+    dataset_class_key: str  = "dataset.class"  # optional
 
     @classmethod
     def from_cfg(cls, cfg: DictConfig) -> "RunDirPlanner":
@@ -65,7 +53,8 @@ class RunDirPlanner:
         Returns:
           (run_dir_path, exp_name_str)
         """
-        logbase  = select_str(cfg, self.logbase_key, default="logs")
+
+        # logbase  = select_str(cfg, self.logbase_key, default="logs")
         exp_name = select_str(cfg, self.exp_name_key, default="")
 
         # exp_name が未設定/空なら watch から作る
@@ -79,7 +68,8 @@ class RunDirPlanner:
         - dataset: logbase/<dataset.name>/exp_name
         - method : logbase/<cfg.name>/exp_name（必要なら追加）
         """
-        parts = [Path(logbase)]
+        # parts = [Path(logbase)]
+        parts = [Path(cfg.path.logs)]
 
         if layout == "dataset":
             ds_name = select_str(cfg, self.dataset_class_key, default="")

@@ -1,0 +1,12 @@
+logbase : logs
+prefix  : eval/
+layout  : dataset
+tag     : null
+suffix  : null
+exp_name: null
+
+tag_template: >
+  f:PT{eval.epoch}_ B{eval.batch_size}_T{eval.task_step}
+  _{eval.observation_mode}_{eval.policy_config.infer_model}
+  _a{eval.start_action_idx.obj_tag}_{eval.policy_config.decision_mode.mode}
+  _{eval.policy_config.decision_mode.param.ucb_lb}_v12_1_for_paper_render

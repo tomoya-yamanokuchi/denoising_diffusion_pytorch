@@ -1,0 +1,7 @@
+watch_base:
+  - { key: log.prefix,            label: "" }
+  - { key: eval.task_step,        label: "T" }
+  - { key: eval.observation_mode, label: "" }
+  - { key: log.tag,               label: "" }
+
+watch_extra: []   # evalは常に空にしてもいい

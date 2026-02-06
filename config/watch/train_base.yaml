@@ -1,0 +1,4 @@
+watch_base:
+  - { key: log.prefix,          label: "" }
+  - { key: dataset.image_size,  label: "D" }
+  - { key: log.tag,             label: "" }

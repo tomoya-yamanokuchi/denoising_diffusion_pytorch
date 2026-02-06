@@ -87,6 +87,7 @@ def get_eval_data(data_source_dir):
         else:
             pass
 
+    import ipdb; ipdb.set_trace()
     return mesh_components
 
 if __name__ == '__main__':
@@ -176,6 +177,7 @@ if __name__ == '__main__':
             create_folder(cond_save_path)
 
             ## env for evaluation
+            import ipdb; ipdb.set_trace()
             env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
             obs,reward,done,info = env.reset()
 

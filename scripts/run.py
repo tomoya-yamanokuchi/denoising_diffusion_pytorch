@@ -13,7 +13,7 @@ def main(cfg: DictConfig) -> None:
     usecase = str(cfg.usecase.name)
 
     if usecase == "train":
-        b = TrainBuilder(cfg)
+        b = TrainBuilder(cfg.method)
         b.build_all()
         # 例: b.trainer.train()
         b.trainer.train()

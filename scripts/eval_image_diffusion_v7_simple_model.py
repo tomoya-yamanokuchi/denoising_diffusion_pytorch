@@ -122,10 +122,10 @@ if __name__ == '__main__':
 
 
 
-    ## voxe setting
-    s_grid_config = {"bounds":(-0.05,0.05,-0.05,0.05,-0.05,0.05),
-                        "side_length":16}
-    # s_grid_config = grid_config.s_grid_config
+        ## voxe setting
+        # s_grid_config = {"bounds":(-0.05,0.05,-0.05,0.05,-0.05,0.05),
+        #                     "side_length":16}
+        # s_grid_config = grid_config.s_grid_config
 
 
 
@@ -153,12 +153,12 @@ if __name__ == '__main__':
             cond_save_path = os.path.normpath(f"{test_save_folder}/{val}/episode_{episode_num}")
             create_folder(cond_save_path)
 
-            ## env for evaluation
-            env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
+                ## env for evaluation
+                # env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
             obs,reward,done,info = env.reset()
 
-            ## env for policy partial observation
-            env2 = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
+                ## env for policy partial observation
+                # env2 = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
             obs,reward,done,info = env2.reset()
 
             pil_image_save_from_numpy(info["oracle_obs"]["x"],f"{cond_save_path}/oracle_obs_cast_x_axis{0}.png")
@@ -173,35 +173,6 @@ if __name__ == '__main__':
             intermediate_action_l = []
 
             for i in range(int(args.task_step)):
-                # if i == 0:
-                #     cut_cost_tmp    = 0
-                #     action_         = args.start_action_idx
-                #     # action_ = random_number = random.randint(0, 47)
-                #     obs, reward, done, info = env.step(action_idx=action_)
-                #     env2.step(action_idx=action_)
-                #     print(f"init_action:{action_}")
-                # else:
-                #     print(f"action_slice_range:{action}")
-                #     cut_cost_tmp = 0
-                #     for j in range(len(action)):
-                #         action_ = action[j]
-                #         obs,reward,done,info = env.step(action_idx=action_)
-                #         print(f'step: {j} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
-                #         cut_cost_tmp+=reward
-
-
-
-                ###################################################################################
-                ## prior_based_ep_00がなかったときの実装
-                ####################################################################################
-                # if i == 0:
-                #     cut_cost_tmp    = 0
-                #     action          = args.start_action_idx[val]
-                #     policy.update_split_obs_config(action, s_grid_config)
-                # else:
-                #     print("s")
-
-
                 ###################################################################################
                 ## aprior_based_ep_00のときは，policy partial
                 ## 観測画像が黒＝すべての領域が未観測としてそれぞれの方策を実行，算出した行動を1step目の行動とする
@@ -223,6 +194,7 @@ if __name__ == '__main__':
                 print(f"action_slice_range:{action}")
                 for j in range(len(action)):
                     action_ = action[j]
+                    import ipdb; ipdb.set_trace()
                     obs,reward,done,info = env.step(action_idx=action_)
                     print(f'step: {j} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
                     cut_cost_tmp+=reward

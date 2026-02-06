@@ -1,1 +1,9 @@
-name: train
+defaults:
+  - /path   : local
+  - /watch  : train_base
+  - /method : conditional_image_diffusion
+  - /dataset: celeba
+  - _self_
+
+name  : train
+device: cuda:0

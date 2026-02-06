@@ -1,7 +1,3 @@
-defaults:
-  - /dataset: celeba
-  - _self_
-
 name     : vaeac
 USER_NAME: user
 device   : "cuda:0"
@@ -53,7 +49,11 @@ log:
   suffix  :
 
 # config/task/vaeac.yaml など
-watch:
-  - { key: log.prefix, label: "" }
-  - { key: dataset.image_size, label: "D" }
-  - { key: log.tag, label: "" }
+# watch:
+#   - { key: log.prefix, label: "" }
+#   - { key: dataset.image_size, label: "D" }
+#   - { key: log.tag, label: "" }
+
+watch_extra:
+  - { key: model.reg.lambda_kl, label: "kl" }
+  - { key: model.reg.lambda_reg, label: "rg" }

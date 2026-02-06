@@ -1,0 +1,27 @@
+defaults:
+  - cases  : simple
+
+policy    : policy.cutting_surface_planner_v9.cutting_surface_planner
+batch_size: 32
+
+policy_config:
+  ctrl_mode    : epsilon_greedy_00
+  infer_model  : vaeac
+  decision_mode:
+    mode: clip_ucb_raw
+    param:
+      ucb_lb: 0.5
+  cfg_omega: 0.2
+
+eval_data_path: /home/dev/.../geom_test_1
+
+loadpath: /home/dev/.../logs/Image_diffusion_2D/vaeac/D64_...
+epoch   : "10000"
+
+task_step: 8
+observation_mode: partial_obs
+iter: [0, 6]
+
+# start_action_idx:
+  # obj_tag : "123456789" # ひと目で評価オブジェクトを一覧するためのタグ
+  # Object_1: ???   # ここは後で設計（range指定やファイル指定が現実的）

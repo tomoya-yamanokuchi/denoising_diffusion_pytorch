@@ -1,0 +1,3 @@
+# config/path/local.yaml  （= cfg.path.*）
+workspace: /home/dev/workspace
+logs: ${.workspace}/denoising_diffusion_pytorch/logs
