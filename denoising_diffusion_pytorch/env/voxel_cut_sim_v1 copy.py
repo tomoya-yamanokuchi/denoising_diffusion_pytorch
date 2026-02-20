@@ -126,7 +126,7 @@ class voxel_cut_handler():
 
         ## create  slice pos to 2d image pos map fun
         self.index_map_fn       = index_map(grid_config=grid_config)
-        ## create vocel handler　# 1) ボクセルハンドラ生成（内部にボクセル格子の幾何を持つ）
+        ## create vocel handler　
         self.voxel_hander       = pv_box_array_multi_type_obj(grid_config=grid_config,pre_near_by_cells=pre_near_by_cells)
         _                       = self.voxel_hander.cast_mesh_to_box_array(mesh_components=mesh_components)
         nearby_cells            = self.voxel_hander.get_box_array_data().boxes
@@ -139,7 +139,6 @@ class voxel_cut_handler():
         else:
             NotImplementedError()
 
-        import ipdb; ipdb.set_trace()
 
         ## get each axis sliced image
         self.init_imgs_z = self.voxel_hander.get_box_color_to_2d_image(box_color=self.colors,permute="z")

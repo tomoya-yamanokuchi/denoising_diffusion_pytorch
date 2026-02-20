@@ -489,7 +489,7 @@ class pv_box_array_multi_type_obj():
 
         return nearby_cells
 
-
+        
 
     def cast_mesh_to_box_array(self,mesh_components):
         """Maps mesh components to the voxel grid and update the voxel colors.

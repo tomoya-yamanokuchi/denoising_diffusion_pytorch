@@ -8,17 +8,20 @@ from .collector import EpisodeCollector
 from .interfaces import EpisodeObserver, OracleUpdater, StepExecutor, NextActionPolicy
 from .strategies import ActionInitStrategy
 
+from app.wiring.factories.episode_context_factory import EpisodeContextFactory
+
 
 @dataclass
 class EpisodeRunner:
-    observer          : EpisodeObserver
-    oracle_updater    : OracleUpdater
-    step_executor     : StepExecutor
-    init_action       : ActionInitStrategy
-    next_action_policy: NextActionPolicy
-    collector_factory : type[EpisodeCollector] = EpisodeCollector
+    # def __init__(self, ctx: EpisodeContext):
+        # self.a = ctx.case
 
-    def run(self, ctx: EpisodeContext) -> EpisodeResult:
+
+    def run(self, context: EpisodeContext) -> EpisodeResult:
+
+
+        case_ctx = case_context_factory.create(cfg_case=cfg_case, mesh_components=mesh_components)
+
         policy     = ctx.policy
         eval_env   = ctx.envs.eval
         policy_env = ctx.envs.policy

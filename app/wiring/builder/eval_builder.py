@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 
 # --- eval/ 以下で作った部品 ---
 from denoising_diffusion_pytorch.eval.types import Envs
-from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
+
 from denoising_diffusion_pytorch.eval.observers import ImageObserver, NullObserver
 # from denoising_diffusion_pytorch.eval.oracle_updater import DefaultOracleUpdater
 # from denoising_diffusion_pytorch.eval.step_executor import DefaultStepExecutor
@@ -87,28 +87,51 @@ class EvalBuilder:
 
     def build_env_factory(self) -> None:
         from app.wiring.factories.env_factory import EnvFactory
-        self.env_factory = EnvFactory()
+        self.env_factory = EnvFactory(grid_config=self.cfg.env.grid)
 
 
-    # def build_image_writer(self) -> None:
-    #     from denoising_diffusion_pytorch.eval. import ImageWriter  # 既存の ImageWriter を想定
-    #     self.image_writer = ImageWriter()
+    def build_obs_model_factory(self):
+        from app.wiring.factories.obs_model_factory import VoxelObsModelFactory
+        # ---
+        self.obs_model_factory = VoxelObsModelFactory(grid_config=self.cfg.env.grid)
+
+    def build_case_context_factory(self):
+        from app.wiring.factories.case_context_factory import CaseContextFactory
+        self.case_context_factory = CaseContextFactory(
+            env_factory       = self.env_factory,
+            obs_model_factory = self.obs_model_factory,
+        )
+
+    def build_episode_context_factory(self):
+        from app.wiring.factories.episode_context_factory import EpisodeContextFactory
+        self.episode_context_factory = EpisodeContextFactory(
+            grid_config = self.cfg.env.grid,
+            task_step   = self.cfg.eval.task_step,
+            ctrl_mode   = self.cfg.eval.policy_config.ctrl_mode,
+        )
 
     def build_episode_runner(self) -> None:
-        ctrl_mode   = str(self.cfg.eval.policy_config.ctrl_mode)
-        init_action = make_action_init_strategy(ctrl_mode)
+        from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
+        self.episode_runner = EpisodeRunner()
 
-        # 保存する/しないは Observer の差し替えで吸収（runner に if を持ち込まない）
-        save_images = bool(getattr(self.cfg.eval, "save_images", True))
-        observer = ImageObserver(self.image_writer) if save_images else NullObserver()
+    def build_policy(self):
+        self.policy = None
 
-        self.episode_runner = EpisodeRunner(
-            observer           = observer,
-            # oracle_updater     = DefaultOracleUpdater(),
-            # step_executor      = DefaultStepExecutor(),
-            init_action        = init_action,
-            next_action_policy = DefaultNextActionPolicy(),
-        )
+    def build_orchestrator(self):
+        from app.usecases.eval_orchestrator import EvalOrchestrator
+        self.eval_orchestrator = EvalOrchestrator(self)
+
+    # def build_context(self):
+    #     from app.wiring.types.eval_context import EvalContext
+    #     return EvalContext(
+    #         cfg                 = self.cfg,
+    #         run_dir             = self.run_dir,
+    #         eval_cases          = self.eval_cases,
+    #         mesh_factory        = self.mesh_factory,
+    #         case_ctx_factory    = self.case_ctx_factory,
+    #         episode_ctx_factory = self.episode_ctx_factory,
+    #         episode_runner      = self.episode_runner,
+    # )
 
     # --------------------------------------------------
     # method / evaluator (project-specific)
@@ -123,36 +146,26 @@ class EvalBuilder:
     #     from app.wiring.method_factory import build_method  # 仮：あなたのプロジェクトに合わせて
     #     self.method = build_method(self.cfg.method, device=str(self.cfg.device))
 
-    def build_evaluator(self) -> None:
-        """
-        Evaluator は「ケース列挙→episode_runner.run(ctx)」を回すだけのオブジェクト。
-        """
-        # eval 設定を evaluator に渡す
-        self.evaluator = Evaluator(
-            cfg_eval=self.cfg.eval,
-            run_dir=self.run_dir,
-            env_factory=self.env_factory,
-            episode_runner=self.episode_runner,
-            policy=self.method,  # method=policy として扱う
-            device=str(self.cfg.device),
-        )
-
     # --------------------------------------------------
-    def build_all(self) -> None:
-        # ---- config root / validation
+    def build_all(self) -> "EvalContext":
         self.validate_config_top()
         self.set_config_root_as_usecase_root()
         self.validate_config_usecase()
 
-        # ---- run dir
         self.build_run_dir_manager()
         self.build_run_dir()
 
-        # ---- cases / factories
         self.build_eval_cases()
+        self.build_mesh_components_factory()
         self.build_env_factory()
-        # ----
-        # self.build_image_writer()
-        # self.build_method()
+        self.build_obs_model_factory()
+
+        self.build_case_context_factory()
+        self.build_episode_context_factory()
         self.build_episode_runner()
-        self.build_evaluator()
+
+        self.build_policy()
+
+        self.build_orchestrator()
+
+        return self

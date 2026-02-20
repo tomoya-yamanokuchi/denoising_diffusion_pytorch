@@ -87,7 +87,7 @@ def get_eval_data(data_source_dir):
         else:
             pass
 
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     return mesh_components
 
 if __name__ == '__main__':

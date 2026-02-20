@@ -7,8 +7,34 @@ from typing import Any, Dict, List, Optional
 
 @dataclass(frozen=True)
 class Envs:
-    eval  : Any  # dismantling_env (evaluation usage)
-    policy: Any  # dismantling_env (policy internal usage)
+    eval  : Any  # dismantling_env (evaluation usage with full observation)
+    policy: Any  # dismantling_env (partial observation for policy)
+
+@dataclass(frozen=True)
+class CaseContext:
+    name            : str
+    dataset_dir     : str
+    start_action_idx: List[int]
+    mesh_components : Any
+    envs            : Envs
+    obs_model       : Any
+
+@dataclass(frozen=True)
+class EpisodeContext:
+    case           : CaseContext
+    policy         : Any
+    grid_config    : Dict[str, Any]
+    task_step      : int
+    ctrl_mode      : str
+
+@dataclass(frozen=True)
+class EpisodeResult:
+    actions             : List[Any]
+    rewards             : List[float]
+    infos               : List[Any]
+    removal_performance : List[float]
+    intermediate_actions: List[Any]
+    last_info           : Optional[Dict[str, Any]] = None
 
 
 @dataclass(frozen=True)
@@ -22,25 +48,3 @@ class ActionArtifacts:
     # candidates : Optional[List[Any]] = None
     # scores     : Optional[List[float]] = None
     # heatmap    : Optional[Any] = None
-
-
-@dataclass(frozen=True)
-class EpisodeContext:
-    policy     : Any
-    envs       : Envs
-    episode_dir: Path
-
-    grid_config : Dict[str, Any]
-    start_action: Any
-    task_step   : int
-    ctrl_mode   : str
-
-
-@dataclass(frozen=True)
-class EpisodeResult:
-    actions             : List[Any]
-    rewards             : List[float]
-    infos               : List[Any]
-    removal_performance : List[float]
-    intermediate_actions: List[Any]
-    last_info           : Optional[Dict[str, Any]] = None
