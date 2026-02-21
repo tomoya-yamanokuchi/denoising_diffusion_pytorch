@@ -12,8 +12,6 @@ from  tqdm import tqdm
 import ray
 from denoising_diffusion_pytorch.utils.os_utils import get_path,cstyle
 from denoising_diffusion_pytorch.utils.assign_voxels_pallarel import assign_voxels
-from denoising_diffusion_pytorch.env.mesh_components import MeshComponent, MeshComponentSet
-
 
 class box_array_data():
 
@@ -357,9 +355,9 @@ class pv_box_array_multi_type_obj():
         """
         ## 立方体の一辺の長さ
         side_length = np.abs(self.grid_centers[1][0]-self.grid_centers[0][0])/2.1
-        bounds      = [-1, 1, -1, 1, -1, 1]
-        cubes       = pv.Box(bounds)
-        cubes       =  cubes.scale([side_length, side_length, side_length], inplace=False)
+        bounds = [-1, 1, -1, 1, -1, 1]
+        cubes = pv.Box(bounds)
+        cubes =  cubes.scale([side_length, side_length, side_length], inplace=False)
 
         if pre_nearby_cells is not None and str(self.grid_centers.shape[0]-1) in pre_nearby_cells:
             nearby_cells = pre_nearby_cells
@@ -369,6 +367,85 @@ class pv_box_array_multi_type_obj():
             for i in tqdm(range(self.grid_centers.shape[0])):
                 cube_copy = cubes.translate(self.grid_centers[i])  # 立方体を中心座標に移動
                 nearby_cells.update({str(i):cube_copy}) # コピーされた立方体を追加
+
+
+        # # file_path = './my_dict.pkl.gz'
+        # file_path = './my_dict.pkl'
+
+        # if os.path.exists(file_path):
+        #     with open(file_path, 'rb') as f:
+        #         # load_nearby_cells = pickle.load(f)
+        #         load_nearby_cells = cpickle.load(f)
+
+        #     print("File is successfully loaded.")
+        #     if str(self.grid_centers.shape[0]-1) in load_nearby_cells:
+        #             nearby_cells = load_nearby_cells
+        #     else:
+        #         import ipdb;ipdb.set_trace()
+        # else:
+        #     # ファイルが存在しない場合
+        #     print(f"{file_path} is not exist")
+
+        #     nearby_cells = {}
+        #     # 立方体を配置
+        #     for i in tqdm(range(self.grid_centers.shape[0])):
+        #         cube_copy = cubes.translate(self.grid_centers[i])  # 立方体を中心座標に移動
+        #         nearby_cells.update({str(i):cube_copy}) # コピーされた立方体を追加
+
+        #     # with open('./my_dict.pkl', 'wb') as f:
+        #     #     pickle.dump(nearby_cells, f)
+
+        #     with open(file_path, 'wb') as f:
+        #         cpickle.dump(nearby_cells, f,  protocol=-1)
+
+
+        #     # with open('./my_dict.joblib', 'wb') as f:
+        #     #     joblib.dump(nearby_cells, f, compress = 3)
+
+        #     # with open('./my_dict.pkl.gz', 'wb') as f:
+        #     #     pickle.dump(nearby_cells, f)
+
+
+        # try:
+        #     print("try_load_nearby_cells")
+        #     # with open('./my_dict.pkl', 'rb') as f:
+        #     #     load_nearby_cells = pickle.load(f)
+
+        #     # with open('./my_dict.joblib', 'rb') as f:
+        #     #     load_nearby_cells = joblib.load(f)
+
+        #     with open('./my_dict.pkl.gz', 'rb') as f:
+        #         load_nearby_cells = pickle.load(f)
+
+        #     print("try_load_nearby_cells")
+
+        #     if str(self.grid_centers.shape[0]-1) in load_nearby_cells:
+        #         nearby_cells = load_nearby_cells
+        #         print("f")
+        #     else:
+        #         import ipdb;ipdb.set_trace()
+
+        # except:
+        #     nearby_cells = {}
+        #     # 立方体を配置
+        #     for i in tqdm(range(self.grid_centers.shape[0])):
+        #         cube_copy = cubes.translate(self.grid_centers[i])  # 立方体を中心座標に移動
+        #         nearby_cells.update({str(i):cube_copy}) # コピーされた立方体を追加
+
+        #     # with open('./my_dict.pkl', 'wb') as f:
+        #     #     pickle.dump(nearby_cells, f)
+
+        #     # with open('./my_dict.joblib', 'wb') as f:
+        #     #     joblib.dump(nearby_cells, f, compress = 3)
+
+
+        #     with open('./my_dict.pkl.gz', 'wb') as f:
+        #         pickle.dump(nearby_cells, f)
+
+        #     print("hogege")
+
+        # import ipdb;ipdb.set_trace()
+
 
         return nearby_cells
 
@@ -414,17 +491,12 @@ class pv_box_array_multi_type_obj():
 
 
 
-    def cast_mesh_to_box_array(self, mesh_components: MeshComponentSet):
+    def cast_mesh_to_box_array(self,mesh_components):
         """Maps mesh components to the voxel grid and update the voxel colors.
 
         Args:
-            mesh_components (dict):
-                A dictionary of mesh components with their corresponding colors.
-                i.e., {'Component':
-                    { 'mesh':pyvista.core.pointset.PolyData,
-                      "color":list
-                    }
-                }
+            mesh_components (dict): A dictionary of mesh components with their corresponding colors. i.e., {'Component': {'mesh':pyvista.core.pointset.PolyData,
+            "color":list}}
 
         Returns:
             np.ndarray: The updated box colors for the grid (n,3).
@@ -434,19 +506,15 @@ class pv_box_array_multi_type_obj():
         vicinity_box_length = np.abs(self.grid_centers[0]-self.grid_centers[1]).max()
         side_length = vicinity_box_length/2.0
 
-        for idx, _val in enumerate(mesh_components):
+        for idx, val in enumerate(mesh_components):
             # ugrid = pv.voxelize(mesh_components[val]["mesh"],density=side_length)
-            # ugrid = pv.voxelize(mesh_components[val]["mesh"], density=side_length, check_surface=False)
-            # -------
-            val: MeshComponent = _val
-            ugrid = pv.voxelize(val.mesh, density=side_length, check_surface=False)
+            ugrid = pv.voxelize(mesh_components[val]["mesh"],density=side_length,check_surface=False)
             ugrid_cell_center = ugrid.cell_centers().points
-            # -------
+
             # colors = np.zeros((self.grid.GetNumberOfCells(), 3))+[1, 1, 1]
             idxs = self.grid.find_closest_cell(ugrid_cell_center)
             if not len(idxs)==0:
-                # self._box_colors[idxs] = mesh_components[val]["color"]
-                self._box_colors[idxs] = val.color
+                self._box_colors[idxs] = mesh_components[val]["color"]
             else:
                 print(f"{cstyle.YELLOW}====== object name {val} is not allocated ======= {cstyle.END}")
                 pass

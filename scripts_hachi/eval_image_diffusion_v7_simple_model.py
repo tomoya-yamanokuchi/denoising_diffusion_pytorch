@@ -177,8 +177,8 @@ if __name__ == '__main__':
             create_folder(cond_save_path)
 
             ## env for evaluation
-            import ipdb; ipdb.set_trace()
-            env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
+            # import ipdb; ipdb.set_trace()
+            env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components) # visualize & cost computation
             obs,reward,done,info = env.reset()
 
             ## env for policy partial observation
@@ -197,51 +197,14 @@ if __name__ == '__main__':
             intermediate_action_l = []
 
             for i in range(int(args.task_step)):
-                # if i == 0:
-                #     cut_cost_tmp    = 0
-                #     action_         = args.start_action_idx
-                #     # action_ = random_number = random.randint(0, 47)
-                #     obs, reward, done, info = env.step(action_idx=action_)
-                #     env2.step(action_idx=action_)
-                #     print(f"init_action:{action_}")
-                # else:
-                #     print(f"action_slice_range:{action}")
-                #     cut_cost_tmp = 0
-                #     for j in range(len(action)):
-                #         action_ = action[j]
-                #         obs,reward,done,info = env.step(action_idx=action_)
-                #         print(f'step: {j} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
-                #         cut_cost_tmp+=reward
-
-
-
-                ###################################################################################
-                ## prior_based_ep_00がなかったときの実装
-                ####################################################################################
-                # if i == 0:
-                #     cut_cost_tmp    = 0
-                #     action          = args.start_action_idx[val]
-                #     policy.update_split_obs_config(action, s_grid_config)
-                # else:
-                #     print("s")
-
 
                 ###################################################################################
                 ## aprior_based_ep_00のときは，policy partial
                 ## 観測画像が黒＝すべての領域が未観測としてそれぞれの方策を実行，算出した行動を1step目の行動とする
                 ####################################################################################
-                if i == 0 and args.policy_config["ctrl_mode"] == "prior_based_ep_00":
-                    cut_cost_tmp    = 0
-                    action, _, infos = policy.get_optimal_act(slice_img_ = None, observation_history = {} , env2 = env2, tmp_action = "prior_based_ep_00", iters = i, save_path  = cond_save_path)
-                    pil_image_save_from_numpy(infos["ensemble_image"]["z"],f"{cond_save_path}/{-1}_ensemble_z_axis{-1}_{0}.png")
-                    pil_image_save_from_numpy(infos["ensemble_image"]["x"],f"{cond_save_path}/{-1}_ensemble_x_axis{-1}_{0}.png")
-                    pil_image_save_from_numpy(infos["ensemble_image"]["y"],f"{cond_save_path}/{-1}_ensemble_y_axis{-1}_{0}.png")
-                elif i == 0 and args.policy_config["ctrl_mode"] != "prior_based_ep_00":
-                    cut_cost_tmp    = 0
-                    action          = args.start_action_idx[val]
-                    policy.update_split_obs_config(action, s_grid_config)
-                else:
-                    print("s")
+                cut_cost_tmp    = 0
+                action          = args.start_action_idx[val]
+                policy.update_split_obs_config(action, s_grid_config)
 
 
                 print(f"action_slice_range:{action}")

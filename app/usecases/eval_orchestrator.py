@@ -29,16 +29,19 @@ class EvalOrchestrator:
             mesh_components = self.mesh_factory.create(dataset_dir)
             case_ctx        = self.case_context_factory.create(case_spec, mesh_components)
 
-            import ipdb; ipdb.set_trace()
             per_case: List[Any] = []
-            for k in range(self.cfg.eval.iter.start, self.cfg.eval.iter.end):
-                ep_ctx = self.episode_context_factory.create(
-                    case=case_ctx,
-                    policy=self.policy,
-                    run_dir=self.run_dir,
-                    episode_idx=k,
-                )
-                per_case.append(self.episode_runner.run_episode(ep_ctx))
+            # for k in range(self.cfg.eval.iter.start, self.cfg.eval.iter.end): # Objectごとの評価回数
+
+            k = 0
+            # ---
+            ep_ctx = self.episode_context_factory.create(
+                case        = case_ctx,
+                policy      = self.policy,
+                episode_idx = k,
+            )
+            # ---
+            result = self.episode_runner.run(ep_ctx)
+            per_case.append(result)
 
             results[case_ctx.name] = per_case
 

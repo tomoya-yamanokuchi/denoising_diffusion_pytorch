@@ -983,7 +983,7 @@ class cutting_surface_planner():
 
 
     def update_split_obs_config(self, slice_range ,grid_config):
-
+        import ipdb; ipdb.set_trace()
         if min(slice_range)<grid_config['side_length']:
             axis = "z"
             offset= 0

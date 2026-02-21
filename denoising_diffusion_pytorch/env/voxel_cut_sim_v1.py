@@ -3,7 +3,7 @@
 
 import numpy as np
 from PIL import Image
-from denoising_diffusion_pytorch.utils.voxel_handlers import pv_box_array_multi_type_obj
+from denoising_diffusion_pytorch.utils.voxel_handlers_hachi import pv_box_array_multi_type_obj
 from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy
 from denoising_diffusion_pytorch.utils.pil_utils import numpy_to_pil ,cv2_hsv_mask ,pil_to_cv2,color_range_mask
 
@@ -139,7 +139,7 @@ class voxel_cut_handler():
         else:
             NotImplementedError()
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
         ## get each axis sliced image
         self.init_imgs_z = self.voxel_hander.get_box_color_to_2d_image(box_color=self.colors,permute="z")
@@ -258,6 +258,7 @@ class dismantling_env():
         self.grid_config            = grid_config
         self.oracle_obs_model       = voxel_cut_handler(grid_config=self.grid_config, mesh_components=mesh_components,zero_initialize=False,pre_near_by_cells=pre_near_by_cells)
         self.seq_obs_model          = voxel_cut_handler(grid_config=self.grid_config, mesh_components=mesh_components,zero_initialize=True,pre_near_by_cells=pre_near_by_cells)
+
         self.action_table           = self.get_action_table(grid_config=self.grid_config)
         self.observation_history    = {}
 

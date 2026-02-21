@@ -17,10 +17,16 @@ class EpisodeRunner:
         # self.a = ctx.case
 
 
+
+
     def run(self, context: EpisodeContext) -> EpisodeResult:
+        env       = context.case.envs
+        obs_model = context.case.obs_model
 
+        env.eval.reset()
+        env.policy.reset()
 
-        case_ctx = case_context_factory.create(cfg_case=cfg_case, mesh_components=mesh_components)
+        import ipdb; ipdb.set_trace()
 
         policy     = ctx.policy
         eval_env   = ctx.envs.eval

@@ -12,7 +12,7 @@ class CaseContextFactory:
 
     def create(self, cfg_case: DictConfig, mesh_components: Any) -> CaseContext:
         envs      = self.env_factory.create(mesh_components)
-        obs_model = self.obs_model_factory.create(cfg_case, mesh_components)
+        obs_model = self.obs_model_factory.create(mesh_components)
         # ---
         return CaseContext(
             name             = cfg_case.name,

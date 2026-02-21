@@ -13,11 +13,12 @@ class EpisodeContextFactory:
     task_step       : int
     ctrl_mode       : str  # keep for completeness; may be used by policy/observer
 
-    def create(self, case: CaseContext, policy: Any) -> EpisodeContext:
+    def create(self, case: CaseContext, policy: Any, episode_idx) -> EpisodeContext:
         return EpisodeContext(
             case        = case,
             policy      = policy,
             grid_config = self.grid_config,
             task_step   = self.task_step,
             ctrl_mode   = self.ctrl_mode,
+            episode_idx = episode_idx,
         )

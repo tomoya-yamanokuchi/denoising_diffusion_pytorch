@@ -20,7 +20,7 @@ epoch   : "10000"
 
 task_step: 8
 observation_mode: partial_obs
-iter: [0, 6]
+iter: [0, 6] # Objectごとの評価回数
 
 # start_action_idx:
   # obj_tag : "123456789" # ひと目で評価オブジェクトを一覧するためのタグ

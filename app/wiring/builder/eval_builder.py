@@ -28,6 +28,8 @@ from app.wiring.services.config_validator import ConfigValidator
 # from denoising_diffusion_pytorch.eval.evaluator import Evaluator      # 後述の Evaluator を想定
 
 
+# from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
+
 @dataclass
 class EvalBuilder:
     """
@@ -40,7 +42,7 @@ class EvalBuilder:
 
     # build results
     evaluator        : Any                 = None
-    episode_runner   : EpisodeRunner | None = None
+    # episode_runner   : EpisodeRunner       = None
     env_factory      : EnvFactory | None   = None
     image_writer     : Any                 = None
     config_validator : ConfigValidator      = None
@@ -110,7 +112,7 @@ class EvalBuilder:
             ctrl_mode   = self.cfg.eval.policy_config.ctrl_mode,
         )
 
-    def build_episode_runner(self) -> None:
+    def build_episode_runner(self):
         from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
         self.episode_runner = EpisodeRunner()
 

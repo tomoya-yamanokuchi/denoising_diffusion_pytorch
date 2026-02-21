@@ -5,10 +5,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+from ..env.voxel_cut_sim_v1 import dismantling_env
+
+
 @dataclass(frozen=True)
 class Envs:
-    eval  : Any  # dismantling_env (evaluation usage with full observation)
-    policy: Any  # dismantling_env (partial observation for policy)
+    eval  : dismantling_env  # dismantling_env (evaluation usage with full observation)
+    policy: dismantling_env  # dismantling_env (partial observation for policy)
 
 @dataclass(frozen=True)
 class CaseContext:
@@ -26,6 +29,7 @@ class EpisodeContext:
     grid_config    : Dict[str, Any]
     task_step      : int
     ctrl_mode      : str
+    episode_idx    : int
 
 @dataclass(frozen=True)
 class EpisodeResult:

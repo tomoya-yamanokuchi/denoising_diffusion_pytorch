@@ -3,7 +3,7 @@
 
 import numpy as np
 from PIL import Image
-from denoising_diffusion_pytorch.utils.voxel_handlers import pv_box_array_multi_type_obj
+from denoising_diffusion_pytorch.utils.voxel_handlers_hachi import pv_box_array_multi_type_obj
 from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy
 from denoising_diffusion_pytorch.utils.pil_utils import numpy_to_pil ,cv2_hsv_mask ,pil_to_cv2,color_range_mask
 
