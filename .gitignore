@@ -3,3 +3,4 @@ logs
 outputs/
 sw_dir/
 results/
+*.pkl
