@@ -7,6 +7,6 @@ from app.wiring.builder.eval_builder import EvalBuilder
 
 @dataclass
 class EvalUsecase:
-    def run(self, context: EvalBuilder) -> Any:
+    def run(self, build_context: EvalBuilder) -> Any:
         # 入口は薄く：orchestratorに委譲
-        return context.eval_orchestrator.run()
+        return build_context.eval_orchestrator.run()

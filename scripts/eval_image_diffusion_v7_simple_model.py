@@ -185,7 +185,7 @@ if __name__ == '__main__':
             #         pil_image_save_from_numpy(infos["ensemble_image"]["y"],f"{cond_save_path}/{-1}_ensemble_y_axis{-1}_{0}.png")
             #     elif i == 0 and args.policy_config["ctrl_mode"] != "prior_based_ep_00":
                     cut_cost_tmp    = 0
-                    action          = args.start_action_idx[val]
+                    # action          = args.start_action_idx[val]
                     policy.update_split_obs_config(action, s_grid_config)
                 # else:
                 #     print("s")

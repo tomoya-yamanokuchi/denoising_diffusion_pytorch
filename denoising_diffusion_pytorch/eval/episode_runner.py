@@ -4,50 +4,54 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .types import EpisodeContext, EpisodeResult
-from .collector import EpisodeCollector
+from .episode_collector import EpisodeCollector
 from .interfaces import EpisodeObserver, OracleUpdater, StepExecutor, NextActionPolicy
 from .strategies import ActionInitStrategy
-from ..macro_action_policy.action_decision_context import ActionDecisionContext
 from app.wiring.factories.episode_context_factory import EpisodeContextFactory
 from .episode_rollout_serializer import EpisodeRolloutSerializer
 from .types import EpisodeRolloutSnapshot, StepOutcome
+from ..action_decision.action_decision_context_factory import ActionDecisionContextFactory
+from ..action_decision.action_selector import ActionSelector
 
 
 @dataclass
 class EpisodeRunner:
-    # def __init__(self, ctx: EpisodeContext):
-        # self.a = ctx.case
-
+    def __init__(self):
+        self._decision_context_factory = ActionDecisionContextFactory()
+        self._action_selector          = ActionSelector()
 
     def run(self, context: EpisodeContext) -> EpisodeResult:
         # --- extract context ---
-        policy    = context.policy
-        env       = context.case.envs
-        obs_model = context.case.obs_model
+        policy           = context.policy
+        env              = context.case.envs
+        obs_model        = context.case.obs_model
+        artifact_manager = context.artifact_manager
+        image_writer     = context.image_writer
 
         # --- reset env ---
-        env.eval.reset()
-        env.policy.reset()
+        _,_,_,_    = env.eval.reset()
+        _,_,_,info = env.policy.reset()
 
-        import ipdb; ipdb.set_trace()
-
-        # -------- temp param --------
-        cond_save_path = "./"
-        # ----------------------------
+        # --- artifact init ---
+        artifact_manager.create_episodic_artifact_root_directory()
+        image_writer.save_oracle_obs(info)
 
 
-        for step in range(int(ctx.task_step)):
-
-
-            ctx = ActionDecisionContext(
-                step_idx            = step,
-                case_id             = context.case.name,
-                obs_z               = obs["sequential_obs"]["z"] if step > 0 else None,
-                observation_history = obs["observation_history"] if step > 0 else {},
-                env_for_policy      = env.policy,
-                save_path           = cond_save_path,
+        # --- episode loop ---
+        collector = EpisodeCollector()
+        obs                  = None
+        last_executed_action = None
+        for step_idx in range(int(context.task_step)):
+            decision_context = self._decision_context_factory.create(
+                episode_context      = context,
+                step_idx             = step_idx,
+                obs                  = obs,
+                last_executed_action = last_executed_action,
             )
 
+            action_plan = self._action_selector.select(decision_context)
+
+            import ipdb; ipdb.set_trace()
 
 
             # obs, step_reward, info, last_action = self.step_executor.apply(env=eval_env, action=action)

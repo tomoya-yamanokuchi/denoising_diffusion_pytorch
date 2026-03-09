@@ -12,11 +12,11 @@ from app.usecases.eval_usecase import EvalUsecase
 def main(cfg: DictConfig) -> None:
     # 1) build (wiring)
     builder = EvalBuilder(cfg)
-    context = builder.build_all()
+    build_context = builder.build_all()
 
     # 2) run usecase (application)
     usecase = EvalUsecase()
-    usecase.run(context)
+    usecase.run(build_context)
 
 
 if __name__ == "__main__":

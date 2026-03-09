@@ -6,7 +6,9 @@ from typing import Any, Dict, List, Optional
 
 
 from ..env.voxel_cut_sim_v1 import dismantling_env
-
+from .episode_paths import EpisodePaths
+from .episode_image_writer import EpisodeImageWriter
+from .episode_artifact_manager import EpisodeArtifactManager
 
 @dataclass(frozen=True)
 class Envs:
@@ -24,12 +26,16 @@ class CaseContext:
 
 @dataclass(frozen=True)
 class EpisodeContext:
-    case           : CaseContext
-    policy         : Any
-    grid_config    : Dict[str, Any]
-    task_step      : int
-    ctrl_mode      : str
-    episode_idx    : int
+    case            : CaseContext
+    policy          : Any
+    grid_config     : Dict[str, Any]
+    task_step       : int
+    ctrl_mode       : str
+    episode_idx     : int
+    path            : EpisodePaths
+    artifact_manager: EpisodeArtifactManager
+    image_writer    : EpisodeImageWriter
+
 
 @dataclass(frozen=True)
 class EpisodeResult:
@@ -58,12 +64,12 @@ from typing import List, Tuple
 import numpy as np
 @dataclass(frozen=True)
 class StepOutcome:
-    # macro_action       : Tuple[int, ...]
-    last_action        : int
-    reward             : float
-    obs_z              : np.ndarray
-    target_removal_rate: float
-    removal_performance: float
+    macro_action       : tuple[int, ...]  # intermediate_action_l に相当
+    last_action        : int              # action_l に相当
+    reward             : float            # reward_l
+    obs_z              : np.ndarray       # obs_l
+    target_removal_rate: float            # info_l
+    removal_performance: float            # removal_pref_l
 
 @dataclass(frozen=True)
 class EpisodeRolloutSnapshot:
