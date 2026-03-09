@@ -527,7 +527,6 @@ base = {
                                 # 'Object_9':"/home/user/dataset/denoising_diffusion_pytorch/dataset/dataset_6_13900k/geom_test_1/Boxy_2",
 
                                 'Object_1' : "/home/dev/workspace/dataset/nedo/dataset_4_12900k/geom_test_3/Boxy_0",
-
                                 },
 
 

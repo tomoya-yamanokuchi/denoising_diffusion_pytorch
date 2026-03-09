@@ -148,6 +148,7 @@ class EvalBuilder:
     #     from app.wiring.method_factory import build_method  # 仮：あなたのプロジェクトに合わせて
     #     self.method = build_method(self.cfg.method, device=str(self.cfg.device))
 
+
     # --------------------------------------------------
     def build_all(self) -> "EvalContext":
         self.validate_config_top()

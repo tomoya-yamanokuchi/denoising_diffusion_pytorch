@@ -16,8 +16,8 @@ import pyvista as pv
 
 from denoising_diffusion_pytorch.utils.config import Config
 
-from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
-from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import dismantling_env
+from denoising_diffusion_pytorch.env.voxel_cut_sim_v1_hachi import voxel_cut_handler
+from denoising_diffusion_pytorch.env.voxel_cut_sim_v1_hachi import dismantling_env
 
 from denoising_diffusion_pytorch.utils.setup import Parser as parser
 from denoising_diffusion_pytorch.utils.serialization import load_diffusion,load_vaeac
@@ -176,6 +176,8 @@ if __name__ == '__main__':
             cond_save_path = os.path.normpath(f"{test_save_folder}/{val}/episode_{episode_num}")
             create_folder(cond_save_path)
 
+
+            import ipdb; ipdb.set_trace()
             ## env for evaluation
             # import ipdb; ipdb.set_trace()
             env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components) # visualize & cost computation

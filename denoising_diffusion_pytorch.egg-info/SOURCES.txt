@@ -42,4 +42,5 @@ denoising_diffusion_pytorch/utils/serialization.py
 denoising_diffusion_pytorch/utils/setup.py
 denoising_diffusion_pytorch/utils/timer.py
 denoising_diffusion_pytorch/utils/voxel_handlers.py
+denoising_diffusion_pytorch/utils/voxel_handlers_hachi.py
 denoising_diffusion_pytorch/utils/voxel_render.py

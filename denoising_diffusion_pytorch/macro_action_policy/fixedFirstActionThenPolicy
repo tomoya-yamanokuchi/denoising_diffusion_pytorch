@@ -1,0 +1,32 @@
+from .action_decision_context import ActionDecisionStrategy
+from .action_decision_context import ActionDecisionContext
+
+
+class FixedFirstActionThenPolicy(ActionDecisionStrategy):
+    def __init__(self, policy, start_action_map, grid_config):
+        self._policy                      = policy
+        self._start_action_map            = start_action_map
+        self._grid_config                 = grid_config
+        self._last_executed_atomic_action = None
+        self._current_plan                = None
+
+    def decide(self, ctx: ActionDecisionContext) -> list[int]:
+        if ctx.step_idx == 0:
+            action = self._start_action_map[ctx.case_id]
+            self._policy.update_split_obs_config(action, self._grid_config)
+            self._current_plan = action
+            return action
+
+        next_action, _, _ = self._policy.get_optimal_act(
+            ctx.obs_z,
+            ctx.observation_history,
+            ctx.env_for_policy,
+            self._last_executed_atomic_action,
+            ctx.step_idx,
+            ctx.save_path,
+        )
+        self._current_plan = next_action
+        return next_action
+
+    def notify_executed(self, atomic_action: int) -> None:
+        self._last_executed_atomic_action = atomic_action

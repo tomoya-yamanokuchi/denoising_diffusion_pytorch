@@ -138,57 +138,57 @@ if __name__ == '__main__':
         # for episode_num in tqdm(range(1)):
 
 
-            policy_ = Config(
-                args.policy,
-                verbose     = False,
-                diffusion   = diffusion,
-                trainer     = trainer,
-                sample_image_num = args.batch_size,
-                obs_model   = policy_obs_model,
-                config      = args.policy_config,
-                # savepath    = (args.savepath, 'policy_config.pkl'),
-            )
-            policy = policy_()
+            # policy_ = Config(
+            #     args.policy,
+            #     verbose     = False,
+            #     diffusion   = diffusion,
+            #     trainer     = trainer,
+            #     sample_image_num = args.batch_size,
+            #     obs_model   = policy_obs_model,
+            #     config      = args.policy_config,
+            #     # savepath    = (args.savepath, 'policy_config.pkl'),
+            # )
+            # policy = policy_()
 
-            cond_save_path = os.path.normpath(f"{test_save_folder}/{val}/episode_{episode_num}")
-            create_folder(cond_save_path)
+            # cond_save_path = os.path.normpath(f"{test_save_folder}/{val}/episode_{episode_num}")
+            # create_folder(cond_save_path)
 
                 ## env for evaluation
                 # env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
-            obs,reward,done,info = env.reset()
+            # obs,reward,done,info = env.reset()
 
                 ## env for policy partial observation
                 # env2 = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components)
-            obs,reward,done,info = env2.reset()
+            # obs,reward,done,info = env2.reset()
 
-            pil_image_save_from_numpy(info["oracle_obs"]["x"],f"{cond_save_path}/oracle_obs_cast_x_axis{0}.png")
-            pil_image_save_from_numpy(info["oracle_obs"]["y"],f"{cond_save_path}/oracle_obs_cast_y_axis{0}.png")
-            pil_image_save_from_numpy(info["oracle_obs"]["z"],f"{cond_save_path}/oracle_obs_cast_z_axis{0}.png")
+            # pil_image_save_from_numpy(info["oracle_obs"]["x"],f"{cond_save_path}/oracle_obs_cast_x_axis{0}.png")
+            # pil_image_save_from_numpy(info["oracle_obs"]["y"],f"{cond_save_path}/oracle_obs_cast_y_axis{0}.png")
+            # pil_image_save_from_numpy(info["oracle_obs"]["z"],f"{cond_save_path}/oracle_obs_cast_z_axis{0}.png")
 
-            action_l    = []
-            reward_l    = []
-            obs_l       = []
-            info_l      = []
-            removal_pref_l =  []
-            intermediate_action_l = []
+            # action_l    = []
+            # reward_l    = []
+            # obs_l       = []
+            # info_l      = []
+            # removal_pref_l =  []
+            # intermediate_action_l = []
 
-            for i in range(int(args.task_step)):
-                ###################################################################################
-                ## aprior_based_ep_00のときは，policy partial
-                ## 観測画像が黒＝すべての領域が未観測としてそれぞれの方策を実行，算出した行動を1step目の行動とする
-                ####################################################################################
-                if i == 0 and args.policy_config["ctrl_mode"] == "prior_based_ep_00":
-                    cut_cost_tmp    = 0
-                    action, _, infos = policy.get_optimal_act(slice_img_ = None, observation_history = {} , env2 = env2, tmp_action = "prior_based_ep_00", iters = i, save_path  = cond_save_path)
-                    pil_image_save_from_numpy(infos["ensemble_image"]["z"],f"{cond_save_path}/{-1}_ensemble_z_axis{-1}_{0}.png")
-                    pil_image_save_from_numpy(infos["ensemble_image"]["x"],f"{cond_save_path}/{-1}_ensemble_x_axis{-1}_{0}.png")
-                    pil_image_save_from_numpy(infos["ensemble_image"]["y"],f"{cond_save_path}/{-1}_ensemble_y_axis{-1}_{0}.png")
-                elif i == 0 and args.policy_config["ctrl_mode"] != "prior_based_ep_00":
+            # for i in range(int(args.task_step)):
+            #     ###################################################################################
+            #     ## aprior_based_ep_00のときは，policy partial
+            #     ## 観測画像が黒＝すべての領域が未観測としてそれぞれの方策を実行，算出した行動を1step目の行動とする
+            #     ####################################################################################
+            #     if i == 0 and args.policy_config["ctrl_mode"] == "prior_based_ep_00":
+            #         cut_cost_tmp    = 0
+            #         action, _, infos = policy.get_optimal_act(slice_img_ = None, observation_history = {} , env2 = env2, tmp_action = "prior_based_ep_00", iters = i, save_path  = cond_save_path)
+            #         pil_image_save_from_numpy(infos["ensemble_image"]["z"],f"{cond_save_path}/{-1}_ensemble_z_axis{-1}_{0}.png")
+            #         pil_image_save_from_numpy(infos["ensemble_image"]["x"],f"{cond_save_path}/{-1}_ensemble_x_axis{-1}_{0}.png")
+            #         pil_image_save_from_numpy(infos["ensemble_image"]["y"],f"{cond_save_path}/{-1}_ensemble_y_axis{-1}_{0}.png")
+            #     elif i == 0 and args.policy_config["ctrl_mode"] != "prior_based_ep_00":
                     cut_cost_tmp    = 0
                     action          = args.start_action_idx[val]
                     policy.update_split_obs_config(action, s_grid_config)
-                else:
-                    print("s")
+                # else:
+                #     print("s")
 
 
                 print(f"action_slice_range:{action}")

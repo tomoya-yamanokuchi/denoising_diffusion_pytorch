@@ -52,3 +52,19 @@ class ActionArtifacts:
     # candidates : Optional[List[Any]] = None
     # scores     : Optional[List[float]] = None
     # heatmap    : Optional[Any] = None
+
+
+from typing import List, Tuple
+import numpy as np
+@dataclass(frozen=True)
+class StepOutcome:
+    # macro_action       : Tuple[int, ...]
+    last_action        : int
+    reward             : float
+    obs_z              : np.ndarray
+    target_removal_rate: float
+    removal_performance: float
+
+@dataclass(frozen=True)
+class EpisodeRolloutSnapshot:
+    steps: Tuple[StepOutcome, ...]  # 不変で「結果」感を出す
