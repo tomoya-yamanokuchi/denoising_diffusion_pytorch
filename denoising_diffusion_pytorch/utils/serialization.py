@@ -33,6 +33,8 @@ def get_latest_epoch(loadpath):
 
 def load_config(*loadpath):
     loadpath = os.path.join(*loadpath)
+
+    # import ipdb; ipdb.set_trace()
     config = pickle.load(open(loadpath, 'rb'))
     print(f'[ utils/serialization ] Loaded config from {loadpath}')
     # print(config)

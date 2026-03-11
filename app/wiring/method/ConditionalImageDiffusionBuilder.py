@@ -22,11 +22,11 @@ class ConditionalImageDiffusionBuilder:
     def build_model(self):
         from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
         model = Unet(
-            dim            = self.cfg.model.dim,
-            dim_mults      = self.cfg.model.dim_mults,
+            dim            = self.cfg.method.model.dim,
+            dim_mults      = self.cfg.method.model.dim_mults,
             mask_dim       = self.cfg.dataset.image_size,
-            flash_attn     = self.cfg.model.flash_attn,
-            self_condition = self.cfg.model.self_condition,
+            flash_attn     = self.cfg.method.model.flash_attn,
+            self_condition = self.cfg.method.model.self_condition,
         )
         self.model = self._maybe_to_device(model)
         return self.model
@@ -37,7 +37,7 @@ class ConditionalImageDiffusionBuilder:
         method = GaussianDiffusion(
             model      = self.model,
             image_size = self.cfg.dataset.image_size,
-            **self.cfg.diffusion,
+            **self.cfg.method.diffusion,
         )
         self.method = self._maybe_to_device(method)
         return self.method
@@ -49,7 +49,7 @@ class ConditionalImageDiffusionBuilder:
         self.trainer = Trainer(
             diffusion_model = self.method,
             dataset = self.dataset,
-            **self.cfg.trainer,
+            **self.cfg.method.trainer,
         )
 
         return self.trainer
@@ -63,7 +63,10 @@ class ConditionalImageDiffusionBuilder:
     #     )
 
     def _maybe_to_device(self, obj: Any) -> Any:
-        dev = str(self.cfg.device) if "device" in self.cfg else None
+        # dev = str(self.cfg.device) if "device" in self.cfg else None
+        dev = str(self.cfg.device)
+
+        # import ipdb; ipdb.set_trace()
         if dev and hasattr(obj, "to"):
             return obj.to(dev)
         return obj

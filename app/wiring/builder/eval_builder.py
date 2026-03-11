@@ -8,10 +8,7 @@ from omegaconf import DictConfig
 
 # --- eval/ 以下で作った部品 ---
 # 既存ユーティリティ（あなたのプロジェクト側に合わせて import を調整）
-from denoising_diffusion_pytorch.utils.RunDirPlanner import RunDirPlanner
-from denoising_diffusion_pytorch.utils.RunDirInitializer import RunDirInitializer
 
-from app.wiring.services.run_dir_manager import RunDirManager
 from app.wiring.services.config_validator import ConfigValidator
 
 
@@ -23,15 +20,14 @@ class EvalBuilder:
     """
     cfg: DictConfig
 
-    run_dir: Optional[Path] = None
-
-    # build results
-    evaluator        : Any                 = None
-    # episode_runner   : EpisodeRunner       = None
-    env_factory      : EnvFactory | None   = None
-    image_writer     : Any                 = None
-    config_validator : ConfigValidator      = None
-    run_dir_mgr      : RunDirManager       = None
+    # run_dir: Optional[Path] = None
+    # # build results
+    # evaluator        : Any                 = None
+    # # episode_runner   : EpisodeRunner       = None
+    # env_factory      : EnvFactory | None   = None
+    # image_writer     : Any                 = None
+    # config_validator : ConfigValidator      = None
+    # run_dir_mgr      : RunDirManager       = None
 
     # --------------------------------------------------
     # 1. config validation
@@ -52,6 +48,9 @@ class EvalBuilder:
     # 2. directory management
     # --------------------------------------------------
     def build_run_dir_manager(self) -> None:
+        from app.wiring.services.run_dir_manager import RunDirManager
+        from denoising_diffusion_pytorch.utils.RunDirPlanner import RunDirPlanner
+        from denoising_diffusion_pytorch.utils.RunDirInitializer import RunDirInitializer
         self.run_dir_mgr = RunDirManager(
             planner     = RunDirPlanner.from_cfg(self.cfg),
             initializer = RunDirInitializer(),
@@ -104,20 +103,25 @@ class EvalBuilder:
         from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
         self.episode_runner = EpisodeRunner()
 
-    def build_policy(self):
-        self.policy = None
+    def build_policy_model_assets(self) -> None:
+        from app.wiring.loaders.policy_model_assets_loader import PolicyModelAssetsLoader
+        loader = PolicyModelAssetsLoader()
+        self.policy_model_assets = loader.load(self.cfg.eval)
+
 
     def build_orchestrator(self):
-        from app.usecases.eval_orchestrator import EvalOrchestrator
+        from app.usecases.eval.eval_orchestrator import EvalOrchestrator
         self.eval_orchestrator = EvalOrchestrator(self)
 
 
     # --------------------------------------------------
     def build_all(self) -> "EvalContext":
+        # --- config ---
         self.validate_config_top()
         self.set_config_root_as_usecase_root()
         self.validate_config_usecase()
 
+        # --- dir ---
         self.build_run_dir_manager()
         self.build_run_dir()
 
@@ -132,7 +136,7 @@ class EvalBuilder:
         self.build_episode_context_factory()
         self.build_episode_runner()
 
-        self.build_policy()
+        self.build_policy_model_assets()
 
         self.build_orchestrator()
 

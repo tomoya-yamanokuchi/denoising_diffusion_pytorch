@@ -15,7 +15,9 @@ policy_config:
 
 eval_data_path: /home/dev/.../geom_test_1
 
-loadpath: /home/dev/.../logs/Image_diffusion_2D/vaeac/D64_...
+# loadpath: "/home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v1/"
+loadpath: "/home/dev/workspace/denoising_diffusion_pytorch/logs/train/D64/"
+
 epoch   : "10000"
 
 task_step: 8

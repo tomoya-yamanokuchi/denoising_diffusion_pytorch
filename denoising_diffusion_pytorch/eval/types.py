@@ -74,3 +74,6 @@ class StepOutcome:
 @dataclass(frozen=True)
 class EpisodeRolloutSnapshot:
     steps: Tuple[StepOutcome, ...]  # 不変で「結果」感を出す
+
+
+

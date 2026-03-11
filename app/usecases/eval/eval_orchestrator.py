@@ -14,13 +14,13 @@ from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
 
 @dataclass
 class EvalOrchestrator:
-    def __init__(self, context: EvalBuilder):
-        self.cfg                     = context.cfg
-        self.case_context_factory    = context.case_context_factory
-        self.episode_context_factory = context.episode_context_factory
-        self.episode_runner          = context.episode_runner
-        self.policy                  = context.policy
-        self.mesh_factory            = context.mesh_factory
+    def __init__(self, dependency: EvalBuilder):
+        self.cfg                     = dependency.cfg
+        self.case_context_factory    = dependency.case_context_factory
+        self.episode_context_factory = dependency.episode_context_factory
+        self.episode_runner          = dependency.episode_runner
+        self.policy                  = dependency.policy
+        self.mesh_factory            = dependency.mesh_factory
 
     def run(self) -> Dict[str, Any]:
         cases_list = self.cfg.eval.cases

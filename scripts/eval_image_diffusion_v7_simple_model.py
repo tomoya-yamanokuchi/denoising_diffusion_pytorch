@@ -99,26 +99,26 @@ if __name__ == '__main__':
     trainer                 = diffusion_experiment.trainer
 
 
-    #--------------------------------- ----------------------------------#
-    sample_image_num            = args.batch_size
-    test_save_folder            = args.savepath
+        #--------------------------------- ----------------------------------#
+        # sample_image_num            = args.batch_size
+        # test_save_folder            = args.savepath
 
-    #---------------------------load evaluation model ---------------------------#
-    eval_data_dir               =  args.eval_data_path
-    # eval_dataset                =  get_eval_data(eval_data_dir)
+        # ---------------------------load evaluation model ---------------------------#
+        # eval_data_dir               =  args.eval_data_path
+        # eval_dataset                =  get_eval_data(eval_data_dir)
 
 
-    eval_data_lists = args.eval_data_lists
-    eval_dataset_candidate = {}
-    for idx,val in enumerate(eval_data_lists):
-        data = {val:get_eval_data(eval_data_lists[val])}
-        eval_dataset_candidate.update(data)
+        # eval_data_lists = args.eval_data_lists
+        # eval_dataset_candidate = {}
+        # for idx,val in enumerate(eval_data_lists):
+        #     data = {val:get_eval_data(eval_data_lists[val])}
+        #     eval_dataset_candidate.update(data)
 
-    eval_dataset_idx = args.start_action_idx
-    # 抽出
-    eval_dataset = {
-        k: eval_dataset_candidate[k] for k in eval_dataset_idx if k in eval_dataset_candidate
-    }
+        # eval_dataset_idx = args.start_action_idx
+        # # 抽出
+        # eval_dataset = {
+        #     k: eval_dataset_candidate[k] for k in eval_dataset_idx if k in eval_dataset_candidate
+        # }
 
 
 
@@ -131,10 +131,10 @@ if __name__ == '__main__':
 
     for idx, val in enumerate(eval_dataset):
 
-        mesh_components  = eval_dataset[val]
-        policy_obs_model = voxel_cut_handler(grid_config=s_grid_config, mesh_components=mesh_components,zero_initialize=True)
+        # mesh_components  = eval_dataset[val]
+        # policy_obs_model = voxel_cut_handler(grid_config=s_grid_config, mesh_components=mesh_components,zero_initialize=True)
 
-        for episode_num in tqdm(range(args.iter[0],args.iter[1])):
+        # for episode_num in tqdm(range(args.iter[0],args.iter[1])):
         # for episode_num in tqdm(range(1)):
 
 

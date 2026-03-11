@@ -26,27 +26,35 @@ class TrainBuilder:
     """
     # --- input ----
     cfg       : DictConfig
-    # --- output ----
-    run_dir   : Optional[Path] = None
-    exp_name  : Optional[str]  = None
-    dataset   : Any            = None
-    model     : Any            = None
-    method    : Any            = None
-    trainer   : Any            = None
-    image_size: Optional[int]  = None
+    # # --- output ----
+    # run_dir   : Optional[Path] = None
+    # exp_name  : Optional[str]  = None
+    # dataset   : Any            = None
+    # model     : Any            = None
+    # method    : Any            = None
+    # trainer   : Any            = None
+    # image_size: Optional[int]  = None
 
-    def build_config_validator(self):
-        self.validator = ConfigValidator()
+    # --------------------------------------------------
+    # 1. config validation
+    # --------------------------------------------------
+    def validate_config_top(self) -> None:
+        from app.wiring.services.validate_key_config import validate_key_config
+        validate_key_config(self.cfg, ["usecase"])
 
-    def validate_config(self) -> None:
-        # train に最低限必要なキー（trainerなどが重要）
-        self.validator.require_keys(self.cfg, ["device", "dataset", "model", "trainer"])
+    def set_config_root_as_usecase_root(self):
+        self.usecase = self.cfg.usecase.name
+        self.cfg     = self.cfg.usecase
 
-    def set_important_params(self):
-        self.image_size = int(OmegaConf.select(self.cfg, "dataset.image_size") or 0)
-        self.device     = str(OmegaConf.select(self.cfg, "device") or "cuda:0")
+    def validate_config_usecase(self) -> None:
+        from app.wiring.services.validate_key_config import validate_key_config
+        validate_key_config(self.cfg, ["watch", "method", "dataset"])
 
-    def build_run_dir_manager(self):
+    # --------------------------------------------------
+    # 2. directory management
+    # --------------------------------------------------
+    def build_run_dir_manager(self) -> None:
+        from app.wiring.services.run_dir_manager import RunDirManager
         from denoising_diffusion_pytorch.utils.RunDirPlanner import RunDirPlanner
         from denoising_diffusion_pytorch.utils.RunDirInitializer import RunDirInitializer
         self.run_dir_mgr = RunDirManager(
@@ -54,16 +62,19 @@ class TrainBuilder:
             initializer = RunDirInitializer(),
         )
 
-    def plan_and_initialize_run_dir(self) -> None:
-        self.run_dir, self.exp_name = self.run_dir_mgr.plan(self.cfg)
-        self.run_dir_mgr.init(self.cfg, self.run_dir, self.exp_name)
+    def build_run_dir(self) -> None:
+        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
+        self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
+        self.artifact_static_root = run_dir
+
+
 
     def build_method(self) -> None:
         """
         - Sub builder に差分を閉じ込める。
         - Sub builder には最低限、build_dataset/build_model/build_method/build_trainer というメソッドがある想定。
         """
-        name = select_str(self.cfg, "name", default="")
+        name = self.cfg.method.name
         if name not in _METHOD_BUILDERS:
             raise ValueError(f"Unknown train method: {name}. Known: {list(_METHOD_BUILDERS.keys())}")
 
@@ -75,11 +86,22 @@ class TrainBuilder:
         self.method     = sub.build_method()
         self.trainer    = sub.build_trainer()
 
+    def build_orchestrator(self):
+        from app.usecases.train.train_orchestrator import TrianOrchestrator
+        self.train_orchestrator = TrianOrchestrator(self)
 
-    def build_all(self) -> None:
-        self.build_config_validator()
-        self.validate_config()
-        self.set_important_params()
+
+    def build_all(self) -> "TrainContext":
+        # --- config ---
+        self.validate_config_top()
+        self.set_config_root_as_usecase_root()
+        self.validate_config_usecase()
+
+        # --- dir ---
         self.build_run_dir_manager()
-        self.plan_and_initialize_run_dir()
+        self.build_run_dir()
+
         self.build_method()
+        self.build_orchestrator()
+
+        return self

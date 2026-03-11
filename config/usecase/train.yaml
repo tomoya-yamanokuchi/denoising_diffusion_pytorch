@@ -1,5 +1,6 @@
 defaults:
   - /path   : local
+  - /log    : train
   - /watch  : train_base
   - /method : conditional_image_diffusion
   - /dataset: celeba
