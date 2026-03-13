@@ -56,10 +56,14 @@ class EvalBuilder:
             initializer = RunDirInitializer(),
         )
 
-    def build_run_dir(self) -> None:
-        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
-        self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
-        self.artifact_static_root = run_dir
+    # def build_run_dir(self) -> None:
+    #     run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
+    #     self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
+    #     self.artifact_static_root = run_dir
+
+    # def build_saved_train_run_dir_resolver(self) -> None:
+    #     from app.wiring.loaders.saved_train_run_dir_resolver import SavedTrainRunDirResolver
+    #     self.saved_train_run_dir_resolver = SavedTrainRunDirResolver()
 
     # --------------------------------------------------
     # infra (IO / env)
@@ -103,11 +107,24 @@ class EvalBuilder:
         from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
         self.episode_runner = EpisodeRunner()
 
-    def build_policy_model_assets(self) -> None:
-        from app.wiring.loaders.policy_model_assets_loader import PolicyModelAssetsLoader
-        loader = PolicyModelAssetsLoader()
-        self.policy_model_assets = loader.load(self.cfg.eval)
 
+    def build_policy_model_assets_loader(self) -> None:
+        from app.wiring.loaders.saved_run_config_loader import SavedRunConfigLoader
+        from app.wiring.loaders.checkpoint_path_resolver import CheckpointPathResolver
+        from app.wiring.loaders.policy_model_assets_loader import PolicyModelAssetsLoader
+
+        self.policy_model_assets_loader = PolicyModelAssetsLoader(
+            config_loader            = SavedRunConfigLoader(),
+            checkpoint_path_resolver = CheckpointPathResolver(),
+        )
+
+    def build_policy_model_assets(self) -> None:
+        self.policy_model_assets = self.policy_model_assets_loader.load(
+            run_dir      = self.cfg.eval.train_run_dir,
+            epoch        = getattr(self.cfg.eval, "epoch", "latest"),
+            device       = str(self.cfg.device),
+            load_dataset = False,
+        )
 
     def build_orchestrator(self):
         from app.usecases.eval.eval_orchestrator import EvalOrchestrator
@@ -123,7 +140,10 @@ class EvalBuilder:
 
         # --- dir ---
         self.build_run_dir_manager()
-        self.build_run_dir()
+        # self.build_run_dir()
+
+        self.build_policy_model_assets_loader()
+        self.build_policy_model_assets()
 
         self.build_eval_cases()
         self.build_mesh_components_factory()
@@ -135,8 +155,6 @@ class EvalBuilder:
         # --- episode ---
         self.build_episode_context_factory()
         self.build_episode_runner()
-
-        self.build_policy_model_assets()
 
         self.build_orchestrator()
 

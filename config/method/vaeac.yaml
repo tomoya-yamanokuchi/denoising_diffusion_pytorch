@@ -1,6 +1,6 @@
 name     : vaeac
 USER_NAME: user
-device   : "cuda:0"
+# device   : "cuda:0"
 
 model:
   name        : EncoderDecoderNet

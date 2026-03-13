@@ -82,6 +82,8 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0'):
     print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
 
 
+    import ipdb; ipdb.set_trace()
+
     trainer.load(epoch)
 
 
@@ -115,6 +117,8 @@ def load_vae(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
 
     trainer.load(epoch)
 
+    import ipdb; ipdb.set_trace()
+
     return VAEExperiment(dataset, renderer, vae, model, trainer.model, trainer, epoch)
 
 
@@ -144,5 +148,7 @@ def load_vaeac(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
     print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
 
     renderer  = None
+
+    import ipdb; ipdb.set_trace()
 
     return VAEExperiment(dataset, renderer, model, model, model, trainer, epoch)

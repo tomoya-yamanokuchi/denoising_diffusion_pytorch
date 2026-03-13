@@ -1,15 +1,22 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any
 
-
 @dataclass(frozen=True)
 class PolicyModelAssets:
-    """
-    case 非依存で共有される、学習済みモデル群。
-    policy 本体ではなく、policy を構成するための重い推論資産を表す。
-    """
-    diffusion: Any
-    dataset  : Any
-    trainer  : Any
+    model  : Any
+    method : Any
+    trainer: Any
+    dataset: Any
+    epoch  : int
+
+    @property
+    def diffusion(self) -> Any:
+        return self.method
+
+    @property
+    def ema(self) -> Any:
+        return self.trainer.ema
+
+    @property
+    def renderer(self) -> Any:
+        return None

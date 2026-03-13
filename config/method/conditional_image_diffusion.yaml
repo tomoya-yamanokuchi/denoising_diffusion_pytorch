@@ -1,6 +1,6 @@
 name     : conditional_image_diffusion
 USER_NAME: user
-device   : "cuda:0"
+# device   : "cuda:0"
 
 diffusion:
   beta_schedule     : sigmoid

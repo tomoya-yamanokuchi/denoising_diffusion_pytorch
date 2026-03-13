@@ -9,3 +9,4 @@ defaults:
   - _self_
 
 name: eval
+device: cuda:0

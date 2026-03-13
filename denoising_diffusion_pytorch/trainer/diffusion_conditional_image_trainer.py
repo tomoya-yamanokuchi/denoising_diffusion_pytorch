@@ -138,6 +138,8 @@ class Trainer(object):
         self.sw_dir.mkdir(exist_ok = True)
         # step counter state
 
+        # import ipdb; ipdb.set_trace()
+
         self.step = 0
 
         # prepare model, dataloader, optimizer with accelerator

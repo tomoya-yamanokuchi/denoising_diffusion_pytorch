@@ -50,6 +50,16 @@ class TrainBuilder:
         from app.wiring.services.validate_key_config import validate_key_config
         validate_key_config(self.cfg, ["watch", "method", "dataset"])
 
+    def build_config_artifact_writer(self) -> None:
+        from app.wiring.services.train_config_artifact_writer import TrainConfigArtifactWriter
+        self.config_artifact_writer = TrainConfigArtifactWriter()
+
+    def save_train_config_artifacts(self) -> None:
+        self.config_artifact_writer.write(
+            cfg=self.cfg,
+            artifact_static_root=self.artifact_static_root,
+        )
+
     # --------------------------------------------------
     # 2. directory management
     # --------------------------------------------------
@@ -66,6 +76,7 @@ class TrainBuilder:
         run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
         self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
         self.artifact_static_root = run_dir
+        import ipdb; ipdb.set_trace()
 
 
 
@@ -79,7 +90,10 @@ class TrainBuilder:
             raise ValueError(f"Unknown train method: {name}. Known: {list(_METHOD_BUILDERS.keys())}")
 
         Sub = _METHOD_BUILDERS[name]
-        sub: TrainMethodBuilder = Sub(self)  # IntelliSenseが効く
+        sub: TrainMethodBuilder = Sub(
+            cfg = self.cfg,
+            artifact_static_root = self.artifact_static_root,
+        )  # IntelliSenseが効く
 
         self.dataset    = sub.build_dataset()
         self.model      = sub.build_model()
@@ -92,14 +106,18 @@ class TrainBuilder:
 
 
     def build_all(self) -> "TrainContext":
-        # --- config ---
+        # --- load config ---
         self.validate_config_top()
         self.set_config_root_as_usecase_root()
         self.validate_config_usecase()
 
-        # --- dir ---
+        # --- plan dir ---
         self.build_run_dir_manager()
         self.build_run_dir()
+
+        # --- save config ---
+        self.build_config_artifact_writer()
+        self.save_train_config_artifacts()
 
         self.build_method()
         self.build_orchestrator()

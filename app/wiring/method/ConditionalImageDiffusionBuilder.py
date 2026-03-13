@@ -4,13 +4,13 @@ from dataclasses import dataclass
 from typing import Any
 import hydra
 from omegaconf import DictConfig
-# from  builder.train_builder import TrainBuilder
+# from ..builder.train_builder import TrainBuilder
 
 
 class ConditionalImageDiffusionBuilder:
-    def __init__(self, train_builder):
-        self.builder = train_builder
-        self.cfg     = train_builder.cfg
+    def __init__(self, cfg: DictConfig, artifact_static_root: str):
+        self.cfg                  = cfg
+        self.artifact_static_root = artifact_static_root
 
     def build_dataset(self) -> Any:
         from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
@@ -45,13 +45,13 @@ class ConditionalImageDiffusionBuilder:
 
     def build_trainer(self) -> Any:
         from denoising_diffusion_pytorch.trainer.diffusion_conditional_image_trainer import Trainer
-
+        # ---
         self.trainer = Trainer(
             diffusion_model = self.method,
-            dataset = self.dataset,
+            dataset         = self.dataset,
+            results_folder  = str(self.artifact_static_root),
             **self.cfg.method.trainer,
         )
-
         return self.trainer
 
     # def build_evaluator(self, algorithm: Any, dataset: Any) -> Any:
