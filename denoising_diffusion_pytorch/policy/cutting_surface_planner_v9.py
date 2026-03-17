@@ -20,6 +20,7 @@ from denoising_diffusion_pytorch.utils.os_utils import get_path ,get_folder_name
 # from  denoising_diffusion_pytorch.policy.cvaeac_tmp_valid import validate,load_vaeac_model
 from  denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_validate
 from  denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
+from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import dismantling_env
 
 
 class cutting_surface_planner():
@@ -553,7 +554,14 @@ class cutting_surface_planner():
         return last_step_images
 
 
-    def get_optimal_act(self,slice_img_,observation_history, env2,tmp_action,iters,save_path):
+    def get_optimal_act(self,
+            slice_img_ : np.ndarray,
+            observation_history,
+            env2      : dismantling_env,
+            tmp_action: int,
+            iters     : int,
+            save_path : str,
+        ):
         """_summary_
 
         Args:
@@ -982,7 +990,7 @@ class cutting_surface_planner():
         self.oracle_image_z = oracle_obs_image
 
 
-    def update_split_obs_config(self, slice_range ,grid_config):
+    def update_split_obs_config(self, slice_range, grid_config):
 
         if min(slice_range)<grid_config['side_length']:
             axis = "z"

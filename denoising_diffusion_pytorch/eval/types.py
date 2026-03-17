@@ -10,6 +10,9 @@ from .episode_paths import EpisodePaths
 from .episode_image_writer import EpisodeImageWriter
 from .episode_artifact_manager import EpisodeArtifactManager
 
+# from ..policy.cutting_surface_planner_v9 import cutting_surface_planner
+from ..action_plan.action_planner import ActionPlanner
+
 @dataclass(frozen=True)
 class Envs:
     eval  : dismantling_env  # dismantling_env (evaluation usage with full observation)
@@ -27,7 +30,7 @@ class CaseContext:
 @dataclass(frozen=True)
 class EpisodeContext:
     case            : CaseContext
-    policy          : Any
+    action_planner  : ActionPlanner
     grid_config     : Dict[str, Any]
     task_step       : int
     ctrl_mode       : str
@@ -47,19 +50,6 @@ class EpisodeResult:
     last_info           : Optional[Dict[str, Any]] = None
 
 
-@dataclass(frozen=True)
-class ActionArtifacts:
-    """
-    action 推論時に付随して返る「保存・可視化・デバッグ向けの成果物」。
-    - EpisodeRunnerは中身を解釈しない（Observerに渡すだけ）
-    """
-    ensemble_image: Optional[Dict[str, Any]] = None
-    # 将来増える例：
-    # candidates : Optional[List[Any]] = None
-    # scores     : Optional[List[float]] = None
-    # heatmap    : Optional[Any] = None
-
-
 from typing import List, Tuple
 import numpy as np
 @dataclass(frozen=True)
@@ -74,6 +64,5 @@ class StepOutcome:
 @dataclass(frozen=True)
 class EpisodeRolloutSnapshot:
     steps: Tuple[StepOutcome, ...]  # 不変で「結果」感を出す
-
 
 

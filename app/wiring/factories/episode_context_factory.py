@@ -10,7 +10,7 @@ from denoising_diffusion_pytorch.eval.types import CaseContext, EpisodeContext
 from denoising_diffusion_pytorch.eval.episode_paths import EpisodePaths
 from denoising_diffusion_pytorch.eval.episode_image_writer import EpisodeImageWriter
 from denoising_diffusion_pytorch.eval.episode_artifact_manager import EpisodeArtifactManager
-
+from denoising_diffusion_pytorch.action_plan.action_planner import ActionPlanner
 
 @dataclass
 class EpisodeContextFactory:
@@ -20,9 +20,9 @@ class EpisodeContextFactory:
     artifact_static_root: str
 
     def create(self,
-            case       : CaseContext,
-            policy     : Any,
-            episode_idx: int
+            case          : CaseContext,
+            action_planner: ActionPlanner,
+            episode_idx   : int
         ) -> EpisodeContext:
         # ---------
         artifact_episodic_root = self._build_artifact_episodic_root(case.name, episode_idx)
@@ -30,7 +30,7 @@ class EpisodeContextFactory:
         # ---------
         return EpisodeContext(
             case             = case,
-            policy           = policy,
+            action_planner   = action_planner,
             grid_config      = self.grid_config,
             task_step        = self.task_step,
             ctrl_mode        = self.ctrl_mode,

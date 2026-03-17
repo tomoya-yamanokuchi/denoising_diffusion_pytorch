@@ -6,10 +6,6 @@ from typing import Any, Optional
 
 from omegaconf import DictConfig
 
-# --- eval/ 以下で作った部品 ---
-# 既存ユーティリティ（あなたのプロジェクト側に合わせて import を調整）
-
-from app.wiring.services.config_validator import ConfigValidator
 
 
 @dataclass
@@ -19,15 +15,6 @@ class EvalBuilder:
     ここでは “インスタンス化” だけに寄せて、評価手順そのものは Evaluator に寄せる。
     """
     cfg: DictConfig
-
-    # run_dir: Optional[Path] = None
-    # # build results
-    # evaluator        : Any                 = None
-    # # episode_runner   : EpisodeRunner       = None
-    # env_factory      : EnvFactory | None   = None
-    # image_writer     : Any                 = None
-    # config_validator : ConfigValidator      = None
-    # run_dir_mgr      : RunDirManager       = None
 
     # --------------------------------------------------
     # 1. config validation
@@ -61,18 +48,9 @@ class EvalBuilder:
         self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
         self.artifact_static_root = run_dir
 
-    # def build_saved_train_run_dir_resolver(self) -> None:
-    #     from app.wiring.loaders.saved_train_run_dir_resolver import SavedTrainRunDirResolver
-    #     self.saved_train_run_dir_resolver = SavedTrainRunDirResolver()
-
     # --------------------------------------------------
     # infra (IO / env)
     # --------------------------------------------------
-
-    def build_eval_cases(self) -> None:
-        from app.wiring.services.eval_case_loader import load_eval_case_configs
-        self.eval_cases = load_eval_case_configs(self.cfg.eval)
-
     def build_mesh_components_factory(self) -> None:
         from app.wiring.factories.mesh_component_factory import MeshComponentFactory
         self.mesh_factory = MeshComponentFactory()
@@ -103,9 +81,30 @@ class EvalBuilder:
             artifact_static_root = self.artifact_static_root,
         )
 
+
+    def build_action_executer(self):
+        from denoising_diffusion_pytorch.action_plan.macro_action_executor import MacroActionExecutor
+        self.action_executer = MacroActionExecutor()
+
+    # def build_action_planner(self):
+    #     from denoising_diffusion_pytorch.action_plan.action_planner import ActionPlanner
+    #     from denoising_diffusion_pytorch.action_plan.initial_action_provider import InitialActionProvider
+    #     from denoising_diffusion_pytorch.action_plan.legacy_policy_planner_adapter import LegacyPolicyPlannerAdapter
+    #     self.action_planner = ActionPlanner(
+    #         initial_action_provider = InitialActionProvider(),
+    #         action_planner_adapter  = LegacyPolicyPlannerAdapter(),
+    #     )
+
+    def build_step_observer(self):
+        from denoising_diffusion_pytorch.observer.episode_step_observer import EpisodeStepObserver
+        self.step_observer = EpisodeStepObserver(verbose = True)
+
     def build_episode_runner(self):
         from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
-        self.episode_runner = EpisodeRunner()
+        self.episode_runner = EpisodeRunner(
+            action_executor = self.action_executer,
+            step_observer   = self.step_observer,
+        )
 
 
     def build_trained_model_assets(self) -> None:
@@ -135,6 +134,13 @@ class EvalBuilder:
         from ..factories.policy_factory import PolicyFactory
         self.policy_factory = PolicyFactory(assets = self.policy_assets)
 
+    def build_action_planner_factory(self):
+        from ..factories.action_planner_factory import ActionPlannerFactory
+        from denoising_diffusion_pytorch.action_plan.initial_action_provider import InitialActionProvider
+        self.action_planner_factory = ActionPlannerFactory(
+            initial_action_provider = InitialActionProvider(),
+        )
+
     def build_orchestrator(self):
         from app.usecases.eval.eval_orchestrator import EvalOrchestrator
         self.eval_orchestrator = EvalOrchestrator(self)
@@ -155,12 +161,14 @@ class EvalBuilder:
         self.build_policy_assets()
         self.build_policy_factory()
 
-        self.build_eval_cases()
         self.build_mesh_components_factory()
         self.build_env_factory()
         self.build_obs_model_factory()
-
         self.build_case_context_factory()
+
+        self.build_action_executer()
+        self.build_action_planner_factory()
+        self.build_step_observer()
 
         # --- episode ---
         self.build_episode_context_factory()

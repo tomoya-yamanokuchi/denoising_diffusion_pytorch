@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from omegaconf import DictConfig, OmegaConf
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import dismantling_env
 
-from app.wiring.types.envs import Envs
+from denoising_diffusion_pytorch.eval.types import Envs
 
 @dataclass
 class EnvFactory:

@@ -4,7 +4,7 @@ from typing import List, Sequence, Any
 
 from omegaconf import DictConfig, OmegaConf
 
-from app.wiring.types.eval_case_config import EvalCaseConfig
+# from app.wiring.types.eval_case_config import EvalCaseConfig
 
 
 def _as_int_tuple(xs: Any) -> tuple[int, ...]:

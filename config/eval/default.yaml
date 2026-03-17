@@ -6,7 +6,7 @@ defaults:
 
 policy_config:
   ctrl_mode    : epsilon_greedy_00
-  infer_model  : vaeac
+  infer_model  : conditional_diffusion # vaeac
   decision_mode:
     mode: clip_ucb_raw
     param:

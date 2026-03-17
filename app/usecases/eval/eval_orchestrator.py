@@ -17,30 +17,31 @@ class EvalOrchestrator:
         self.policy_assets           = dependency.policy_assets
         self.mesh_factory            = dependency.mesh_factory
         self.policy_factory          = dependency.policy_factory
+        self.action_planner_factory  = dependency.action_planner_factory
 
-        ### ここのコンストラクタが通るまでを確認
 
     def run(self) -> Dict[str, Any]:
         cases_list = self.cfg.eval.cases
+        results: Dict[str, Any] = {}
         for case_spec in cases_list:
             # ----------
             dataset_dir     = case_spec.dataset_dir
             mesh_components = self.mesh_factory.create(dataset_dir)
             case_ctx        = self.case_context_factory.create(case_spec, mesh_components)
             policy          = self.policy_factory.create(obs_model=case_ctx.obs_model)
+            action_planner  = self.action_planner_factory.create(policy=policy)
             # ----------
             per_case: List[Any] = []
             for k in tqdm(range(self.cfg.eval.num_episodes)):
                 policy.reset()
                 ep_ctx = self.episode_context_factory.create(
-                    case        = case_ctx,
-                    policy      = policy,
-                    episode_idx = k,
+                    case           = case_ctx,
+                    action_planner = action_planner,
+                    episode_idx    = k,
                 )
                 # ---
                 result = self.episode_runner.run(ep_ctx)
                 per_case.append(result)
-
+            # ----
             results[case_ctx.name] = per_case
-
         return results

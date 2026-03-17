@@ -184,39 +184,39 @@ if __name__ == '__main__':
             #         pil_image_save_from_numpy(infos["ensemble_image"]["x"],f"{cond_save_path}/{-1}_ensemble_x_axis{-1}_{0}.png")
             #         pil_image_save_from_numpy(infos["ensemble_image"]["y"],f"{cond_save_path}/{-1}_ensemble_y_axis{-1}_{0}.png")
             #     elif i == 0 and args.policy_config["ctrl_mode"] != "prior_based_ep_00":
-                    cut_cost_tmp    = 0
-                    # action          = args.start_action_idx[val]
-                    policy.update_split_obs_config(action, s_grid_config)
+                    # cut_cost_tmp    = 0
+                    # # action          = args.start_action_idx[val]
+                    # policy.update_split_obs_config(action, s_grid_config)
                 # else:
                 #     print("s")
 
 
-                print(f"action_slice_range:{action}")
-                for j in range(len(action)):
-                    action_ = action[j]
-                    import ipdb; ipdb.set_trace()
-                    obs,reward,done,info = env.step(action_idx=action_)
-                    print(f'step: {j} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
-                    cut_cost_tmp+=reward
+                # print(f"action_slice_range:{action}")
+                # for j in range(len(action)):
+                #     action_ = action[j]
+                #     import ipdb; ipdb.set_trace()
+                #     obs,reward,done,info = env.step(action_idx=action_)
+                #     print(f'step: {j} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
+                #     cut_cost_tmp+=reward
 
-                reward = cut_cost_tmp
-                action_l.append(action_)
-                reward_l.append(reward)
-                obs_l.append(obs["sequential_obs"]["z"])
-                info_l.append(info["target_removal_rate"])
-                removal_pref_l.append(info["removal_performance"])
-                intermediate_action_l.append(action)
+                # reward = cut_cost_tmp
+                # action_l.append(action_)
+                # reward_l.append(reward)
+                # obs_l.append(obs["sequential_obs"]["z"])
+                # info_l.append(info["target_removal_rate"])
+                # removal_pref_l.append(info["removal_performance"])
+                # intermediate_action_l.append(action)
 
-                print(f'##########################################################################################################################################')
-                print(f'{val} | Ep.: {episode_num} | step: {i} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
-                print(f'##########################################################################################################################################')
+                # print(f'##########################################################################################################################################')
+                # print(f'{val} | Ep.: {episode_num} | step: {i} | cut_cost: {reward} | target_removal_rate {info["target_removal_rate"]}| removal performance :{info["removal_performance"]:.3f}')
+                # print(f'##########################################################################################################################################')
 
-                pil_image_save_from_numpy(obs["sequential_obs"]["x"],f"{cond_save_path}/{i}_seq_obs_cast_x_axis{i}_{0}.png")
-                pil_image_save_from_numpy(obs["sequential_obs"]["y"],f"{cond_save_path}/{i}_seq_obs_cast_y_axis{i}_{0}.png")
-                pil_image_save_from_numpy(obs["sequential_obs"]["z"],f"{cond_save_path}/{i}_seq_obs_cast_z_axis{i}_{0}.png")
+                # pil_image_save_from_numpy(obs["sequential_obs"]["x"],f"{cond_save_path}/{i}_seq_obs_cast_x_axis{i}_{0}.png")
+                # pil_image_save_from_numpy(obs["sequential_obs"]["y"],f"{cond_save_path}/{i}_seq_obs_cast_y_axis{i}_{0}.png")
+                # pil_image_save_from_numpy(obs["sequential_obs"]["z"],f"{cond_save_path}/{i}_seq_obs_cast_z_axis{i}_{0}.png")
 
 
-                policy.set_oracle_obs(info["oracle_obs"]["z"])
+                # policy.set_oracle_obs(info["oracle_obs"]["z"])
                 # next_action, sorted_action, infos = policy.get_optimal_act(obs["sequential_obs"]["z"],obs["observation_history"])
 
                 if i == 0:

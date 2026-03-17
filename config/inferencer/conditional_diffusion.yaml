@@ -1,4 +1,4 @@
-name     : conditional_image_diffusion
+name     : conditional_diffusion
 USER_NAME: user
 # device   : "cuda:0"
 
