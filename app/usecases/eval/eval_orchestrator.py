@@ -2,14 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from tqdm import tqdm
 from typing import Any, Dict, List
-from omegaconf import DictConfig
-
 from app.wiring.builder.eval_builder import EvalBuilder
-from app.wiring.factories.case_context_factory import CaseContextFactory
-from app.wiring.factories.episode_context_factory import EpisodeContextFactory
-from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
 
 
 @dataclass
@@ -19,31 +14,32 @@ class EvalOrchestrator:
         self.case_context_factory    = dependency.case_context_factory
         self.episode_context_factory = dependency.episode_context_factory
         self.episode_runner          = dependency.episode_runner
-        self.policy                  = dependency.policy
+        self.policy_assets           = dependency.policy_assets
         self.mesh_factory            = dependency.mesh_factory
+        self.policy_factory          = dependency.policy_factory
+
+        ### ここのコンストラクタが通るまでを確認
 
     def run(self) -> Dict[str, Any]:
         cases_list = self.cfg.eval.cases
         for case_spec in cases_list:
+            # ----------
             dataset_dir     = case_spec.dataset_dir
             mesh_components = self.mesh_factory.create(dataset_dir)
             case_ctx        = self.case_context_factory.create(case_spec, mesh_components)
-
+            policy          = self.policy_factory.create(obs_model=case_ctx.obs_model)
+            # ----------
             per_case: List[Any] = []
-            # for k in range(self.cfg.eval.iter.start, self.cfg.eval.iter.end): # Objectごとの評価回数
-
-            k = 0
-
-
-            # ---
-            ep_ctx = self.episode_context_factory.create(
-                case        = case_ctx,
-                policy      = self.policy,
-                episode_idx = k,
-            )
-            # ---
-            result = self.episode_runner.run(ep_ctx)
-            per_case.append(result)
+            for k in tqdm(range(self.cfg.eval.num_episodes)):
+                policy.reset()
+                ep_ctx = self.episode_context_factory.create(
+                    case        = case_ctx,
+                    policy      = policy,
+                    episode_idx = k,
+                )
+                # ---
+                result = self.episode_runner.run(ep_ctx)
+                per_case.append(result)
 
             results[case_ctx.name] = per_case
 

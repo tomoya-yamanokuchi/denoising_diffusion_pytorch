@@ -7,7 +7,7 @@ diffusion:
   timesteps         : 1000
   sampling_timesteps: 20
 
-model:
+network:
   dim: 64
   dim_mults: [1, 2, 4, 8]
   flash_attn: true

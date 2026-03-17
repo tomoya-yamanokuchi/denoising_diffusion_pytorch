@@ -1,11 +1,11 @@
 defaults:
-  - /path   : local
-  - /log    : eval
-  - /watch  : eval_base
-  - /method : conditional_image_diffusion  # ここは評価対象のアルゴリズム
-  - /eval   : default
-  - /env    : default
-  - /dataset: celeba
+  - /path      : local
+  - /log       : eval
+  - /watch     : eval_base
+  - /inferencer: conditional_image_diffusion  # ここは評価対象のアルゴリズム
+  - /eval      : default
+  - /env       : default
+  - /dataset   : celeba
   - _self_
 
 name: eval

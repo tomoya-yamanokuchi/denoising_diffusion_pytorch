@@ -108,6 +108,7 @@ class Trainer(object):
         #     dl = self.accelerator.prepare(dl)
         #     self.dl = cycle(dl)
 
+        # import ipdb; ipdb.set_trace()
         assert len(dataset) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
         data_samples = len(dataset)
         train_size   = int(data_samples * 0.9)

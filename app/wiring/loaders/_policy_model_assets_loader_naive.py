@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from denoising_diffusion_pytorch.utils.serialization import load_diffusion, load_vaeac
 
-from app.wiring.types.policy_model_assets import PolicyModelAssets
+from app.wiring.types.policy_assets import PolicyModelAssets
 
 
 @dataclass

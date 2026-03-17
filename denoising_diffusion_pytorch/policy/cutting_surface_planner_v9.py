@@ -24,19 +24,19 @@ from  denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d
 
 class cutting_surface_planner():
 
-    def __init__(self, diffusion, trainer,sample_image_num, obs_model ,config):
+    def __init__(self, inferencer, trainer, sample_image_num, obs_model, config):
 
         self.ensemble_obs_model     = obs_model
-        self.diffusion              = diffusion
+        self.inferencer             = inferencer
         self.trainer                = trainer
         self.sample_image_num       = sample_image_num
         self.policy_config          = config
-        self.split_obs_config       = {}
+        self.split_obs_config = {}
+        self.oracle_image_z = None
 
-
-
-
-
+    def reset(self):
+        self.split_obs_config = {}
+        self.oracle_image_z = None
 
     def get_color_mask_image(self,images,mask_config):
 
@@ -394,14 +394,14 @@ class cutting_surface_planner():
                    }
 
         ## infer image by diffusion model
-        # sample_image        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        sample_image        = self.diffusion.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
+        # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
+        sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
 
 
-        # sample_image_1        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image_2        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image_3        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image_4        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
+        # sample_image_1        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
+        # sample_image_2        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
+        # sample_image_3        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
+        # sample_image_4        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
         # sample_image = torch.cat((sample_image_1,sample_image_2,sample_image_4),dim=0)
 
         batch_images        = (torch.permute(sample_image,(0,1,3,4,2))*255.0).numpy().astype(np.uint8)
@@ -450,10 +450,10 @@ class cutting_surface_planner():
 
         omega = self.policy_config["cfg_omega"]
         ## infer image by diffusion model
-        # sample_image        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
-        # sample_image        = self.diffusion.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = 0.2).detach().cpu()
-        sample_image        = self.diffusion.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = omega).detach().cpu()
-        # sample_image        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
+        # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
+        # sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = 0.2).detach().cpu()
+        sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = omega).detach().cpu()
+        # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
 
         '''
         sample_image: (batch, diffusion step, width, height, channel) かCWHとか
@@ -486,8 +486,8 @@ class cutting_surface_planner():
 
     def infer_image_by_vaeac(self,normalized_cond):
 
-        # self.diffusion.training= False
-        self.diffusion.eval()
+        # self.inferencer.training= False
+        self.inferencer.eval()
 
         if self.policy_config["ctrl_mode"] == "no_cond":
             # mask_       = torch.where(normalized_cond==-1.0, torch.tensor(1),torch.tensor(1))[:1,:,:]
@@ -505,7 +505,7 @@ class cutting_surface_planner():
                 "observed":observation}
 
         # sample_iage_ = validate(model=self.vaeac_model,data  = data).detach().cpu()
-        sample_image_ = vaeac_validate(model=self.diffusion,data  = data).detach().cpu()
+        sample_image_ = vaeac_validate(model=self.inferencer,data  = data).detach().cpu()
         sample_image = sample_image_.unsqueeze(1)
 
         # batch_images        = (((torch.permute(sample_image,(0,1,3,4,2))+1.0)/2.0)*255.0).numpy().astype(np.uint8)
@@ -535,8 +535,8 @@ class cutting_surface_planner():
 
         # import ipdb;ipdb.set_trace()
 
-        # sampled_seq = self.diffusion.model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
-        sampled_seq = self.diffusion.ema_model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
+        # sampled_seq = self.inferencer.model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
+        sampled_seq = self.inferencer.ema_model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
 
         # import ipdb;ipdb.set_trace()
 

@@ -1,8 +1,8 @@
 defaults:
   - cases  : simple
 
-policy    : policy.cutting_surface_planner_v9.cutting_surface_planner
-batch_size: 32
+# policy    : policy.cutting_surface_planner_v9.cutting_surface_planner
+
 
 policy_config:
   ctrl_mode    : epsilon_greedy_00
@@ -12,6 +12,7 @@ policy_config:
     param:
       ucb_lb: 0.5
   cfg_omega: 0.2
+  inference_sample_image_num: 32
 
 eval_data_path: /home/dev/.../geom_test_1
 
@@ -24,7 +25,7 @@ epoch   : "2000"  #"10000"
 
 task_step: 8
 observation_mode: partial_obs
-iter: [0, 6] # Objectごとの評価回数
+num_episodes: 6 # iter: [0, 6] # Objectごとの評価回数
 
 # start_action_idx:
   # obj_tag : "123456789" # ひと目で評価オブジェクトを一覧するためのタグ
