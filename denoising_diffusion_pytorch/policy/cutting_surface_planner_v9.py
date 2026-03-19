@@ -18,14 +18,14 @@ from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_nump
 from denoising_diffusion_pytorch.utils.os_utils import get_path ,get_folder_name,create_folder,pickle_utils,load_yaml
 
 # from  denoising_diffusion_pytorch.policy.cvaeac_tmp_valid import validate,load_vaeac_model
-from  denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_validate
-from  denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
+from denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_validate
+from denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
 
 from denoising_diffusion_pytorch.action_plan.types import PolicyConfig
 from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMaskCostEstimator
 from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
-
+from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
 
 class cutting_surface_planner():
 
@@ -45,9 +45,13 @@ class cutting_surface_planner():
             obs_model    = obs_model,
             segmentation = policy_config.segmentation,
         )
+        # ---
+        self.decision_aggregator = DecisionAggregator(
+            decision_config=policy_config.decision
+        )
         #  ---
-        self.split_obs_config       = {}
-        self.oracle_image_z         = None
+        self.split_obs_config = {}
+        self.oracle_image_z   = None
 
     def reset(self):
         self.split_obs_config = {}
@@ -220,33 +224,6 @@ class cutting_surface_planner():
         return forward_index, backward_index
 
 
-    def get_color_mask_cost(self,image,mask_config):
-
-        ## diffusion is trained with z axis sliced image
-        self.ensemble_obs_model.cast_2d_image_to_box_color(img=image,config={"axis":"z"})
-        ## get each axis ensemble images
-        cast_image_z = self.ensemble_obs_model.get_2d_image(axis="z")
-        cast_image_x = self.ensemble_obs_model.get_2d_image(axis="x")
-        cast_image_y = self.ensemble_obs_model.get_2d_image(axis="y")
-
-        cast_images = {     "image_x" : cast_image_x,
-                            "image_y" : cast_image_y,
-                            "image_z" : cast_image_z,}
-
-        cost_map = self.get_color_mask_image(images=cast_images,mask_config=mask_config) # 軸の区切りの概念なしのdiffusionが出力する生画像
-
-        ## transform mini batch image shape do not need transform axis, then permute if fixed "z"
-        cost_x = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map["image_x"],permute="z").sum(3).sum(1).sum(1) # 画像を軸のスライス単位に区切って、コスト計算する
-        cost_y = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map["image_y"],permute="z").sum(3).sum(1).sum(1) # 画像を軸のスライス単位に区切って、コスト計算する
-        cost_z = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map["image_z"],permute="z").sum(3).sum(1).sum(1) # 画像を軸のスライス単位に区切って、コスト計算する
-
-
-        cost_maps = {"x_axis":cost_x,
-                     "y_axis":cost_y,
-                     "z_axis":cost_z,}
-
-        return cost_maps
-
     def replace_outliers_with_mean(self,data):
         # 新しい配列をコピーして作成
         cleaned_data = data.copy()
@@ -262,44 +239,6 @@ class cutting_surface_planner():
             # 外れ値を平均で置換
             cleaned_data[:, col] = np.where((col_data < lower_bound) | (col_data > upper_bound), col_mean, col_data)
         return cleaned_data
-
-
-    def get_outlier_removed_cost(self,data,mode,t=0):
-        if mode == "clip_ucb_raw":
-
-            ## convert  cost to bool({0,1]})
-            cost_z_bool = np.where(data["z_axis"]>0,1,0)
-            cost_x_bool = np.where(data["x_axis"]>0,1,0)
-            cost_y_bool = np.where(data["y_axis"]>0,1,0)
-
-            ucb_beta = 1.0
-            cost_lb  = self.policy_config["decision_mode"]['param']["ucb_lb"]
-
-            ## calculate ucb
-            cost_z_ucb = cost_z_bool.mean(0)+ucb_beta*cost_z_bool.std(0)
-            cost_x_ucb = cost_x_bool.mean(0)+ucb_beta*cost_x_bool.std(0)
-            cost_y_ucb = cost_y_bool.mean(0)+ucb_beta*cost_y_bool.std(0)
-
-            cost_z = np.where(cost_z_ucb<=cost_lb,0,10) # 10に意味はない、あるかないかを示すための定数
-            cost_x = np.where(cost_x_ucb<=cost_lb,0,10) # 10に意味はない、あるかないかを示すための定数
-            cost_y = np.where(cost_y_ucb<=cost_lb,0,10) # 10に意味はない、あるかないかを示すための定数
-
-        else:
-            import ipdb;ipdb.set_trace()
-
-
-        return {"cost_z":cost_z,
-                "cost_x":cost_x,
-                "cost_y":cost_y,}
-
-    def dump_cost(self,cost_ensembles,cost):
-        if cost_ensembles is None:
-            cost_ensembles = cost
-        else:
-            for idx, val in enumerate(cost):
-                cost_ensembles[val] = np.vstack((cost_ensembles[val], cost[val]))
-
-        return cost_ensembles
 
 
     def infer_image_by_diffusion(self,normalized_cond):
@@ -580,7 +519,7 @@ class cutting_surface_planner():
                 last_step_images_tmp.append(load_last_step_images*255.0)
             last_step_images = np.asarray(last_step_images_tmp)
 
-            ## ------------ calculate cutting costs ------------
+            ## -------------------- calculate cutting costs --------------------
             collector = SegmentationCostCollector()
             for p in range(self.sample_image_num):
                 seg_cost = self.color_mask_cost_estimator.estimate_all(
@@ -592,18 +531,22 @@ class cutting_surface_planner():
             raw_cost = {"cost_b": cost_ensembles.blue,
                         "cost_r": cost_ensembles.red,
                         "cost_y": cost_ensembles.yellow}
-            import ipdb; ipdb.set_trace()
 
-
-            ## ------------ calculate outlier_removed_cost ------------
+            ## ------------ calculate aggregated cost from ensemble  ------------
             # 実際にはブルーだけを使っている
-            edited_cost_b = self.get_outlier_removed_cost(cost_b_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)
-            cost_x_b = edited_cost_b["cost_x"]
-            cost_y_b = edited_cost_b["cost_y"]
-            cost_z_b = edited_cost_b["cost_z"]
+            decision_costs = self.decision_aggregator.aggregate(cost_ensembles)
+            cost_x_b = decision_costs.blue.x_axis
+            cost_y_b = decision_costs.blue.y_axis
+            cost_z_b = decision_costs.blue.z_axis
 
-            # import ipdb;ipdb.set_trace()
+            ## create log data
+            decision_costs_log = {
+                "cost_b":decision_costs.blue,
+                "cost_r":decision_costs.red,
+                "cost_y":decision_costs.yellow,
+            }
 
+            ## ------------ ????????????  ------------
             ## get ensemble image
             ensemble_image   = last_step_images.mean(0)/255.0
             self.ensemble_obs_model.cast_2d_image_to_box_color(img=ensemble_image,config={"axis":"z"})
@@ -612,10 +555,6 @@ class cutting_surface_planner():
             ensemble_image_x = self.ensemble_obs_model.get_2d_image(axis="x")
             ensemble_image_y = self.ensemble_obs_model.get_2d_image(axis="y")
 
-            ## create edited_cost for logs
-            edited_cost = {"cost_b":edited_cost_b,
-                           "cost_r":edited_cost_r,
-                           "cost_y":edited_cost_y,}
 
             cost_map_logs ={"raw_cost":raw_cost,
                             "editied_cost":edited_cost}
@@ -673,84 +612,6 @@ class cutting_surface_planner():
             cost_map_logs ={"raw_cost":raw_cost,
                             "editied_cost":raw_cost}
 
-
-        '''
-        #############################################################
-        ## get split position for parts splitting !!! under development
-        #############################################################
-        # split_cost_th = split_cost_th_candidate[min(split_cost_th_candidate, key=split_cost_th_candidate.get)]
-        split_cost_th     = 0.0
-        # split_candidate_x = self.find_false_true_false_indices(((cost_x_b+cost_x_r).clip(split_cost_th,None)-split_cost_th)==0.0)
-        # split_candidate_y = self.find_false_true_false_indices(((cost_y_b+cost_y_r).clip(split_cost_th,None)-split_cost_th)==0.0)
-        # split_candidate_z = self.find_false_true_false_indices(((cost_z_b+cost_z_r).clip(split_cost_th,None)-split_cost_th)==0.0)
-
-        split_candidate_x = self.find_false_true_false_indices(((cost_x_b).clip(split_cost_th,None)-split_cost_th)==0.0)
-        split_candidate_y = self.find_false_true_false_indices(((cost_y_b).clip(split_cost_th,None)-split_cost_th)==0.0)
-        split_candidate_z = self.find_false_true_false_indices(((cost_z_b).clip(split_cost_th,None)-split_cost_th)==0.0)
-
-
-        split_index_y     = self.get_split_idx(split_candidate_y,axis="y",observation_history=observation_history)
-        split_index_x     = self.get_split_idx(split_candidate_x,axis="x",observation_history=observation_history)
-        split_index_z     = self.get_split_idx(split_candidate_z,axis="z",observation_history=observation_history)
-
-        split_candidate = [split_index_x,split_index_y,split_index_z]
-        split_index     = self.random_non_negative_one_element(split_candidate)
-
-        if split_index != -1 :
-            grid_size =  int(self.ensemble_obs_model.voxel_hander.box_array.grid_3dim_size[0])
-            split_index_z_max =  int(grid_size-1)
-            split_index_x_max =  int(grid_size*2-1)
-            split_index_y_max =  int(grid_size*2)
-
-            if split_index <=split_index_z_max:
-                split_index_ = split_index
-                offset = 0
-                axis = "z"
-                cost_ = cost_z_b
-            elif split_index_z_max<split_index<=split_index_x_max:
-                split_index_ = split_index-grid_size
-                cost_ = cost_x_b
-                offset = grid_size
-                axis = "x"
-            else:
-                split_index_ = split_index-split_index_y_max
-                cost_ = cost_y_b
-                offset = split_index_y_max
-                axis = "y"
-
-            forward_index ,back_ward_index = self.find_nonzero_indices_both_1(lst=cost_,start_index = split_index_)
-
-
-            if np.abs(split_index-forward_index)<(split_index-back_ward_index):
-                split_range = (np.asarray([back_ward_index, split_index_])).tolist()
-            elif np.abs(split_index-forward_index)>(split_index-back_ward_index):
-                split_range = (np.asarray([split_index,forward_index])).tolist()
-            else:
-                # import ipdb;ipdb.set_trace()
-                forward_index,back_ward_index = self.find_nonzero_indices_both_2(lst=cost_,start_index = split_index_)
-
-                if  forward_index>back_ward_index:
-                    split_range = [0,split_index_]
-                elif forward_index<back_ward_index:
-                    split_range = [split_index_,cost_.shape[0]]
-                else:
-                    trigger = np.random.randint(2)
-                    if trigger == 1:
-                        split_range = [0,split_index_]
-                    else:
-                        split_range = [split_index_,cost_.shape[0]]
-                    # split_range = [split_index_,cost]
-                    # import ipdb;ipdb.set_trace()
-
-            # if split_range is None:
-                # import ipdb;ipdb.set_trace()
-                print(f"===================: {split_range}")
-                self.split_obs_config[str(split_range)] = { "axis":axis,
-                                                            "range":split_range,
-                                                            "offset":offset}
-
-                print(f"split_range:{self.split_obs_config}")
-        '''
 
         #####################################################################
         ## get slice range for pats remove

@@ -7,8 +7,8 @@ from typing import Dict
 
 import numpy as np
 
-from denoising_diffusion_pytorch.action_plan.types import ColorMaskConfig, AxisCost
-from ..action_plan.types import SegmentationConfig, SegmentationCost
+from ..cost.types import SegmentationCost, AxisCost
+from ..action_plan.types import SegmentationConfig, ColorMaskConfig
 from denoising_diffusion_pytorch.utils.pil_utils import color_range_mask
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
 
@@ -41,18 +41,8 @@ class ColorMaskCostEstimator:
         return self._aggregate_slice_costs(mask_images)
 
 
-    def _resolve_mask_config(self, color_name: str) -> ColorMaskConfig:
-        if color_name == "blue":
-            return self.segmentation.blue
-        if color_name == "red":
-            return self.segmentation.red
-        if color_name == "yellow":
-            return self.segmentation.yellow
-        raise ValueError(f"Unknown color_name: {color_name}")
-
     def _cast_to_axis_images(self, image: np.ndarray) -> Dict[str, np.ndarray]:
         self.obs_model.cast_2d_image_to_box_color(img=image, config={"axis": "z"})
-
         return {
             "image_x": self.obs_model.get_2d_image(axis="x"),
             "image_y": self.obs_model.get_2d_image(axis="y"),

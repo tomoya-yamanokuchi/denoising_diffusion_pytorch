@@ -33,3 +33,17 @@ class SegmentationCostEnsemble:
     blue  : AxisCostEnsemble
     red   : AxisCostEnsemble
     yellow: AxisCostEnsemble
+
+
+@dataclass(frozen=True)
+class AxisDecisionCost:
+    x_axis: np.ndarray
+    y_axis: np.ndarray
+    z_axis: np.ndarray
+
+
+@dataclass(frozen=True)
+class SegmentationDecisionCost:
+    blue  : AxisDecisionCost
+    red   : AxisDecisionCost
+    yellow: AxisDecisionCost

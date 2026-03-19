@@ -668,7 +668,7 @@ class cutting_surface_planner():
                         "cost_r": cost_r_ensembles,
                         "cost_y": cost_y_ensembles}
 
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
 
             # 実際にはブルーだけを使っている
             edited_cost_b = self.get_outlier_removed_cost(cost_b_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)
@@ -686,7 +686,7 @@ class cutting_surface_planner():
             cost_y_y = edited_cost_y["cost_y"]
             cost_z_y = edited_cost_y["cost_z"]
 
-            # import ipdb;ipdb.set_trace()
+            import ipdb;ipdb.set_trace()
 
             ## get ensemble image
             ensemble_image   = last_step_images.mean(0)/255.0

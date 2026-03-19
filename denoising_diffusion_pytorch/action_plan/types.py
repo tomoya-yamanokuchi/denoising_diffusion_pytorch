@@ -68,37 +68,3 @@ class PolicyConfig:
     segmentation: SegmentationConfig
     decision    : DecisionConfig
 
-
-
-import numpy as np
-
-from dataclasses import dataclass
-import numpy as np
-
-
-@dataclass(frozen=True)
-class AxisCost:
-    x_axis: np.ndarray
-    y_axis: np.ndarray
-    z_axis: np.ndarray
-
-
-@dataclass(frozen=True)
-class SegmentationCost:
-    blue: AxisCost
-    red: AxisCost
-    yellow: AxisCost
-
-
-@dataclass(frozen=True)
-class AxisCostEnsemble:
-    x_axis: np.ndarray
-    y_axis: np.ndarray
-    z_axis: np.ndarray
-
-
-@dataclass(frozen=True)
-class SegmentationCostEnsemble:
-    blue: AxisCostEnsemble
-    red: AxisCostEnsemble
-    yellow: AxisCostEnsemble
