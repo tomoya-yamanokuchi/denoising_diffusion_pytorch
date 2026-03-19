@@ -1,15 +1,6 @@
-
-
-
 import random
 import numpy as np
 import torch
-from torchvision import transforms
-from torchvision.transforms import InterpolationMode
-from PIL import Image
-from scipy import stats
-import cv2
-
 
 from denoising_diffusion_pytorch.utils.normalization import LimitsNormalizer
 from denoising_diffusion_pytorch.utils.arrays import to_torch,to_device,to_np
@@ -26,6 +17,8 @@ from denoising_diffusion_pytorch.action_plan.types import PolicyConfig
 from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMaskCostEstimator
 from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
 from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
+from .ensemble_image_builder import EnsembleImageBuilder
+
 
 class cutting_surface_planner():
 
@@ -49,21 +42,14 @@ class cutting_surface_planner():
         self.decision_aggregator = DecisionAggregator(
             decision_config=policy_config.decision
         )
+        self.ensemble_image_builder = EnsembleImageBuilder(obs_model)
         #  ---
         self.split_obs_config = {}
         self.oracle_image_z   = None
 
     def reset(self):
         self.split_obs_config = {}
-        self.oracle_image_z = None
-
-    def get_color_mask_image(self,images,mask_config):
-
-        cost_map = {}
-        for idx, val in enumerate(images):
-            cost_map[val] = color_range_mask(image=images[val],mask_config=mask_config)
-
-        return cost_map
+        self.oracle_image_z   = None
 
 
     def get_slice_range(self,cost,axis,observation_history):
@@ -96,42 +82,6 @@ class cutting_surface_planner():
         return slice_range
 
 
-
-
-
-
-
-    def get_split_idx(self,cost,axis,observation_history):
-
-            if axis == "z":
-                offset = 0
-            elif axis=="x":
-                offset = self.ensemble_obs_model.voxel_hander.box_array.grid_3dim_size[0]
-            elif axis =="y":
-                offset = self.ensemble_obs_model.voxel_hander.box_array.grid_3dim_size[0]+self.ensemble_obs_model.voxel_hander.box_array.grid_3dim_size[0]
-
-            indices_of_ones = cost+offset
-
-            # import ipdb;ipdb.set_trace()
-
-            if len(indices_of_ones)==0:
-                slice_range =-1
-            else:
-
-                observation_history_keys = list(observation_history.keys())
-                sprit_range_ = [x for x in indices_of_ones if x not in observation_history_keys]
-                if len(sprit_range_)==0:
-                    slice_range =-1
-                else:
-                    slice_range  = random.choice(sprit_range_)
-                    # print(f"split_enable | candidate : {sprit_range_}, set :{slice_range}")
-                    # import ipdb;ipdb.set_trace()
-
-            # import ipdb;ipdb.set_trace()
-
-            return slice_range
-
-
     def find_nonzero_indices(self, arr):
 
         ## find indices array > cost threshold
@@ -142,152 +92,6 @@ class cutting_surface_planner():
         return start_index, end_index
 
 
-    def find_false_true_false_indices(self,lst):
-        result = []
-        start = -1
-
-        for i in range(len(lst)):
-            if lst[i] == False:
-                if start != -1 and i - start > 1:
-                    result.extend(range(start + 1, i))
-                start = i
-        return np.asarray(result)
-
-
-    def compare_lists_for_zero(self, list1, list2):
-        if len(list1) != len(list2):
-            raise ValueError("リストの長さが異なります。")
-        result = []
-        for item1, item2 in zip(list1, list2):
-            result.append(item1 == 0 and item2 == 0)
-
-        return result
-
-
-    def random_non_negative_one_element(self,input_list):
-        # -1ではない要素をフィルタリング
-        non_negative_elements = [element for element in input_list if element != -1]
-
-        if not non_negative_elements:
-            # raise ValueError("リストには -1 以外の要素が含まれていません。")
-            return -1
-
-        # ランダムに1つ抽出
-        return random.choice(non_negative_elements)
-
-
-    def find_nonzero_indices_both_1(self, lst, start_index):
-        forward_index = -1
-        backward_index = -1
-
-        # Search forward from start_index + 1
-        for i in range(start_index + 1, len(lst)):
-            if lst[i] != 0:
-                forward_index = i
-                break
-
-        # Search backward from start_index - 1
-        for i in range(start_index - 1, -1, -1):
-            if lst[i] != 0:
-                backward_index = i
-                break
-        if backward_index == -1:
-            backward_index=0
-        elif forward_index==-1:
-            forward_index=len(lst)
-
-        return forward_index, backward_index
-
-    def find_nonzero_indices_both_2(self, lst, start_index):
-        forward_index = 0
-        backward_index = 0
-
-        # Search forward from start_index + 1
-        for i in range(start_index + 1, len(lst)):
-            forward_index+=lst[i]
-            # if lst[i] != 0:
-                # forward_index = i
-                # break
-
-        # Search backward from start_index - 1
-        for i in range(start_index - 1, -1, -1):
-            backward_index+=lst[i]
-            # if lst[i] != 0:
-                # backward_index = i
-                # break
-
-        # if backward_index == -1:
-        #     backward_index=0
-        # elif forward_index==-1:
-        #     forward_index=len(lst)
-
-        return forward_index, backward_index
-
-
-    def replace_outliers_with_mean(self,data):
-        # 新しい配列をコピーして作成
-        cleaned_data = data.copy()
-        # 各列に対して処理を行う
-        for col in range(data.shape[1]):
-            col_data = data[:, col]
-            Q1 = np.percentile(col_data, 25)
-            Q3 = np.percentile(col_data, 75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            col_mean = np.mean(col_data[(col_data >= lower_bound) & (col_data <= upper_bound)])
-            # 外れ値を平均で置換
-            cleaned_data[:, col] = np.where((col_data < lower_bound) | (col_data > upper_bound), col_mean, col_data)
-        return cleaned_data
-
-
-    def infer_image_by_diffusion(self,normalized_cond):
-
-
-        if self.policy_config.control.mode == "no_cond":
-            # import ipdb;ipdb.set_trace()
-            cond = None
-        else:
-            # cond = {0:{ "idx":torch.where(normalized_cond>-1.0),
-            #             "val":normalized_cond}}
-            mask = (normalized_cond != -1.0).any(dim=0)
-            cond = {
-                0: {
-                    "idx": torch.where(mask),
-                    "val": normalized_cond
-                    }
-                   }
-
-        ## infer image by diffusion model
-        # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-
-
-        # sample_image_1        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image_2        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image_3        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image_4        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond ).detach().cpu()
-        # sample_image = torch.cat((sample_image_1,sample_image_2,sample_image_4),dim=0)
-
-        batch_images        = (torch.permute(sample_image,(0,1,3,4,2))*255.0).numpy().astype(np.uint8)
-        last_step_images    = batch_images[:,-1,:,:,:]
-
-        # import ipdb;ipdb.set_trace()
-
-        # # Resize & ToTensor
-        # env_img_dim = self.ensemble_obs_model.init_imgs_y.shape[0]
-        # transform_func = transforms.Compose(
-        #                                     [
-        #                                         transforms.Resize((env_img_dim, env_img_dim), interpolation=InterpolationMode.NEAREST),
-        #                                         # transforms.Resize((env_img_dim, env_img_dim)),
-        #                                         transforms.ToTensor(),])
-        # # 各画像に適用
-        # transformed_imgs = [transform_func(Image.fromarray(img)) for img in last_step_images]
-        # # バッチTensorにまとめる（B, C, H, W）
-        # batch_tensor = torch.stack(transformed_imgs)  # shape: (32, 3, 512, 512)
-        # last_step_images = (batch_tensor.permute(0,2,3,1)*255.0).numpy().astype(np.uint8)
-
-        return last_step_images
 
 
 
@@ -315,10 +119,7 @@ class cutting_surface_planner():
 
         omega = self.policy_config.inference.guidance_scale
         ## infer image by diffusion model
-        # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
-        # sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = 0.2).detach().cpu()
         sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = omega).detach().cpu()
-        # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
 
         '''
         sample_image: (batch, diffusion step, width, height, channel) かCWHとか
@@ -329,20 +130,6 @@ class cutting_surface_planner():
         # batch_images        = (torch.permute(sample_image,(0,1,3,4,2))*255.0).numpy().astype(np.uint8)
         batch_images        = (torch.permute(sample_image,(0,1,3,4,2))*255.0).clamp(0, 255).cpu().numpy().astype(np.uint8)
         last_step_images    = batch_images[:,-1,:,:,:]
-
-
-        # Resize & ToTensor
-        # env_img_dim = self.ensemble_obs_model.init_imgs_y.shape[0]
-        # transform_func = transforms.Compose(
-        #                                     [
-        #                                         transforms.Resize((env_img_dim, env_img_dim), interpolation=InterpolationMode.NEAREST),
-        #                                         # transforms.Resize((env_img_dim, env_img_dim)),
-        #                                         transforms.ToTensor(),])
-        # # 各画像に適用
-        # transformed_imgs = [transform_func(Image.fromarray(img)) for img in last_step_images]
-        # # バッチTensorにまとめる（B, C, H, W）
-        # batch_tensor = torch.stack(transformed_imgs)  # shape: (32, 3, 512, 512)
-        # last_step_images = (batch_tensor.permute(0,2,3,1)*255.0).numpy().astype(np.uint8)
 
         return last_step_images # (batch, 1, width, height, channel)
 
@@ -481,7 +268,6 @@ class cutting_surface_planner():
         # pil_image_save_from_numpy(obs["sequential_obs"]["x"],f"{cond_image_save_path}/seq_obs_cast_{iters}_axis_x_{0}.png")
 
 
-
         if self.policy_config.control.mode != "oracle_obs" and self.policy_config.control.mode != "random" :
 
             # import ipdb;ipdb.set_trace()
@@ -495,8 +281,6 @@ class cutting_surface_planner():
             ## conditional image generation
             if self.policy_config.inference.model == "vaeac":
                 last_step_images = self.infer_image_by_vaeac(normalized_cond=normalized_cond)
-            elif self.policy_config.inference.model=="diffusion":
-                last_step_images = self.infer_image_by_diffusion(normalized_cond=normalized_cond)
             elif self.policy_config.inference.model=="conditional_diffusion":
                 last_step_images = self.infer_image_by_conditional_diffusion(normalized_cond=normalized_cond)
             elif self.policy_config.inference.model=="diffusion_1D":
@@ -527,91 +311,20 @@ class cutting_surface_planner():
                 )
                 collector.add(seg_cost)
             cost_ensembles = collector.build()
-            ## create raw_cost for logs
-            raw_cost = {"cost_b": cost_ensembles.blue,
-                        "cost_r": cost_ensembles.red,
-                        "cost_y": cost_ensembles.yellow}
 
             ## ------------ calculate aggregated cost from ensemble  ------------
-            # 実際にはブルーだけを使っている
-            decision_costs = self.decision_aggregator.aggregate(cost_ensembles)
-            cost_x_b = decision_costs.blue.x_axis
-            cost_y_b = decision_costs.blue.y_axis
-            cost_z_b = decision_costs.blue.z_axis
+            costs_decision = self.decision_aggregator.aggregate(cost_ensembles)
+            cost_x_b = costs_decision.blue.x_axis
+            cost_y_b = costs_decision.blue.y_axis
+            cost_z_b = costs_decision.blue.z_axis
 
-            ## create log data
-            decision_costs_log = {
-                "cost_b":decision_costs.blue,
-                "cost_r":decision_costs.red,
-                "cost_y":decision_costs.yellow,
+            ## ------------ create log data  ------------
+            ensemble_images = self.ensemble_image_builder.build_from_generated_samples(last_step_images)
+
+            cost_map_logs = {
+                "cost_ensembles": cost_ensembles,
+                "costs_decision": costs_decision,
             }
-
-            ## ------------ ????????????  ------------
-            ## get ensemble image
-            ensemble_image   = last_step_images.mean(0)/255.0
-            self.ensemble_obs_model.cast_2d_image_to_box_color(img=ensemble_image,config={"axis":"z"})
-            ## get each axis ensemble images
-            ensemble_image_z = self.ensemble_obs_model.get_2d_image(axis="z")
-            ensemble_image_x = self.ensemble_obs_model.get_2d_image(axis="x")
-            ensemble_image_y = self.ensemble_obs_model.get_2d_image(axis="y")
-
-
-            cost_map_logs ={"raw_cost":raw_cost,
-                            "editied_cost":edited_cost}
-
-
-
-        elif self.policy_config.control.mode == "oracle_obs" or self.policy_config.control.mode == "random":
-
-            ensemble_image = self.oracle_image_z
-            self.ensemble_obs_model.cast_2d_image_to_box_color(img=ensemble_image,config={"axis":"z"})
-            ## get each axis ensemble images
-            ensemble_image_z = self.ensemble_obs_model.get_2d_image(axis="z")
-            ensemble_image_x = self.ensemble_obs_model.get_2d_image(axis="x")
-            ensemble_image_y = self.ensemble_obs_model.get_2d_image(axis="y")
-            ensemble_images  = {"image_x":ensemble_image_x,
-                                "image_y":ensemble_image_y,
-                                "image_z":ensemble_image_z,}
-
-            #############################################################
-            ## get each segmented images
-            ##############################################################
-
-            cost_map_yellow = self.get_color_mask_image(images=ensemble_images,mask_config=self.policy_config["image_mask_config_y"])
-            cost_map_blue   = self.get_color_mask_image(images=ensemble_images,mask_config=self.policy_config["image_mask_config_b"])
-            cost_map_red    = self.get_color_mask_image(images=ensemble_images,mask_config=self.policy_config["image_mask_config_r"])
-            # pil_image_save_from_numpy(ensemble_image_z,"./ensemble_z.png")
-            # pil_image_save_from_numpy(ensemble_image_x,"./ensemble_x.png")
-            # pil_image_save_from_numpy(ensemble_image_y,"./ensemble_y.png")
-
-            ############################################################
-            # get cost of each segmented images for oracle obs and random
-            #############################################################
-            # transform mini batch image shape do not need transform axis, then permute if fixed "z"
-            cost_x_y = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_yellow["image_x"],permute="z").sum(3).sum(1).sum(1)
-            cost_y_y = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_yellow["image_y"],permute="z").sum(3).sum(1).sum(1)
-            cost_z_y = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_yellow["image_z"],permute="z").sum(3).sum(1).sum(1)
-
-
-            # transform mini batch image shape do not need transform axis, then permute if fixed "z"
-            cost_x_b = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_blue["image_x"],permute="z").sum(3).sum(1).sum(1)
-            cost_y_b = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_blue["image_y"],permute="z").sum(3).sum(1).sum(1)
-            cost_z_b = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_blue["image_z"],permute="z").sum(3).sum(1).sum(1)
-
-
-            # transform mini batch image shape do not need transform axis, then permute if fixed "z"
-            cost_x_r = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_red["image_x"],permute="z").sum(3).sum(1).sum(1)
-            cost_y_r = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_red["image_y"],permute="z").sum(3).sum(1).sum(1)
-            cost_z_r = self.ensemble_obs_model.voxel_hander.get_2d_image_to_mini_batch_image(cost_map_red["image_z"],permute="z").sum(3).sum(1).sum(1)
-
-            ## create raw_cost for logs
-            raw_cost = {"cost_b": cost_map_blue,
-                        "cost_r": cost_map_red,
-                        "cost_y": cost_map_yellow}
-
-            cost_map_logs ={"raw_cost":raw_cost,
-                            "editied_cost":raw_cost}
-
 
         #####################################################################
         ## get slice range for pats remove
@@ -619,12 +332,10 @@ class cutting_surface_planner():
         split_index= 2
         if iters == 0 and split_index==-1:
             print("fail to first split")
-            # slice_range_z =self.get_slice_range(cost=cost_z_b+cost_z_r,axis="z",observation_history=observation_history)
-            # slice_range_x =self.get_slice_range(cost=cost_x_b+cost_x_r,axis="x",observation_history=observation_history)
-            # slice_range_y =self.get_slice_range(cost=cost_y_b+cost_y_r,axis="y",observation_history=observation_history)
             slice_range_z =self.get_slice_range(cost=cost_z_b,axis="z",observation_history=observation_history)
             slice_range_x =self.get_slice_range(cost=cost_x_b,axis="x",observation_history=observation_history)
             slice_range_y =self.get_slice_range(cost=cost_y_b,axis="y",observation_history=observation_history)
+
             slice_range_candidates = [slice_range_z,slice_range_x,slice_range_y]
             # 最も長いリスト
             slice_range = max(slice_range_candidates, key=len)
@@ -709,8 +420,6 @@ class cutting_surface_planner():
         cost_z = cost_z_b
 
 
-
-
         #################################################
         ## random policy setting
         ################################################
@@ -745,13 +454,10 @@ class cutting_surface_planner():
                 reverse=False))
         ######################################################################################################3
 
-        infos ={"ensemble_image": { "z":ensemble_image_z,
-                                    "x":ensemble_image_x,
-                                    "y":ensemble_image_y,}}
+        infos ={"ensemble_image": ensemble_images}
 
         # print(f"split_candidate :{split_candidate}, spit_idx : {split_index}, slice_range :{slice_range}")
         print(f"spit_idx : {split_index}, slice_range :{slice_range}")
-
 
         return slice_range, sort_action_candidate, infos
 
