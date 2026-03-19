@@ -13,8 +13,8 @@ from app.wiring.services.config_validator import ConfigValidator
 
 
 _METHOD_BUILDERS: Dict[str, Type[TrainMethodBuilder]] = {
-    "conditional_image_diffusion": ConditionalImageDiffusionBuilder,
-    "vaeac"                      : VAEACBuilder,
+    "conditional_diffusion": ConditionalImageDiffusionBuilder,
+    "vaeac"                : VAEACBuilder,
 }
 
 
@@ -48,7 +48,7 @@ class TrainBuilder:
 
     def validate_config_usecase(self) -> None:
         from app.wiring.services.validate_key_config import validate_key_config
-        validate_key_config(self.cfg, ["watch", "method", "dataset"])
+        validate_key_config(self.cfg, ["watch", "inferencer", "dataset"])
 
     def build_config_artifact_writer(self) -> None:
         from app.wiring.services.train_config_artifact_writer import TrainConfigArtifactWriter
@@ -76,8 +76,6 @@ class TrainBuilder:
         run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
         self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
         self.artifact_static_root = run_dir
-        import ipdb; ipdb.set_trace()
-
 
 
     def build_method(self) -> None:
@@ -85,7 +83,7 @@ class TrainBuilder:
         - Sub builder に差分を閉じ込める。
         - Sub builder には最低限、build_dataset/build_model/build_method/build_trainer というメソッドがある想定。
         """
-        name = self.cfg.method.name
+        name = self.cfg.inferencer.name
         if name not in _METHOD_BUILDERS:
             raise ValueError(f"Unknown train method: {name}. Known: {list(_METHOD_BUILDERS.keys())}")
 

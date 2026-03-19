@@ -177,7 +177,7 @@ if __name__ == '__main__':
             create_folder(cond_save_path)
 
 
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             ## env for evaluation
             # import ipdb; ipdb.set_trace()
             env = dismantling_env(grid_config=s_grid_config,mesh_components=mesh_components) # visualize & cost computation

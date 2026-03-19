@@ -4,7 +4,8 @@ from typing import Any
 
 @dataclass(frozen=True)
 class TrainedModelAssets:
-    inferencer: Any
-    trainer   : Any
-    dataset   : Any
-    epoch     : int
+    infer_model: str
+    inferencer : Any
+    trainer    : Any
+    dataset    : Any
+    epoch      : int

@@ -82,7 +82,7 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0'):
     print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
 
 
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
 
     trainer.load(epoch)
 

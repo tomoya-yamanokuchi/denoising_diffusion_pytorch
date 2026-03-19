@@ -1,23 +1,8 @@
 defaults:
-  - cases  : simple
-
-# policy    : policy.cutting_surface_planner_v9.cutting_surface_planner
-
-
-policy_config:
-  ctrl_mode    : epsilon_greedy_00
-  infer_model  : conditional_diffusion # vaeac
-  decision_mode:
-    mode: clip_ucb_raw
-    param:
-      ucb_lb: 0.5
-  cfg_omega: 0.2
-  inference_sample_image_num: 32
+  - cases : simple
+  - policy: default
 
 eval_data_path: /home/dev/.../geom_test_1
-
-# loadpath: "/home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v1/"
-# loadpath: "/home/dev/workspace/denoising_diffusion_pytorch/logs/train/D64/"
 
 train_run_dir: /home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/train/D64
 
@@ -27,6 +12,3 @@ task_step: 8
 observation_mode: partial_obs
 num_episodes: 6 # iter: [0, 6] # Objectごとの評価回数
 
-# start_action_idx:
-  # obj_tag : "123456789" # ひと目で評価オブジェクトを一覧するためのタグ
-  # Object_1: ???   # ここは後で設計（range指定やファイル指定が現実的）

@@ -22,18 +22,24 @@ from  denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_val
 from  denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import dismantling_env
 
+from denoising_diffusion_pytorch.action_plan.types import PolicyConfig
+
 
 class cutting_surface_planner():
 
-    def __init__(self, inferencer, trainer, sample_image_num, obs_model, config):
-
+    def __init__(self,
+            inferencer,
+            trainer,
+            obs_model    : dismantling_env,
+            policy_config: PolicyConfig,
+        ):
         self.ensemble_obs_model     = obs_model
         self.inferencer             = inferencer
         self.trainer                = trainer
-        self.sample_image_num       = sample_image_num
-        self.policy_config          = config
-        self.split_obs_config = {}
-        self.oracle_image_z = None
+        self.policy_config          = policy_config
+        self.sample_image_num       = policy_config.inference.sample_image_num
+        self.split_obs_config       = {}
+        self.oracle_image_z         = None
 
     def reset(self):
         self.split_obs_config = {}
@@ -251,86 +257,7 @@ class cutting_surface_planner():
 
 
     def get_outlier_removed_cost(self,data,mode,t=0):
-
-        if mode == "remove_outliers_cal_cost_mean":
-            cost_z = self.replace_outliers_with_mean(data["z_axis"]).mean(0)
-            cost_x = self.replace_outliers_with_mean(data["x_axis"]).mean(0)
-            cost_y = self.replace_outliers_with_mean(data["y_axis"]).mean(0)
-        elif mode == "remove_outliers_cal_cost_mode":
-            cost_z = stats.mode(self.replace_outliers_with_mean(data["z_axis"]), axis=0).mode[0]
-            cost_x = stats.mode(self.replace_outliers_with_mean(data["x_axis"]), axis=0).mode[0]
-            cost_y = stats.mode(self.replace_outliers_with_mean(data["y_axis"]), axis=0).mode[0]
-        elif mode == "cal_cost_mode":
-            cost_z = stats.mode(data["z_axis"], axis=0).mode[0]
-            cost_x = stats.mode(data["x_axis"], axis=0).mode[0]
-            cost_y = stats.mode(data["y_axis"], axis=0).mode[0]
-        elif mode == "cal_cost_mean":
-            cost_z = data["z_axis"].mean(0)
-            cost_x = data["x_axis"].mean(0)
-            cost_y = data["y_axis"].mean(0)
-        elif mode == "cal_cost_mean_ucb":
-
-            ## convert  cost to bool({0,1]})
-            cost_z_bool = np.where(data["z_axis"]>0,1,0) #１ピクセルでもしきい値以上での目標部品が存在するものとして計算
-            cost_x_bool = np.where(data["x_axis"]>0,1,0) #１ピクセルでもしきい値以上での目標部品が存在するものとして計算
-            cost_y_bool = np.where(data["y_axis"]>0,1,0) #１ピクセルでもしきい値以上での目標部品が存在するものとして計算
-
-            ## set hyper param
-            ucb_beta = 1.0
-            # cost_lb_discount_factor = 0.99
-            cost_lb_discount_factor  = self.policy_config["decision_mode"]['param']["cost_lb_discount_factor"]
-            # cost_lb  = 1.0-np.power(0.99,t)
-            cost_lb  = 1.0-np.power(cost_lb_discount_factor,t)
-
-            ## calculate ucb
-            cost_z_ucb = cost_z_bool.mean(0)+ucb_beta*cost_z_bool.var(0)
-            cost_x_ucb = cost_x_bool.mean(0)+ucb_beta*cost_x_bool.var(0)
-            cost_y_ucb = cost_y_bool.mean(0)+ucb_beta*cost_y_bool.var(0)
-
-            ## remove cost<cost_lb
-            # cost_z = np.where(cost_z_ucb<=cost_lb,0,10)
-            # cost_x = np.where(cost_x_ucb<=cost_lb,0,10)
-            # cost_y = np.where(cost_y_ucb<=cost_lb,0,10)
-
-            # cost_z =cost_z_ucb
-            # cost_x =cost_x_ucb
-            # cost_y =cost_y_ucb
-
-            cost_z = np.where(cost_z_ucb<=cost_lb,0,10)
-            cost_x = np.where(cost_x_ucb<=cost_lb,0,10)
-            cost_y = np.where(cost_y_ucb<=cost_lb,0,10)
-
-        elif mode == "clip_ucb":
-
-            ## convert  cost to bool({0,1]})
-            cost_z_bool = np.where(data["z_axis"]>0,1,0)
-            cost_x_bool = np.where(data["x_axis"]>0,1,0)
-            cost_y_bool = np.where(data["y_axis"]>0,1,0)
-
-            ucb_beta = 1.0
-            cost_lb  = self.policy_config["decision_mode"]['param']["ucb_lb"]
-
-            ## calculate ucb
-            cost_z_ucb = cost_z_bool.mean(0)+ucb_beta*cost_z_bool.var(0)
-            cost_x_ucb = cost_x_bool.mean(0)+ucb_beta*cost_x_bool.var(0)
-            cost_y_ucb = cost_y_bool.mean(0)+ucb_beta*cost_y_bool.var(0)
-
-
-            ## remove cost<cost_lb
-            # cost_z = np.where(cost_z_ucb<=cost_lb,0,10)
-            # cost_x = np.where(cost_x_ucb<=cost_lb,0,10)
-            # cost_y = np.where(cost_y_ucb<=cost_lb,0,10)
-
-            # cost_z =cost_z_ucb
-            # cost_x =cost_x_ucb
-            # cost_y =cost_y_ucb
-
-            cost_z = np.where(cost_z_ucb<=cost_lb,0,10)
-            cost_x = np.where(cost_x_ucb<=cost_lb,0,10)
-            cost_y = np.where(cost_y_ucb<=cost_lb,0,10)
-
-
-        elif mode == "clip_ucb_raw":
+        if mode == "clip_ucb_raw":
 
             ## convert  cost to bool({0,1]})
             cost_z_bool = np.where(data["z_axis"]>0,1,0)
@@ -345,23 +272,13 @@ class cutting_surface_planner():
             cost_x_ucb = cost_x_bool.mean(0)+ucb_beta*cost_x_bool.std(0)
             cost_y_ucb = cost_y_bool.mean(0)+ucb_beta*cost_y_bool.std(0)
 
-            ## remove cost<cost_lb
-            # cost_z = np.where(cost_z_ucb<=cost_lb,0,10)
-            # cost_x = np.where(cost_x_ucb<=cost_lb,0,10)
-            # cost_y = np.where(cost_y_ucb<=cost_lb,0,10)
-
-            # cost_z =cost_z_ucb
-            # cost_x =cost_x_ucb
-            # cost_y =cost_y_ucb
-
-            cost_z = np.where(cost_z_ucb<=cost_lb,0,10) #10に意味はない、あるかないかを示すための定数
-            cost_x = np.where(cost_x_ucb<=cost_lb,0,10) #10に意味はない、あるかないかを示すための定数
-            cost_y = np.where(cost_y_ucb<=cost_lb,0,10) #10に意味はない、あるかないかを示すための定数
-
-
+            cost_z = np.where(cost_z_ucb<=cost_lb,0,10) # 10に意味はない、あるかないかを示すための定数
+            cost_x = np.where(cost_x_ucb<=cost_lb,0,10) # 10に意味はない、あるかないかを示すための定数
+            cost_y = np.where(cost_y_ucb<=cost_lb,0,10) # 10に意味はない、あるかないかを示すための定数
 
         else:
             import ipdb;ipdb.set_trace()
+
 
         return {"cost_z":cost_z,
                 "cost_x":cost_x,
@@ -380,7 +297,7 @@ class cutting_surface_planner():
     def infer_image_by_diffusion(self,normalized_cond):
 
 
-        if self.policy_config["ctrl_mode"] == "no_cond":
+        if self.policy_config.control.mode == "no_cond":
             # import ipdb;ipdb.set_trace()
             cond = None
         else:
@@ -430,7 +347,7 @@ class cutting_surface_planner():
     def infer_image_by_conditional_diffusion(self,normalized_cond):
 
 
-        if self.policy_config["ctrl_mode"] == "no_cond":
+        if self.policy_config.control.mode == "no_cond":
             cond = None
             normalized_cond[:] = -1.0
             mask = normalized_cond.repeat(self.sample_image_num,1,1,1)
@@ -449,7 +366,7 @@ class cutting_surface_planner():
             mask =  normalized_cond.repeat(self.sample_image_num,1,1,1)
 
 
-        omega = self.policy_config["cfg_omega"]
+        omega = self.policy_config.inference.guidance_scale
         ## infer image by diffusion model
         # sample_image        = self.inferencer.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
         # sample_image        = self.inferencer.ema_model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask, omega = 0.2).detach().cpu()
@@ -490,7 +407,7 @@ class cutting_surface_planner():
         # self.inferencer.training= False
         self.inferencer.eval()
 
-        if self.policy_config["ctrl_mode"] == "no_cond":
+        if self.policy_config.control.mode == "no_cond":
             # mask_       = torch.where(normalized_cond==-1.0, torch.tensor(1),torch.tensor(1))[:1,:,:]
             mask_       = torch.where((normalized_cond == -1.0).all(dim=0), torch.tensor(1),torch.tensor(1))
             observation =  normalized_cond.repeat(self.sample_image_num,1,1,1)
@@ -618,7 +535,7 @@ class cutting_surface_planner():
 
 
 
-        if self.policy_config["ctrl_mode"] != "oracle_obs" and self.policy_config["ctrl_mode"] != "random" :
+        if self.policy_config.control.mode != "oracle_obs" and self.policy_config.control.mode != "random" :
 
             # import ipdb;ipdb.set_trace()
             if  tmp_action == "prior_based_ep_00":
@@ -629,13 +546,13 @@ class cutting_surface_planner():
                 normalized_cond = to_torch(normalized_cond)
 
             ## conditional image generation
-            if self.policy_config["infer_model"] == "vaeac":
+            if self.policy_config.inference.model == "vaeac":
                 last_step_images = self.infer_image_by_vaeac(normalized_cond=normalized_cond)
-            elif self.policy_config["infer_model"]=="diffusion":
+            elif self.policy_config.inference.model=="diffusion":
                 last_step_images = self.infer_image_by_diffusion(normalized_cond=normalized_cond)
-            elif self.policy_config["infer_model"]=="conditional_diffusion":
+            elif self.policy_config.inference.model=="conditional_diffusion":
                 last_step_images = self.infer_image_by_conditional_diffusion(normalized_cond=normalized_cond)
-            elif self.policy_config["infer_model"]=="diffusion_1D":
+            elif self.policy_config.inference.model=="diffusion_1D":
                 last_step_images = self.infer_image_by_diffusion_1D(slice_img)
             else:
                 import ipdb;ipdb.set_trace()
@@ -661,11 +578,12 @@ class cutting_surface_planner():
             cost_r_ensembles = None
             cost_y_ensembles = None
 
+
             for p in range(last_step_images.shape[0]):
 
-                cost_b = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config["image_mask_config_b"])
-                cost_r = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config["image_mask_config_r"])
-                cost_y = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config["image_mask_config_y"])
+                cost_b = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config.segmentation.blue.target_mask) # ["image_mask_config_b"])
+                cost_r = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config.segmentation.red.target_mask) # ["image_mask_config_r"])
+                cost_y = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config.segmentation.yellow.target_mask) # ["image_mask_config_y"])
 
                 cost_b_ensembles = self.dump_cost(cost_ensembles=cost_b_ensembles,cost=cost_b)
                 cost_r_ensembles = self.dump_cost(cost_ensembles=cost_r_ensembles,cost=cost_r)
@@ -712,7 +630,7 @@ class cutting_surface_planner():
 
 
 
-        elif self.policy_config["ctrl_mode"] == "oracle_obs" or self.policy_config["ctrl_mode"] == "random":
+        elif self.policy_config.control.mode == "oracle_obs" or self.policy_config.control.mode == "random":
 
             ensemble_image = self.oracle_image_z
             self.ensemble_obs_model.cast_2d_image_to_box_color(img=ensemble_image,config={"axis":"z"})
@@ -943,7 +861,7 @@ class cutting_surface_planner():
         #################################################
         ## random policy setting
         ################################################
-        if self.policy_config["ctrl_mode"] == "random" :
+        if self.policy_config.control.mode == "random" :
             action_index_max                = int(self.ensemble_obs_model.voxel_hander.box_array.grid_3dim_size[0]*3-1)
             random_number                   = random.randint(1, 3)
             random_slice_range_candidate    = [i for i in range(0, action_index_max)]

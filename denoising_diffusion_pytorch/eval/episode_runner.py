@@ -67,13 +67,13 @@ class EpisodeRunner:
         self.step_observer.on_episode_finished(context)
 
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
         return EpisodeResult(
-            actions=collector.actions,
-            rewards=collector.rewards,
-            infos=collector.infos,
-            removal_performance=collector.removal_performance,
-            intermediate_actions=collector.intermediate_actions,
-            last_info=collector.last_info,
+            actions             = collector.actions,
+            rewards             = collector.rewards,
+            infos               = collector.infos,
+            removal_performance = collector.removal_performance,
+            intermediate_actions= collector.intermediate_actions,
+            last_info           = collector.last_info,
         )

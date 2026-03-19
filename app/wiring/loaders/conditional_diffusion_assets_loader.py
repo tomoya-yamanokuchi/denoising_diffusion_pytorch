@@ -6,20 +6,21 @@ from .checkpoint_path_resolver import CheckpointPathResolver
 from ..types.trained_model_assets import TrainedModelAssets
 
 @dataclass
-class TrainedModelAssetsLoader:
+class ConditionalDiffusionAssetsLoader:
     config_loader           : SavedRunConfigLoader
     checkpoint_path_resolver: CheckpointPathResolver
 
     def load(
         self,
-        run_dir: str,
-        epoch  : str = "latest",
-        device : str = "cuda:0",
+        run_dir    : str,
+        epoch      : str = "latest",
+        device     : str = "cuda:0",
+        infer_model: str = None,
     ) -> TrainedModelAssets:
 
         cfg = self.config_loader.load(run_dir)
 
-        if cfg.inferencer.name != "conditional_image_diffusion":
+        if cfg.inferencer.name != "conditional_diffusion":
             raise NotImplementedError(
                 f"Unsupported method: {cfg.inferencer.name}"
             )
@@ -28,10 +29,20 @@ class TrainedModelAssetsLoader:
         inferencer = self._build_inferencer(cfg, device)
         trainer    = self._build_trainer(cfg, inferencer, dataset)
 
+
         # checkpoint 復元
         trainer.load(epoch)
+        inferencer = trainer.ema # diffusionの場合にはEMAがラップされているので
+
+
+        self._validate_loader_contract(
+            infer_model = infer_model,
+            inferencer  = inferencer,
+            trainer     = trainer,
+        )
 
         return TrainedModelAssets(
+            infer_model= infer_model,
             inferencer = inferencer,
             trainer    = trainer,
             dataset    = dataset,
@@ -75,3 +86,19 @@ class TrainedModelAssetsLoader:
             dataset         = dataset,
             **cfg.inferencer.trainer,
         )
+
+
+    def _validate_loader_contract(self, infer_model, inferencer, trainer) -> None:
+        inferencer_type = type(inferencer).__name__
+        print(
+            "[ConditionalDiffusionAssetsLoader] "
+            f"infer_model={infer_model}, "
+            f"inferencer_type={inferencer_type}, "
+            f"has_ema_model={hasattr(inferencer, 'ema_model')}"
+        )
+
+        if not hasattr(inferencer, "ema_model"):
+            raise TypeError(
+                "Conditional diffusion inferencer must expose ema_model. "
+                f"Got: {inferencer_type}"
+            )

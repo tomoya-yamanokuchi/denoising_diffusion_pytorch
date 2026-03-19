@@ -11,7 +11,6 @@ class PolicyFactory:
             # ---
             inferencer       = self._assets.trained_assets.inferencer,
             trainer          = self._assets.trained_assets.trainer,
-            sample_image_num = self._assets.policy_config.inference_sample_image_num,
-            config           = self._assets.policy_config,
+            policy_config    = self._assets.policy_config,
         )
 

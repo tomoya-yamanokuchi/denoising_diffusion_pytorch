@@ -444,7 +444,7 @@ base = {
 
         # 'policy'            :'policy.cutting_surface_planner_v7.cutting_surface_planner',
         # 'policy'            :'policy.cutting_surface_planner_v8.cutting_surface_planner', # for real model
-        'policy'            :'policy.cutting_surface_planner_v9.cutting_surface_planner', # for simple model
+        'policy'            :'policy.cutting_surface_planner_v9_hachi.cutting_surface_planner', # for simple model
         'batch_size'        : 32,  # diffusion default
         # 'batch_size'        : 16, # for real model vaeac
         # 'batch_size'        : 18,
