@@ -447,7 +447,7 @@ class cutting_surface_planner():
                         # "val":normalized_cond}}
             mask =  normalized_cond.repeat(self.sample_image_num,1,1,1)
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         omega = self.policy_config["cfg_omega"]
         ## infer image by diffusion model
         # sample_image        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
@@ -667,6 +667,8 @@ class cutting_surface_planner():
             raw_cost = {"cost_b": cost_b_ensembles,
                         "cost_r": cost_r_ensembles,
                         "cost_y": cost_y_ensembles}
+
+            import ipdb; ipdb.set_trace()
 
             # 実際にはブルーだけを使っている
             edited_cost_b = self.get_outlier_removed_cost(cost_b_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)

@@ -20,9 +20,11 @@ from denoising_diffusion_pytorch.utils.os_utils import get_path ,get_folder_name
 # from  denoising_diffusion_pytorch.policy.cvaeac_tmp_valid import validate,load_vaeac_model
 from  denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_validate
 from  denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
-from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import dismantling_env
+from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
 
 from denoising_diffusion_pytorch.action_plan.types import PolicyConfig
+from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMaskCostEstimator
+from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
 
 
 class cutting_surface_planner():
@@ -30,14 +32,20 @@ class cutting_surface_planner():
     def __init__(self,
             inferencer,
             trainer,
-            obs_model    : dismantling_env,
+            obs_model    : voxel_cut_handler,
             policy_config: PolicyConfig,
         ):
-        self.ensemble_obs_model     = obs_model
-        self.inferencer             = inferencer
-        self.trainer                = trainer
-        self.policy_config          = policy_config
-        self.sample_image_num       = policy_config.inference.sample_image_num
+        self.ensemble_obs_model        = obs_model
+        self.inferencer                = inferencer
+        self.trainer                   = trainer
+        self.policy_config             = policy_config
+        self.sample_image_num          = policy_config.inference.sample_image_num
+        # ---
+        self.color_mask_cost_estimator = ColorMaskCostEstimator(
+            obs_model    = obs_model,
+            segmentation = policy_config.segmentation,
+        )
+        #  ---
         self.split_obs_config       = {}
         self.oracle_image_z         = None
 
@@ -474,7 +482,7 @@ class cutting_surface_planner():
     def get_optimal_act(self,
             slice_img_ : np.ndarray,
             observation_history,
-            env2      : dismantling_env,
+            env2      : voxel_cut_handler,
             tmp_action: int,
             iters     : int,
             save_path : str,
@@ -572,43 +580,27 @@ class cutting_surface_planner():
                 last_step_images_tmp.append(load_last_step_images*255.0)
             last_step_images = np.asarray(last_step_images_tmp)
 
-            ## calculate cutting costs
-
-            cost_b_ensembles = None
-            cost_r_ensembles = None
-            cost_y_ensembles = None
-
-
-            for p in range(last_step_images.shape[0]):
-
-                cost_b = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config.segmentation.blue.target_mask) # ["image_mask_config_b"])
-                cost_r = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config.segmentation.red.target_mask) # ["image_mask_config_r"])
-                cost_y = self.get_color_mask_cost(last_step_images[p]/255.0,mask_config=self.policy_config.segmentation.yellow.target_mask) # ["image_mask_config_y"])
-
-                cost_b_ensembles = self.dump_cost(cost_ensembles=cost_b_ensembles,cost=cost_b)
-                cost_r_ensembles = self.dump_cost(cost_ensembles=cost_r_ensembles,cost=cost_r)
-                cost_y_ensembles = self.dump_cost(cost_ensembles=cost_y_ensembles,cost=cost_y)
-
+            ## ------------ calculate cutting costs ------------
+            collector = SegmentationCostCollector()
+            for p in range(self.sample_image_num):
+                seg_cost = self.color_mask_cost_estimator.estimate_all(
+                    image = last_step_images[p] / 255.0,
+                )
+                collector.add(seg_cost)
+            cost_ensembles = collector.build()
             ## create raw_cost for logs
-            raw_cost = {"cost_b": cost_b_ensembles,
-                        "cost_r": cost_r_ensembles,
-                        "cost_y": cost_y_ensembles}
+            raw_cost = {"cost_b": cost_ensembles.blue,
+                        "cost_r": cost_ensembles.red,
+                        "cost_y": cost_ensembles.yellow}
+            import ipdb; ipdb.set_trace()
 
+
+            ## ------------ calculate outlier_removed_cost ------------
             # 実際にはブルーだけを使っている
             edited_cost_b = self.get_outlier_removed_cost(cost_b_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)
             cost_x_b = edited_cost_b["cost_x"]
             cost_y_b = edited_cost_b["cost_y"]
             cost_z_b = edited_cost_b["cost_z"]
-
-            edited_cost_r = self.get_outlier_removed_cost(cost_r_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)
-            cost_x_r = edited_cost_r["cost_x"]
-            cost_y_r = edited_cost_r["cost_y"]
-            cost_z_r = edited_cost_r["cost_z"]
-
-            edited_cost_y = self.get_outlier_removed_cost(cost_y_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)
-            cost_x_y = edited_cost_y["cost_x"]
-            cost_y_y = edited_cost_y["cost_y"]
-            cost_z_y = edited_cost_y["cost_z"]
 
             # import ipdb;ipdb.set_trace()
 
