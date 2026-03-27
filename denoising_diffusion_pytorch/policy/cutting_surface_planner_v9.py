@@ -4,7 +4,6 @@ import torch
 
 from denoising_diffusion_pytorch.utils.normalization import LimitsNormalizer
 from denoising_diffusion_pytorch.utils.arrays import to_torch,to_device,to_np
-from denoising_diffusion_pytorch.utils.pil_utils import numpy_to_pil ,cv2_hsv_mask ,pil_to_cv2,color_range_mask,color_mask
 from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy, pil_image_load_to_numpy
 from denoising_diffusion_pytorch.utils.os_utils import get_path ,get_folder_name,create_folder,pickle_utils,load_yaml
 
@@ -18,6 +17,7 @@ from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMask
 from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
 from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
 from .ensemble_image_builder import EnsembleImageBuilder
+from .planning.axis_slice_range_selector import AxisSliceRangeSelector
 
 
 class cutting_surface_planner():
@@ -27,6 +27,7 @@ class cutting_surface_planner():
             trainer,
             obs_model    : voxel_cut_handler,
             policy_config: PolicyConfig,
+            axis_slice_range_selector : AxisSliceRangeSelector,
         ):
         self.ensemble_obs_model        = obs_model
         self.inferencer                = inferencer
@@ -46,6 +47,12 @@ class cutting_surface_planner():
         #  ---
         self.split_obs_config = {}
         self.oracle_image_z   = None
+
+        self.axis_slice_range_selector = axis_slice_range_selector
+
+
+
+
 
     def reset(self):
         self.split_obs_config = {}
@@ -92,12 +99,7 @@ class cutting_surface_planner():
         return start_index, end_index
 
 
-
-
-
     def infer_image_by_conditional_diffusion(self,normalized_cond):
-
-
         if self.policy_config.control.mode == "no_cond":
             cond = None
             normalized_cond[:] = -1.0
@@ -132,7 +134,6 @@ class cutting_surface_planner():
         last_step_images    = batch_images[:,-1,:,:,:]
 
         return last_step_images # (batch, 1, width, height, channel)
-
 
 
 
@@ -318,7 +319,7 @@ class cutting_surface_planner():
             cost_y_b = costs_decision.blue.y_axis
             cost_z_b = costs_decision.blue.z_axis
 
-            ## ------------ create log data  ------------
+            ## ------------------------ create log data  ------------------------
             ensemble_images = self.ensemble_image_builder.build_from_generated_samples(last_step_images)
 
             cost_map_logs = {
@@ -326,57 +327,44 @@ class cutting_surface_planner():
                 "costs_decision": costs_decision,
             }
 
+            '''
+                ここまで先週にやった
+            '''
+
+            """
+                今週の開始：
+                    NEDOやること
+                    get_slice_range まわりの 責務の外部化（AxisSliceRangeSelector）
+            """
+
         #####################################################################
         ## get slice range for pats remove
         #####################################################################
         split_index= 2
         if iters == 0 and split_index==-1:
-            print("fail to first split")
-            slice_range_z =self.get_slice_range(cost=cost_z_b,axis="z",observation_history=observation_history)
-            slice_range_x =self.get_slice_range(cost=cost_x_b,axis="x",observation_history=observation_history)
-            slice_range_y =self.get_slice_range(cost=cost_y_b,axis="y",observation_history=observation_history)
-
-            slice_range_candidates = [slice_range_z,slice_range_x,slice_range_y]
-            # 最も長いリスト
-            slice_range = max(slice_range_candidates, key=len)
-
-            if min(slice_range)<env2.grid_config['side_length']:
-                axis = "z"
-                offset= 0
-            elif min(slice_range)<env2.grid_config['side_length']:
-                axis = "x"
-                offset = env2.grid_config['side_length']
-            else:
-                axis = "y"
-                offset = env2.grid_config['side_length']+env2.grid_config['side_length']
-
-            if len(slice_range)!=1:
-
-                if slice_range[0]>slice_range[1]:
-                    temp_slice_range = (np.asarray(slice_range[::-1])-offset)[1:]
-                else:
-                    temp_slice_range = (np.asarray(slice_range)-offset)[:-1]
-
-                split_range = [temp_slice_range[0],temp_slice_range[-1]]
-                self.split_obs_config[str(split_range)] = { "axis":axis,
-                                                            "range":split_range,
-                                                            "offset":offset}
-            else:
-                a = 0
-
-        # elif split_index!=-1:
+            a = 0
         elif split_index ==-1000:
-            # import ipdb;ipdb.set_trace()
-            # print(f"iter:{iters},split_idx:{split_index}")
-            # slice_range = [split_index]
             a = 0
         else:
-            slice_range_z =self.get_slice_range(cost=cost_z_b,axis="z",observation_history=observation_history)
-            slice_range_x =self.get_slice_range(cost=cost_x_b,axis="x",observation_history=observation_history)
-            slice_range_y =self.get_slice_range(cost=cost_y_b,axis="y",observation_history=observation_history)
-            slice_range_candidates = [slice_range_z,slice_range_x,slice_range_y]
-            # 最も長いリスト
-            slice_range = max(slice_range_candidates, key=len)
+            # import ipdb; ipdb.set_trace()
+            # slice_range_z =self.get_slice_range(cost=cost_z_b,axis="z",observation_history=observation_history)
+            # slice_range_x =self.get_slice_range(cost=cost_x_b,axis="x",observation_history=observation_history)
+            # slice_range_y =self.get_slice_range(cost=cost_y_b,axis="y",observation_history=observation_history)
+            # slice_range_candidates = [slice_range_z,slice_range_x,slice_range_y]
+            # # 最も長いリスト
+            # slice_range = max(slice_range_candidates, key=len)
+
+
+            selection = self.axis_slice_range_selector.select(
+                cost_x = cost_x_b,
+                cost_y = cost_y_b,
+                cost_z = cost_z_b,
+                observation_history = observation_history,
+            )
+
+            import ipdb; ipdb.set_trace()
+            # -------------------------
+
 
             if min(slice_range)<env2.grid_config['side_length']:
                 axis = "z"
@@ -415,50 +403,15 @@ class cutting_surface_planner():
         print("------------------------------------")
         print(f"split_range:{self.split_obs_config}")
         print("------------------------------------")
-        cost_x = cost_x_b
-        cost_y = cost_y_b
-        cost_z = cost_z_b
-
-
-        #################################################
-        ## random policy setting
-        ################################################
-        if self.policy_config.control.mode == "random" :
-            action_index_max                = int(self.ensemble_obs_model.voxel_hander.box_array.grid_3dim_size[0]*3-1)
-            random_number                   = random.randint(1, 3)
-            random_slice_range_candidate    = [i for i in range(0, action_index_max)]
-            observation_history_keys        = list(observation_history.keys())
-            slice_range_candidates          = [x for x in random_slice_range_candidate if x not in observation_history_keys]
-            slice_range                     = random.sample(slice_range_candidates, random_number)
-            print(slice_range)
-
-
-        #######################################################################################################
-        #### not necessary part, deprecated
-        #######################################################################################################
-        cost_data ={"z":cost_z,
-                    "x":cost_x,
-                    "y":cost_y}
-        cost_map = {}
-        h =0
-        for idx, val in enumerate(cost_data):
-            for j in range(len(cost_data[val])):
-                cost_map.update({h:{"axis":val,"loc":j,"cost":cost_data[val][j]}})
-                h+=1
-        ##  remove already observed actions
-        un_observed_action_keys = set(cost_map.keys())-set(observation_history.keys())
-        action_candidate = {key: cost_map[key] for key in un_observed_action_keys}
-        # 第2階層の"Age"キーで昇順でソートする。
-        sort_action_candidate = dict(sorted(action_candidate.items(),
-                key=lambda x:x[1]['cost'],
-                reverse=False))
-        ######################################################################################################3
 
         infos ={"ensemble_image": ensemble_images}
 
         # print(f"split_candidate :{split_candidate}, spit_idx : {split_index}, slice_range :{slice_range}")
         print(f"spit_idx : {split_index}, slice_range :{slice_range}")
 
+        # --- temp ---
+        sort_action_candidate = None
+        # ---
         return slice_range, sort_action_candidate, infos
 
 
