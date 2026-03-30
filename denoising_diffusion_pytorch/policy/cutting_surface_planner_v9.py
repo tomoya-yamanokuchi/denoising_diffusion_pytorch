@@ -10,7 +10,7 @@ from denoising_diffusion_pytorch.utils.os_utils import get_path ,get_folder_name
 # from  denoising_diffusion_pytorch.policy.cvaeac_tmp_valid import validate,load_vaeac_model
 from denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_validate
 from denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
-from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
+from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler, dismantling_env
 
 from denoising_diffusion_pytorch.action_plan.types import PolicyConfig
 from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMaskCostEstimator
@@ -18,6 +18,7 @@ from denoising_diffusion_pytorch.cost.segmentation_cost_collector import Segment
 from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
 from .ensemble_image_builder import EnsembleImageBuilder
 from .planning.axis_slice_range_selector import AxisSliceRangeSelector
+from .planning.types import AxisCostSet
 
 
 class cutting_surface_planner():
@@ -209,7 +210,7 @@ class cutting_surface_planner():
     def get_optimal_act(self,
             slice_img_ : np.ndarray,
             observation_history,
-            env2      : voxel_cut_handler,
+            env2      : dismantling_env,
             tmp_action: int,
             iters     : int,
             save_path : str,
@@ -356,11 +357,14 @@ class cutting_surface_planner():
 
 
             selection = self.axis_slice_range_selector.select(
-                cost_x = cost_x_b,
-                cost_y = cost_y_b,
-                cost_z = cost_z_b,
+                axis_costs = AxisCostSet(
+                    x = cost_x_b,
+                    y = cost_y_b,
+                    z = cost_z_b,
+                ),
                 observation_history = observation_history,
             )
+            slice_range = selection.slice_range
 
             import ipdb; ipdb.set_trace()
             # -------------------------
@@ -393,9 +397,9 @@ class cutting_surface_planner():
                 a = 0
 
             # import ipdb;ipdb.set_trace()
-            cost_map_logs["slice_candidate"]={"candidate_x":slice_range_x,
-                                              "candidate_y":slice_range_y,
-                                              "candidate_z":slice_range_z}
+            cost_map_logs["slice_candidate"]={"candidate_x":selection.slice_candidates.x,
+                                              "candidate_y":selection.slice_candidates.y,
+                                              "candidate_z":selection.slice_candidates.z}
             cost_map_logs["slice_range"]=slice_range
             pickle_utils().save(dataset=cost_map_logs, save_path=save_path+f"/{iters}_cost_map_logs.pickle")
 

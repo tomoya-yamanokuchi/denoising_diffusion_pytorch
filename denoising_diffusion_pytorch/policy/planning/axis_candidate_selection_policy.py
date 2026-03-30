@@ -1,44 +1,35 @@
 from __future__ import annotations
 
-from .types import GlobalAxisCandidates, OutToInSliceIndices
+from .action.action_candidates import ActionCandidates
 
 
 class AxisCandidateSelectionPolicy:
-    def __init__(self, empty_candidate_fallback: str = "single_zero"):
-        self.empty_candidate_fallback = empty_candidate_fallback
+    """
+    Select one ordered ActionCandidates sequence within a single axis.
 
+    Returned candidates are always interpreted as:
+        outside -> inside
+    """
 
     def choose(
         self,
-        candidates: GlobalAxisCandidates | None,
-    ) -> OutToInSliceIndices:
-        if candidates is None:
-            return self._empty_out_to_in_slice_indices()
-
-        top_out_to_in_slice_indices = OutToInSliceIndices(
-            values = tuple(candidates.top)
-        )
-        bottom_out_to_in_slice_indices = OutToInSliceIndices(
-            values = tuple(reversed(candidates.bottom))
-        )
-
-        if (
-            top_out_to_in_slice_indices.is_empty()
-            and bottom_out_to_in_slice_indices.is_empty()
-        ):
-            return self._empty_out_to_in_slice_indices()
-
-        if len(top_out_to_in_slice_indices) >= len(bottom_out_to_in_slice_indices):
-            return top_out_to_in_slice_indices
-
-        return bottom_out_to_in_slice_indices
+        top_candidates   : ActionCandidates | None,
+        bottom_candidates: ActionCandidates | None,
+    ) -> ActionCandidates | None:
+        top_out_to_in    = top_candidates
+        bottom_out_to_in = None if bottom_candidates is None else bottom_candidates.reversed()
 
 
-    def _empty_out_to_in_slice_indices(self) -> OutToInSliceIndices:
-        if self.empty_candidate_fallback == "single_zero":
-            return OutToInSliceIndices(values=(0,))
-        if self.empty_candidate_fallback == "empty":
-            return OutToInSliceIndices(values=())
-        raise ValueError(
-            f"Unsupported empty_candidate_fallback: {self.empty_candidate_fallback}"
-        )
+        if top_out_to_in is None and bottom_out_to_in is None:
+            return None
+
+        if top_out_to_in is None:
+            return bottom_out_to_in
+
+        if bottom_out_to_in is None:
+            return top_out_to_in
+
+        if len(top_out_to_in) >= len(bottom_out_to_in):
+            return top_out_to_in
+
+        return bottom_out_to_in

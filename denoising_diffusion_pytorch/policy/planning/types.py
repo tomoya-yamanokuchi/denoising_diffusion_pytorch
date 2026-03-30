@@ -6,11 +6,6 @@ from typing import Optional, Tuple
 import numpy as np
 
 
-@dataclass(frozen=True)
-class AxisLocalIndex:
-    axis : str
-    index: int
-
 
 @dataclass(frozen=True)
 class AxisCostVector:
@@ -36,6 +31,21 @@ class AxisCostVector:
     @property
     def side_length(self) -> int:
         return len(self.values)
+
+
+
+@dataclass(frozen=True)
+class AxisCostSet:
+    x: np.ndarray
+    y: np.ndarray
+    z: np.ndarray
+
+    def items(self):
+        return (
+            ("z", self.z),
+            ("x", self.x),
+            ("y", self.y),
+        )
 
 
 @dataclass(frozen=True)
@@ -69,7 +79,6 @@ class SliceSelectionResult:
     split_obs_update: Optional[dict]
 
 
-
 @dataclass(frozen=True)
 class OutToInSliceIndices:
     values: tuple[int, ...]
@@ -82,3 +91,7 @@ class OutToInSliceIndices:
 
     def is_empty(self) -> bool:
         return len(self.values) == 0
+
+
+
+

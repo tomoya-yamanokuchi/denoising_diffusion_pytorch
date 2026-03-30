@@ -2,24 +2,49 @@ from __future__ import annotations
 
 import numpy as np
 
-from .types import ActiveRange, LocalAxisCandidates
+from .action.action_candidates import ActionCandidates
+from .types import ActiveRange
 
 
 class LocalCandidateRangeFactory:
-    def build(
-        self,
-        active_range: ActiveRange,
-        side_length : int,
-    ) -> LocalAxisCandidates:
+    """
+    Build axis-local candidates as ordered ActionCandidates.
 
+    top:
+        already ordered from outside -> inside
+    bottom:
+        ordered from inside -> outside at construction time;
+        the policy will reverse it when selecting.
+    """
+
+    def build_top(
+        self,
+        axis        : str,
+        active_range: ActiveRange | None,
+        side_length : int,
+    ) -> ActionCandidates | None:
         if active_range is None:
             return None
 
-        # top    = tuple(np.arange(0, active_range.start_index-1).tolist()) # 旧実装そのまま:  off-by-one バグ
-        top    = tuple(np.arange(0, active_range.start_index).tolist()) # 旧実装からの修正
-        bottom = tuple(np.arange(active_range.end_index + 1, side_length).tolist())
+        local_indices = tuple(np.arange(0, active_range.start_index).tolist())
+        return ActionCandidates.from_local_indices(
+            axis          = axis,
+            local_indices = local_indices,
+            side_length   = side_length,
+        )
 
-        return LocalAxisCandidates(
-            top    = top,
-            bottom = bottom,
+    def build_bottom(
+        self,
+        axis        : str,
+        active_range: ActiveRange | None,
+        side_length : int,
+    ) -> ActionCandidates | None:
+        if active_range is None:
+            return None
+
+        local_indices = tuple(np.arange(active_range.end_index + 1, side_length).tolist())
+        return ActionCandidates.from_local_indices(
+            axis          = axis,
+            local_indices = local_indices,
+            side_length   = side_length,
         )

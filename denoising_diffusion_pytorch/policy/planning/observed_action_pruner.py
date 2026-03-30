@@ -1,12 +1,14 @@
-from typing import Iterable, Sequence
+from __future__ import annotations
+
+from .action.action_candidates import ActionCandidates
 
 
 class ObservedActionPruner:
     def prune(
         self,
-        candidates         : Sequence[int],
+        candidates         : ActionCandidates | None,
         observation_history: dict[int, dict],
-    ) -> list[int]:
-
-        observed_keys = set(observation_history.keys())
-        return [idx for idx in candidates if idx not in observed_keys]
+    ) -> ActionCandidates | None:
+        if candidates is None:
+            return None
+        return candidates.prune_by_observation_history(observation_history)

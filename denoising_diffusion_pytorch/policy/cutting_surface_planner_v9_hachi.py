@@ -686,7 +686,7 @@ class cutting_surface_planner():
             cost_y_y = edited_cost_y["cost_y"]
             cost_z_y = edited_cost_y["cost_z"]
 
-            import ipdb;ipdb.set_trace()
+            # import ipdb;ipdb.set_trace()
 
             ## get ensemble image
             ensemble_image   = last_step_images.mean(0)/255.0
@@ -901,6 +901,7 @@ class cutting_surface_planner():
                 axis = "y"
                 offset = env2.grid_config['side_length']+env2.grid_config['side_length']
 
+            import ipdb; ipdb.set_trace()
 
             if len(slice_range)!=1:
 
@@ -916,7 +917,7 @@ class cutting_surface_planner():
             else:
                 a = 0
 
-            # import ipdb;ipdb.set_trace()
+            import ipdb;ipdb.set_trace()
             cost_map_logs["slice_candidate"]={"candidate_x":slice_range_x,
                                               "candidate_y":slice_range_y,
                                               "candidate_z":slice_range_z}

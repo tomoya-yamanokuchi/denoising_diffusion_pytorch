@@ -1,23 +1,27 @@
 from __future__ import annotations
 
-from .types import SliceCandidates, OutToInSliceIndices
+from .action.action_candidates import ActionCandidates
+from .types import SliceCandidates
 
 
 class SliceRangeSelectionPolicy:
     """
-    Choose the final slice range among axis-wise candidates.
+    Choose the final slice range among x/y/z candidates.
 
-    Current policy
-    --------------
-    Select the longest candidate among z/x/y.
-    This preserves the current planner behavior.
+    Current policy:
+        choose the longest non-None candidate.
     """
 
     def choose(
         self,
         candidates: SliceCandidates,
-    ) -> OutToInSliceIndices:
-        return max(
-            [candidates.z, candidates.x, candidates.y],
-            key=len,
-        )
+    ) -> ActionCandidates | None:
+        valid_candidates = [
+            c for c in [candidates.z, candidates.x, candidates.y]
+            if c is not None
+        ]
+
+        if len(valid_candidates) == 0:
+            return None
+
+        return max(valid_candidates, key=len)
