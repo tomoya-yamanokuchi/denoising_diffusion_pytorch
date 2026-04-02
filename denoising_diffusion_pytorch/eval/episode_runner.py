@@ -4,14 +4,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .types import EpisodeContext, EpisodeResult
-from ..action_plan.macro_action_executor import MacroActionExecutor
-from ..observer.episode_step_observer import EpisodeStepObserver
+from ..policy.planning.action_executor import ActionExecutor
+
+
+# .ActionExecutor import ActionExecutor
+from .episode_step_observer import EpisodeStepObserver
 
 
 @dataclass
 class EpisodeRunner:
     def __init__(self,
-            action_executor: MacroActionExecutor,
+            action_executor: ActionExecutor,
             step_observer  : EpisodeStepObserver
         ):
         self.action_executor = action_executor
@@ -22,42 +25,38 @@ class EpisodeRunner:
         policy_env     = context.case.envs.policy
         action_planner = context.action_planner
 
-        _, _, _, _     = eval_env.reset()
-        _, _, _, info  = policy_env.reset()
+        _                 = eval_env.reset()
+        env_reset_results = policy_env.reset()
 
         context.artifact_manager.create_episodic_artifact_root_directory()
 
         self.step_observer.on_episode_started(
             image_writer = context.image_writer,
-            initial_info = info,
+            initial_info = env_reset_results.info,
         )
 
-
-        plan = action_planner.initialize(context)
+        action_plan = action_planner.initialize(context)
 
         for step_idx in range(int(context.task_step)):
-            outcome, obs, info = self.action_executor.execute(
-                env          = context.case.envs.eval,
-                macro_action = plan.action,
+            step_outcome = self.action_executor.execute(
+                env               = context.case.envs.eval,
+                action_candidates = action_plan.action_candidates,
             )
 
             self.step_observer.on_step_executed(
                 episode_ctx = context,
                 step_idx    = step_idx,
-                outcome     = outcome,
-                obs         = obs,
-                artifacts   = plan.artifacts,
+                step_outcome= step_outcome,
+                artifacts   = action_plan.artifacts,
             )
 
             if step_idx == context.task_step - 1:
                 break
 
-            plan = action_planner.plan_next(
+            action_plan = action_planner.plan_next(
                 episode_ctx       = context,
                 executed_step_idx = step_idx,
-                executed_step     = outcome,
-                last_obs          = obs,
-                last_info         = info,
+                step_outcome      = step_outcome,
             )
 
         self.step_observer.on_episode_finished(context)

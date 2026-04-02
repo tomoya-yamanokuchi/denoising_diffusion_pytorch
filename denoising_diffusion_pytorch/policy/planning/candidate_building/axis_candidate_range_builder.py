@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from .action.action_candidates import ActionCandidates
+from ..action_definition.action_candidates import ActionCandidates
 from .active_range_detector import ActiveRangeDetector
 from .axis_candidate_selection_policy import AxisCandidateSelectionPolicy
 from .local_candidate_range_factory import LocalCandidateRangeFactory
 from .observed_action_pruner import ObservedActionPruner
-from .types import AxisCostVector
+from ...types import AxisCostVector
 
 from pprint import pprint
 
@@ -16,11 +16,11 @@ class AxisCandidateRangeBuilder:
 
     def __init__(
         self,
-        active_range_detector: ActiveRangeDetector,
+        active_range_detector  : ActiveRangeDetector,
         local_candidate_factory: LocalCandidateRangeFactory,
-        pruner: ObservedActionPruner,
-        selection_policy: AxisCandidateSelectionPolicy,
-        expected_side_length: int,
+        pruner                 : ObservedActionPruner,
+        selection_policy       : AxisCandidateSelectionPolicy,
+        expected_side_length   : int,
     ):
         self.active_range_detector = active_range_detector
         self.local_candidate_factory = local_candidate_factory
@@ -30,7 +30,7 @@ class AxisCandidateRangeBuilder:
 
     def build(
         self,
-        axis_cost: AxisCostVector,
+        axis_cost          : AxisCostVector,
         observation_history: dict[int, dict],
     ) -> ActionCandidates | None:
         self._validate_side_length(axis_cost)

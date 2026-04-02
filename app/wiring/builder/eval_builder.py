@@ -83,20 +83,11 @@ class EvalBuilder:
 
 
     def build_action_executer(self):
-        from denoising_diffusion_pytorch.action_plan.macro_action_executor import MacroActionExecutor
-        self.action_executer = MacroActionExecutor()
-
-    # def build_action_planner(self):
-    #     from denoising_diffusion_pytorch.action_plan.action_planner import ActionPlanner
-    #     from denoising_diffusion_pytorch.action_plan.initial_action_provider import InitialActionProvider
-    #     from denoising_diffusion_pytorch.action_plan.legacy_policy_planner_adapter import LegacyPolicyPlannerAdapter
-    #     self.action_planner = ActionPlanner(
-    #         initial_action_provider = InitialActionProvider(),
-    #         action_planner_adapter  = LegacyPolicyPlannerAdapter(),
-    #     )
+        from denoising_diffusion_pytorch.policy.planning.action_executor import ActionExecutor
+        self.action_executer = ActionExecutor()
 
     def build_step_observer(self):
-        from denoising_diffusion_pytorch.observer.episode_step_observer import EpisodeStepObserver
+        from denoising_diffusion_pytorch.eval.episode_step_observer import EpisodeStepObserver
         self.step_observer = EpisodeStepObserver(verbose = True)
 
     def build_episode_runner(self):
@@ -133,11 +124,12 @@ class EvalBuilder:
         )
 
 
-
-
     def build_policy_config(self) -> None:
         from app.wiring.mappers.policy_config_mapper import build_policy_config
-        self.policy_config = build_policy_config(self.cfg.eval.policy)
+        self.policy_config = build_policy_config(
+            cfg_policy             = self.cfg.eval.policy,
+            voxel_grid_side_length = self.cfg.env.grid.side_length,
+        )
 
 
     def build_policy_assets(self) -> None:
@@ -153,9 +145,11 @@ class EvalBuilder:
 
     def build_action_planner_factory(self):
         from ..factories.action_planner_factory import ActionPlannerFactory
-        from denoising_diffusion_pytorch.action_plan.initial_action_provider import InitialActionProvider
+        from denoising_diffusion_pytorch.policy.planning.initial_action_provider import InitialActionProvider
         self.action_planner_factory = ActionPlannerFactory(
-            initial_action_provider = InitialActionProvider(),
+            initial_action_provider = InitialActionProvider(
+                voxel_grid_side_length = self.cfg.env.grid.side_length
+            ),
         )
 
     def build_orchestrator(self):

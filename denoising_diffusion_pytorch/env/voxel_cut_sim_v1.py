@@ -5,9 +5,9 @@ import numpy as np
 from PIL import Image
 # from denoising_diffusion_pytorch.utils.voxel_handlers_hachi import pv_box_array_multi_type_obj
 from denoising_diffusion_pytorch.utils.voxel_handlers import pv_box_array_multi_type_obj
-from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy
+# from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy
 from denoising_diffusion_pytorch.utils.pil_utils import numpy_to_pil ,cv2_hsv_mask ,pil_to_cv2,color_range_mask
-
+from .types import AxisImages, DismantlingObservation, DismantlingInfo, DismantlingStepResult
 
 class index_map():
     """Maps 1D indices to 2D coordinates and vice versa.
@@ -375,7 +375,7 @@ class dismantling_env():
         return target_mask_cutting_cost
 
 
-    def step(self,action_idx,partial_obs={}):
+    def step(self,action_idx,partial_obs={}) -> DismantlingStepResult:
         """_summary_
             slice voxel model based on action index and return obs,reward,done,info
         Args:
@@ -501,8 +501,6 @@ class dismantling_env():
                 #   +------------+
 
 
-
-
         if update_flag == 1:
             self.seq_obs_model.update_color(mini_batch_image=mini_batch_image,config=action)
         elif update_flag == 0:
@@ -512,35 +510,23 @@ class dismantling_env():
 
         self.observation_history.update({action_idx:action})
 
-        obs     = self.get_obs()
-        reward  = self.get_reward(mini_batch_image=mini_batch_image)
-        done    = False
-        info    = self.get_info()
+        return DismantlingStepResult(
+            observation = self.get_obs(),
+            reward      = self.get_reward(mini_batch_image=mini_batch_image),
+            done        = False,
+            info        = self.get_info(),
+        )
 
-        return obs,reward,done,info
 
-
-    def get_obs(self):
-        """Returns the current observation from the environment.
-
-        Returns:
-            dict: Contains the 2D images sliced along each axis ("x", "y", "z") and the observation history.
-
-        Examples:
-            >>> obs = {"sequential_obs":{ "x":sq_slice_image_x,
-            >>>                      "y":sq_slice_image_y,
-            >>>                      "z":sq_slice_image_z},
-            >>>   "observation_history":self.observation_history}
-        """
-        sq_slice_image_x = self.seq_obs_model.get_2d_image(axis="x")
-        sq_slice_image_y = self.seq_obs_model.get_2d_image(axis="y")
-        sq_slice_image_z = self.seq_obs_model.get_2d_image(axis="z")
-
-        obs = {"sequential_obs":{ "x":sq_slice_image_x,
-                                  "y":sq_slice_image_y,
-                                  "z":sq_slice_image_z},
-               "observation_history":self.observation_history}
-        return obs
+    def get_obs(self) -> DismantlingObservation:
+        return DismantlingObservation(
+            axis_images = AxisImages(
+                x = self.seq_obs_model.get_2d_image(axis="x"),
+                y = self.seq_obs_model.get_2d_image(axis="y"),
+                z = self.seq_obs_model.get_2d_image(axis="z"),
+            ),
+            observation_history = self.observation_history,
+        )
 
 
     def get_info(self):
@@ -554,43 +540,41 @@ class dismantling_env():
         oc_slice_image_z = self.oracle_obs_model.init_imgs_z
 
         current_target_removal_vol = self.get_reward(self.seq_obs_model.get_2d_image(axis="z"))
-        target_removal_rate        =(current_target_removal_vol/self.oracle_target_shape_vol)*100.0
+        target_removal_rate        = (current_target_removal_vol/self.oracle_target_shape_vol)*100.0
 
         ################################################
         ## get sum(unobserved pixels) values
         #################################################
         target_mask        =  np.asarray([0.0,0.0,0.0])
-        image_mask_config  = {"target_mask":target_mask,
-                                            "target_mask_lb":target_mask-0.0,
-                                            "target_mask_ub":target_mask+0.0,}
-        mask_image         = color_range_mask(self.seq_obs_model.get_2d_image(axis="z"),image_mask_config)
-        # remaining_vol                   = (self.image_dim[0]*self.image_dim[1]) - ((self.mini_batch_image_dim[0]*self.mini_batch_image_dim[1])*len(self.observation_history))
-        # remaining_vol                   = (self.image_dim[0]*self.image_dim[1]) - (mask_image.mean(2).sum())
-        remaining_vol                   = mask_image.mean(2).sum()+1e-6
-        target_remaining_vol            = self.oracle_target_shape_vol-current_target_removal_vol
-        target_to_remaining_vol_rate    = (target_remaining_vol/remaining_vol)*100
+        image_mask_config  = {
+            "target_mask"   : target_mask,
+            "target_mask_lb": target_mask-0.0,
+            "target_mask_ub": target_mask+0.0,
+        }
+        mask_image                   = color_range_mask(self.seq_obs_model.get_2d_image(axis="z"),image_mask_config)
+        remaining_vol                = mask_image.mean(2).sum()+1e-6
+        target_remaining_vol         = self.oracle_target_shape_vol-current_target_removal_vol
+        target_to_remaining_vol_rate = (target_remaining_vol/remaining_vol)*100
 
-
-        info = {"oracle_obs":{  "x": oc_slice_image_x,
-                                "y": oc_slice_image_y,
-                                "z": oc_slice_image_z},
-               "observation_history"    :self.observation_history,
-               "action_table"           :self.action_table,
-               "target_removal_rate"    :target_removal_rate,
-               "removal_performance"    :target_to_remaining_vol_rate,
-               "remaining_vol":remaining_vol,
-               "target_remaining_vol":target_remaining_vol}
-        return info
+        return DismantlingInfo(
+            oracle_axis_images = AxisImages(
+                x = oc_slice_image_x,
+                y = oc_slice_image_y,
+                z = oc_slice_image_z,
+            ),
+            observation_history  = self.observation_history,
+            action_table         = self.action_table,
+            target_removal_rate  = target_removal_rate,
+            removal_performance  = target_to_remaining_vol_rate,
+            remaining_vol        = remaining_vol,
+            target_remaining_vol = target_remaining_vol,
+        )
 
 
     def reset(self):
-        """Resets the environment to its initial state.
-
-        Returns:
-            tuple: Contains the initial observation, reward, done flag, and additional information.
-        """
-        obs     = self.get_obs()
-        done    = False
-        reward  = 0.0
-        info    = self.get_info()
-        return obs,reward,done,info
+        return DismantlingStepResult(
+            observation = self.get_obs(),
+            reward      = 0.0,
+            done        = False,
+            info        = self.get_info(),
+        )

@@ -8,7 +8,7 @@ from typing import Dict
 import numpy as np
 
 from ..cost.types import SegmentationCost, AxisCost
-from ..action_plan.types import SegmentationConfig, ColorMaskConfig
+from ..policy.types import SegmentationConfig, ColorMaskConfig
 from denoising_diffusion_pytorch.utils.pil_utils import color_range_mask
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
 

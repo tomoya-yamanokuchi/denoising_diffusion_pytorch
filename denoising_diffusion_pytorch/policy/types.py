@@ -76,7 +76,6 @@ class SliceCandidates:
 class SliceSelectionResult:
     slice_range     : Tuple[int, ...]
     slice_candidates: SliceCandidates
-    split_obs_update: Optional[dict]
 
 
 @dataclass(frozen=True)
@@ -93,5 +92,59 @@ class OutToInSliceIndices:
         return len(self.values) == 0
 
 
+from .planning.action_definition.action_candidates import ActionCandidates
+from typing import Any, Dict, List, Optional, Tuple
 
 
+@dataclass(frozen=True)
+class ActionArtifacts:
+    ensemble_image: Optional[dict[str, Any]] = None
+    debug_info    : Optional[dict[str, Any]] = None
+
+@dataclass(frozen=True)
+class ActionPlan:
+    action_candidates: ActionCandidates
+    artifacts        : ActionArtifacts
+
+'''
+    config
+'''
+
+@dataclass
+class ControlConfig:
+    mode: str
+
+@dataclass
+class InferenceConfig:
+    model           : str
+    guidance_scale  : float
+    sample_image_num: int
+
+@dataclass
+class ColorMaskConfig:
+    target_mask   : list[float]
+    target_mask_lb: list[float]
+    target_mask_ub: list[float]
+
+@dataclass
+class SegmentationConfig:
+    blue  : ColorMaskConfig
+    red   : ColorMaskConfig
+    yellow: ColorMaskConfig
+
+@dataclass
+class DecisionParamConfig:
+    ucb_lb: float = 0.5
+
+@dataclass
+class DecisionConfig:
+    mode : str
+    param: DecisionParamConfig
+
+@dataclass
+class PolicyConfig:
+    control               : ControlConfig
+    inference             : InferenceConfig
+    segmentation          : SegmentationConfig
+    decision              : DecisionConfig
+    voxel_grid_side_length: int

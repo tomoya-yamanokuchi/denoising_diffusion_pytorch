@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from .action.action_candidates import ActionCandidates
-from .types import ActiveRange
+from ..action_definition.action_candidates import ActionCandidates
+from ...types import ActiveRange
 
 
 class LocalCandidateRangeFactory:

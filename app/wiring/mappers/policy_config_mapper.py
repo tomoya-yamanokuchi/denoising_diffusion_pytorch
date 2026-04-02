@@ -2,7 +2,7 @@
 
 from omegaconf import DictConfig
 
-from denoising_diffusion_pytorch.action_plan.types import (
+from denoising_diffusion_pytorch.policy.types import (
     ColorMaskConfig,
     ControlConfig,
     DecisionConfig,
@@ -21,7 +21,10 @@ def _build_color_mask_config(cfg_mask: DictConfig) -> ColorMaskConfig:
     )
 
 
-def build_policy_config(cfg_policy: DictConfig) -> PolicyConfig:
+def build_policy_config(
+        cfg_policy            : DictConfig,
+        voxel_grid_side_length: int,
+    ) -> PolicyConfig:
     return PolicyConfig(
         control=ControlConfig(
             mode = str(cfg_policy.control.mode),
@@ -42,4 +45,5 @@ def build_policy_config(cfg_policy: DictConfig) -> PolicyConfig:
                 ucb_lb = float(cfg_policy.decision.param.ucb_lb),
             ),
         ),
+        voxel_grid_side_length = voxel_grid_side_length,
     )

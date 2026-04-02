@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .action.action_candidates import ActionCandidates
+from ..action_definition.action_candidates import ActionCandidates
 
 
 class AxisCandidateSelectionPolicy:
@@ -18,7 +18,6 @@ class AxisCandidateSelectionPolicy:
     ) -> ActionCandidates | None:
         top_out_to_in    = top_candidates
         bottom_out_to_in = None if bottom_candidates is None else bottom_candidates.reversed()
-
 
         if top_out_to_in is None and bottom_out_to_in is None:
             return None

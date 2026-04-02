@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .action.action_candidates import ActionCandidates
+from ..action_definition.action_candidates import ActionCandidates
 
 
 class ObservedActionPruner:

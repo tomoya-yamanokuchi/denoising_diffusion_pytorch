@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from .action.action_candidates import ActionCandidates
-from .types import SliceCandidates
+from ..action_definition.action_candidates import ActionCandidates
+from ...types import SliceCandidates
 
 
-class SliceRangeSelectionPolicy:
+class SelectionPolicy:
     """
     Choose the final slice range among x/y/z candidates.
 

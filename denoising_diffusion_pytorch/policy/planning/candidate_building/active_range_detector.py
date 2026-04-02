@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .types import ActiveRange, AxisCostVector
+from ...types import ActiveRange, AxisCostVector
 
 
 class ActiveRangeDetector:

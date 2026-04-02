@@ -864,6 +864,7 @@ class cutting_surface_planner():
 
             if len(slice_range)!=1:
 
+                import ipdb; ipdb.set_trace()
                 if slice_range[0]>slice_range[1]:
                     temp_slice_range = (np.asarray(slice_range[::-1])-offset)[1:]
                 else:

@@ -15,10 +15,10 @@ class CaseContextFactory:
         obs_model = self.obs_model_factory.create(mesh_components)
         # ---
         return CaseContext(
-            name             = cfg_case.name,
-            dataset_dir      = cfg_case.dataset_dir,
-            start_action_idx = cfg_case.start_action_idx,
-            mesh_components  = mesh_components,
-            envs             = envs,
-            obs_model        = obs_model,
+            name                          = cfg_case.name,
+            dataset_dir                   = cfg_case.dataset_dir,
+            initial_global_action_indices = cfg_case.initial_global_action_indices,
+            mesh_components               = mesh_components,
+            envs                          = envs,
+            obs_model                     = obs_model,
         )

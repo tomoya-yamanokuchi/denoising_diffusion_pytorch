@@ -2,9 +2,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..eval.types import EpisodeContext, StepOutcome
-from ..action_plan.types import ActionArtifacts
-from ..eval.episode_image_writer import EpisodeImageWriter
+from .types import EpisodeContext, StepOutcome
+from ..policy.types import ActionArtifacts
+from .episode_image_writer import EpisodeImageWriter
 
 
 @dataclass
@@ -17,21 +17,22 @@ class EpisodeStepObserver:
 
     def on_step_executed(
             self,
-            episode_ctx: EpisodeContext,
-            step_idx   : int,
-            outcome    : StepOutcome,
-            obs        : dict[str, Any],
-            artifacts  : ActionArtifacts,
+            episode_ctx : EpisodeContext,
+            step_idx    : int,
+            step_outcome: StepOutcome,
+            artifacts   : ActionArtifacts,
         ) -> None:
-        self._steps.append(outcome)
+        self._steps.append(step_outcome)
 
         self._log_step(
-            episode_ctx=episode_ctx,
-            step_idx=step_idx,
-            outcome=outcome,
+            episode_ctx  = episode_ctx,
+            step_idx     = step_idx,
+            step_outcome = step_outcome,
         )
-
-        episode_ctx.image_writer.save_seq_obs(step_idx, seq_obs=obs["sequential_obs"])
+        episode_ctx.image_writer.save_seq_obs(
+            step_idx = step_idx,
+            seq_obs  = step_outcome.env_result.observation
+        )
         self._save_ensemble_image(episode_ctx, step_idx, artifacts)
 
 
@@ -45,9 +46,9 @@ class EpisodeStepObserver:
 
     def _log_step(
         self,
-        episode_ctx: EpisodeContext,
-        step_idx: int,
-        outcome: StepOutcome,
+        episode_ctx : EpisodeContext,
+        step_idx    : int,
+        step_outcome: StepOutcome,
     ) -> None:
         if not self.verbose:
             return
@@ -57,11 +58,11 @@ class EpisodeStepObserver:
             f"{episode_ctx.case.name} | "
             f"Ep.: {episode_ctx.episode_idx} | "
             f"step: {step_idx} | "
-            f"cut_cost: {outcome.reward} | "
-            f"target_removal_rate: {outcome.target_removal_rate} | "
-            f"removal_performance: {outcome.removal_performance:.3f}"
+            f"cut_cost: {step_outcome.reward} | "
+            f"target_removal_rate: {step_outcome.target_removal_rate} | "
+            f"removal_performance: {step_outcome.removal_performance:.3f}"
         )
-        print(f"macro_action: {outcome.macro_action}")
+        print(f"executed_action_candidates: {step_outcome.executed_action_candidates.to_list()}")
         print("#" * 120)
 
 

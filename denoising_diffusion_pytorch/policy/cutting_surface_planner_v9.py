@@ -12,23 +12,25 @@ from denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_vali
 from denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import get_2d_image_to_1d
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler, dismantling_env
 
-from denoising_diffusion_pytorch.action_plan.types import PolicyConfig
+
 from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMaskCostEstimator
 from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
 from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
 from .ensemble_image_builder import EnsembleImageBuilder
-from .planning.axis_slice_range_selector import AxisSliceRangeSelector
-from .planning.types import AxisCostSet
+from .types import PolicyConfig, AxisCostSet
+from .planning.action_selection.action_candidates_selector import ActionCandidatesSelector
+from .planning.visibility.visibility_constraint_set import VisibilityConstraintSet
+from .planning.action_definition.action_candidates import ActionCandidates
 
 
 class cutting_surface_planner():
 
     def __init__(self,
-            inferencer,
+            inferencer, # dissufion / vaeac
             trainer,
-            obs_model    : voxel_cut_handler,
-            policy_config: PolicyConfig,
-            axis_slice_range_selector : AxisSliceRangeSelector,
+            obs_model                 : voxel_cut_handler,
+            policy_config             : PolicyConfig,
+            action_candidates_selector: ActionCandidatesSelector,
         ):
         self.ensemble_obs_model        = obs_model
         self.inferencer                = inferencer
@@ -44,60 +46,17 @@ class cutting_surface_planner():
         self.decision_aggregator = DecisionAggregator(
             decision_config=policy_config.decision
         )
-        self.ensemble_image_builder = EnsembleImageBuilder(obs_model)
-        #  ---
-        self.split_obs_config = {}
-        self.oracle_image_z   = None
-
-        self.axis_slice_range_selector = axis_slice_range_selector
-
-
-
+        self.action_candidates_selector = action_candidates_selector
+        self.voxel_grid_side_length     = policy_config.voxel_grid_side_length
+        # ---
+        self.ensemble_image_builder    = EnsembleImageBuilder(obs_model)
+        self.visibility_constraints    = VisibilityConstraintSet(self.voxel_grid_side_length)
+        self.oracle_image_z            = None
 
 
     def reset(self):
-        self.split_obs_config = {}
-        self.oracle_image_z   = None
-
-
-    def get_slice_range(self,cost,axis,observation_history):
-
-        if axis == "z":
-            offset = 0
-        elif axis=="x":
-            offset = cost.shape[0]
-        elif axis =="y":
-            offset =cost.shape[0]+cost.shape[0]
-
-        top, btm = self.find_nonzero_indices(cost)
-
-        top_slice_range = np.arange(offset, offset+top-1).tolist()
-        btm_slice_range = np.arange(offset+btm+1, offset+cost.shape[0]).tolist()
-
-        observation_history_keys = list(observation_history.keys())
-        slice_range_top = [x for x in top_slice_range if x not in observation_history_keys]
-        slice_range_btm = [x for x in btm_slice_range if x not in observation_history_keys]
-        if len(slice_range_top)==0 and len(slice_range_btm)==0:
-            slice_range =[0]
-        elif len(slice_range_top) >= len(slice_range_btm):
-            slice_range = slice_range_top
-        elif len(slice_range_top) <= len(slice_range_btm):
-            slice_range_obj = reversed(slice_range_btm)
-            slice_range     = list(slice_range_obj)
-        else:
-            import ipdb;ipdb.set_trace()
-
-        return slice_range
-
-
-    def find_nonzero_indices(self, arr):
-
-        ## find indices array > cost threshold
-        cost_threshold = 0
-        start_index = np.argmax((arr>cost_threshold)!=0)
-        end_index = len(arr) - np.argmax((arr[::-1]>cost_threshold) != 0) - 1
-
-        return start_index, end_index
+        self.visibility_constraints = VisibilityConstraintSet(self.voxel_grid_side_length)
+        self.oracle_image_z         = None
 
 
     def infer_image_by_conditional_diffusion(self,normalized_cond):
@@ -208,243 +167,121 @@ class cutting_surface_planner():
 
 
     def get_optimal_act(self,
-            slice_img_ : np.ndarray,
-            observation_history,
-            env2      : dismantling_env,
-            tmp_action: int,
-            iters     : int,
-            save_path : str,
+            observation_history              : dict,
+            env2                             : dismantling_env,
+            last_executed_global_action_index: int,
+            iters                            : int,
+            save_path                        : str,
         ):
-        """_summary_
+        step_results = env2.step(
+            action_idx  = last_executed_global_action_index,
+            partial_obs = self.visibility_constraints.to_legacy_partial_obs()
+        )
+        obs        = step_results.observation
+        slice_img  = obs.axis_images.z # 学習とテストで固定させておく
 
-        Args:
-            slice_img_ (np.asarray): full observed image
-            observation_history (dict): observed sliced images index dict
-            env2 (_type_): cutting plane observation model to get partial observation of conditional image
-            tmp_action (_type_): current cutting action index
-            iters (_type_): current task step index
-            save_path (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
-
-        """
-        ####################################################################
-        # get partial observation image for conditional image generation ###
-        #####################################################################
-        self.split_obs_config : Information about the slice range that will not be observed due to the split by the cutting.
-                                Defaults to {}.
-                                e.g.,{'[0, 2]': {'axis': 'z', 'range': [0, 2], 'offset': 0}}
-        """
-
-        # import ipdb;ipdb.set_trace()
-
-        ###################################################################################
-        ## prior_based_ep_00がなかったときの実装
-        ####################################################################################
-        # obs,reward,done,info = env2.step(action_idx=tmp_action, partial_obs = self.split_obs_config)
-
-
-        ################################################################################
-        ## actionがprior_based_ep_00のときは，policy partial observation用のenv2を進めずに，
-        ## 観測画像が黒＝すべての領域が未観測としてそれぞれの方策を使う
-        ################################################################################
-        if tmp_action == "prior_based_ep_00":
-            obs = env2.get_obs()
-        else:
-            obs,reward,done,info = env2.step(action_idx=tmp_action, partial_obs = self.split_obs_config)
-
-
-        slice_img  = obs["sequential_obs"]["z"] #学習とテストで固定させておく
-        print(f"inner action:{tmp_action}")
+        # import ipdb; ipdb.set_trace()
 
         cond_image_save_path = save_path+"/conditions/"
         create_folder(cond_image_save_path)
         cond_ds_image_save_path = save_path+"/conditions_ds/"
         create_folder(cond_ds_image_save_path)
 
-
-        pil_image_save_from_numpy(obs["sequential_obs"]["z"],f"{cond_image_save_path}/seq_obs_cast_{iters}_axis_z_{0}.png")
+        # pil_image_save_from_numpy(obs.axis_images.z"],f"{cond_image_save_path}/seq_obs_cast_{iters}_axis_z_{0}.png")
         # pil_image_save_from_numpy(obs["sequential_obs"]["y"],f"{cond_image_save_path}/seq_obs_cast_{iters}_axis_y_{0}.png")
         # pil_image_save_from_numpy(obs["sequential_obs"]["x"],f"{cond_image_save_path}/seq_obs_cast_{iters}_axis_x_{0}.png")
 
 
-        if self.policy_config.control.mode != "oracle_obs" and self.policy_config.control.mode != "random" :
+        normalizer      = LimitsNormalizer(slice_img)
+        normalized_cond = normalizer.normalize(slice_img).transpose(2,0,1)
+        normalized_cond = to_torch(normalized_cond)
 
-            # import ipdb;ipdb.set_trace()
-            if  tmp_action == "prior_based_ep_00":
-                normalized_cond = to_torch((np.ones_like(slice_img)*-1.0).transpose(2,0,1))
-            else:
-                normalizer      = LimitsNormalizer(slice_img)
-                normalized_cond = normalizer.normalize(slice_img).transpose(2,0,1)
-                normalized_cond = to_torch(normalized_cond)
+        ## conditional image generation
+        if self.policy_config.inference.model == "vaeac":
+            last_step_images = self.infer_image_by_vaeac(normalized_cond=normalized_cond)
+        elif self.policy_config.inference.model=="conditional_diffusion":
+            last_step_images = self.infer_image_by_conditional_diffusion(normalized_cond=normalized_cond)
+        elif self.policy_config.inference.model=="diffusion_1D":
+            last_step_images = self.infer_image_by_diffusion_1D(slice_img)
+        else:
+            import ipdb;ipdb.set_trace()
 
-            ## conditional image generation
-            if self.policy_config.inference.model == "vaeac":
-                last_step_images = self.infer_image_by_vaeac(normalized_cond=normalized_cond)
-            elif self.policy_config.inference.model=="conditional_diffusion":
-                last_step_images = self.infer_image_by_conditional_diffusion(normalized_cond=normalized_cond)
-            elif self.policy_config.inference.model=="diffusion_1D":
-                last_step_images = self.infer_image_by_diffusion_1D(slice_img)
-            else:
-                import ipdb;ipdb.set_trace()
-
-            raw_pred_image_save_path = save_path+f"/raw_pred_image/step_{iters}"
-            create_folder(raw_pred_image_save_path)
-            ## save each generated images
-            for k in range(last_step_images.shape[0]):
-                pil_image_save_from_numpy(last_step_images[k]/255.0,raw_pred_image_save_path+f"/ensemble_z_{k}.png")
-                # pass
+        raw_pred_image_save_path = save_path+f"/raw_pred_image/step_{iters}"
+        create_folder(raw_pred_image_save_path)
+        ## save each generated images
+        for k in range(last_step_images.shape[0]):
+            pil_image_save_from_numpy(last_step_images[k]/255.0,raw_pred_image_save_path+f"/ensemble_z_{k}.png")
+            # pass
 
 
-            last_step_images_tmp = []
-            for k in range(last_step_images.shape[0]):
-                # import ipdb; ipdb.set_trace()
-                load_last_step_images = pil_image_load_to_numpy(raw_pred_image_save_path+f"/ensemble_z_{k}.png")
-                last_step_images_tmp.append(load_last_step_images*255.0)
-            last_step_images = np.asarray(last_step_images_tmp)
+        last_step_images_tmp = []
+        for k in range(last_step_images.shape[0]):
+            # import ipdb; ipdb.set_trace()
+            load_last_step_images = pil_image_load_to_numpy(raw_pred_image_save_path+f"/ensemble_z_{k}.png")
+            last_step_images_tmp.append(load_last_step_images*255.0)
+        last_step_images = np.asarray(last_step_images_tmp)
 
-            ## -------------------- calculate cutting costs --------------------
-            collector = SegmentationCostCollector()
-            for p in range(self.sample_image_num):
-                seg_cost = self.color_mask_cost_estimator.estimate_all(
-                    image = last_step_images[p] / 255.0,
-                )
-                collector.add(seg_cost)
-            cost_ensembles = collector.build()
+        ## -------------------- calculate cutting costs --------------------
+        collector = SegmentationCostCollector()
+        for p in range(self.sample_image_num):
+            seg_cost = self.color_mask_cost_estimator.estimate_all(
+                image = last_step_images[p] / 255.0,
+            )
+            collector.add(seg_cost)
+        cost_ensembles = collector.build()
 
-            ## ------------ calculate aggregated cost from ensemble  ------------
-            costs_decision = self.decision_aggregator.aggregate(cost_ensembles)
-            cost_x_b = costs_decision.blue.x_axis
-            cost_y_b = costs_decision.blue.y_axis
-            cost_z_b = costs_decision.blue.z_axis
+        ## ------------ calculate aggregated cost from ensemble  ------------
+        costs_decision = self.decision_aggregator.aggregate(cost_ensembles)
+        cost_x_b = costs_decision.blue.x_axis
+        cost_y_b = costs_decision.blue.y_axis
+        cost_z_b = costs_decision.blue.z_axis
 
-            ## ------------------------ create log data  ------------------------
-            ensemble_images = self.ensemble_image_builder.build_from_generated_samples(last_step_images)
+        ## ------------------------ create log data  ------------------------
+        ensemble_images = self.ensemble_image_builder.build_from_generated_samples(last_step_images)
 
-            cost_map_logs = {
-                "cost_ensembles": cost_ensembles,
-                "costs_decision": costs_decision,
-            }
+        cost_map_logs = {
+            "cost_ensembles": cost_ensembles,
+            "costs_decision": costs_decision,
+        }
 
-            '''
-                ここまで先週にやった
-            '''
-
-            """
-                今週の開始：
-                    NEDOやること
-                    get_slice_range まわりの 責務の外部化（AxisSliceRangeSelector）
-            """
 
         #####################################################################
         ## get slice range for pats remove
         #####################################################################
-        split_index= 2
-        if iters == 0 and split_index==-1:
-            a = 0
-        elif split_index ==-1000:
-            a = 0
-        else:
-            # import ipdb; ipdb.set_trace()
-            # slice_range_z =self.get_slice_range(cost=cost_z_b,axis="z",observation_history=observation_history)
-            # slice_range_x =self.get_slice_range(cost=cost_x_b,axis="x",observation_history=observation_history)
-            # slice_range_y =self.get_slice_range(cost=cost_y_b,axis="y",observation_history=observation_history)
-            # slice_range_candidates = [slice_range_z,slice_range_x,slice_range_y]
-            # # 最も長いリスト
-            # slice_range = max(slice_range_candidates, key=len)
+        selection = self.action_candidates_selector.select(
+            axis_costs = AxisCostSet(
+                x = cost_x_b,
+                y = cost_y_b,
+                z = cost_z_b,
+            ),
+            observation_history = observation_history,
+        )
+        selected_candidates = selection.slice_range
+        self.update_visibility_constraints(selected_candidates)
+
+        # ---- log ----
+        cost_map_logs["slice_candidate"] = {
+            "candidate_x": None if selection.slice_candidates.x is None else selection.slice_candidates.x.to_list(),
+            "candidate_y": None if selection.slice_candidates.y is None else selection.slice_candidates.y.to_list(),
+            "candidate_z": None if selection.slice_candidates.z is None else selection.slice_candidates.z.to_list(),
+        }
+        cost_map_logs["slice_range"] = (
+            None if selected_candidates is None else selected_candidates.to_list()
+        )
+        pickle_utils().save(dataset=cost_map_logs, save_path=save_path+f"/{iters}_cost_map_logs.pickle")
 
 
-            selection = self.axis_slice_range_selector.select(
-                axis_costs = AxisCostSet(
-                    x = cost_x_b,
-                    y = cost_y_b,
-                    z = cost_z_b,
-                ),
-                observation_history = observation_history,
-            )
-            slice_range = selection.slice_range
-
-            import ipdb; ipdb.set_trace()
-            # -------------------------
-
-
-            if min(slice_range)<env2.grid_config['side_length']:
-                axis = "z"
-                offset= 0
-            # elif min(slice_range)<env2.grid_config['side_length']:
-            elif min(slice_range)<env2.grid_config['side_length']+env2.grid_config['side_length']:
-                axis = "x"
-                offset = env2.grid_config['side_length']
-            else:
-                axis = "y"
-                offset = env2.grid_config['side_length']+env2.grid_config['side_length']
-
-
-            if len(slice_range)!=1:
-
-                if slice_range[0]>slice_range[1]:
-                    temp_slice_range = (np.asarray(slice_range[::-1])-offset)[1:]
-                else:
-                    temp_slice_range = (np.asarray(slice_range)-offset)[:-1]
-
-                split_range = [temp_slice_range[0],temp_slice_range[-1]]
-                self.split_obs_config[str(split_range)] = { "axis":axis,
-                                                            "range":split_range,
-                                                            "offset":offset}
-            else:
-                a = 0
-
-            # import ipdb;ipdb.set_trace()
-            cost_map_logs["slice_candidate"]={"candidate_x":selection.slice_candidates.x,
-                                              "candidate_y":selection.slice_candidates.y,
-                                              "candidate_z":selection.slice_candidates.z}
-            cost_map_logs["slice_range"]=slice_range
-            pickle_utils().save(dataset=cost_map_logs, save_path=save_path+f"/{iters}_cost_map_logs.pickle")
-
-
-        print("------------------------------------")
-        print(f"split_range:{self.split_obs_config}")
-        print("------------------------------------")
-
-        infos ={"ensemble_image": ensemble_images}
-
-        # print(f"split_candidate :{split_candidate}, spit_idx : {split_index}, slice_range :{slice_range}")
-        print(f"spit_idx : {split_index}, slice_range :{slice_range}")
-
-        # --- temp ---
+        # =================================================
+        infos                 = {"ensemble_image": ensemble_images}
+        slice_range           = None if selected_candidates is None else selected_candidates.to_list()
         sort_action_candidate = None
-        # ---
-        return slice_range, sort_action_candidate, infos
 
+        return slice_range, sort_action_candidate, infos
 
 
     def set_oracle_obs(self,oracle_obs_image):
         self.oracle_image_z = oracle_obs_image
 
 
-    def update_split_obs_config(self, slice_range, grid_config):
-
-        if min(slice_range)<grid_config['side_length']:
-            axis = "z"
-            offset= 0
-        elif min(slice_range)<grid_config['side_length']+grid_config['side_length']:
-            axis = "x"
-            offset = grid_config['side_length']
-        else:
-            axis = "y"
-            offset = grid_config['side_length']+grid_config['side_length']
-
-
-        if len(slice_range)!=1:
-
-            if slice_range[0]>slice_range[1]:
-                temp_slice_range = (np.asarray(slice_range[::-1])-offset)[1:]
-            else:
-                temp_slice_range = (np.asarray(slice_range)-offset)[:-1]
-
-            split_range = [temp_slice_range[0],temp_slice_range[-1]]
-            self.split_obs_config[str(split_range)] = { "axis":axis,
-                                                        "range":split_range,
-                                                        "offset":offset} # action history
+    def update_visibility_constraints(self, candidates: ActionCandidates):
+        self.visibility_constraints.add_from_action_candidates(candidates)

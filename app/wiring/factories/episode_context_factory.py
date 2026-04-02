@@ -10,7 +10,7 @@ from denoising_diffusion_pytorch.eval.types import CaseContext, EpisodeContext
 from denoising_diffusion_pytorch.eval.episode_paths import EpisodePaths
 from denoising_diffusion_pytorch.eval.episode_image_writer import EpisodeImageWriter
 from denoising_diffusion_pytorch.eval.episode_artifact_manager import EpisodeArtifactManager
-from denoising_diffusion_pytorch.action_plan.action_planner import ActionPlanner
+from denoising_diffusion_pytorch.policy.planning.action_planner import ActionPlanner
 
 @dataclass
 class EpisodeContextFactory:

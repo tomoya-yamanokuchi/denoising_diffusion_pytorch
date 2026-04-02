@@ -7,7 +7,7 @@ from denoising_diffusion_pytorch.cost.types import (
     SegmentationDecisionCost,
 )
 from denoising_diffusion_pytorch.policy.decision.decision_rules import clip_ucb_raw
-from denoising_diffusion_pytorch.action_plan.types import DecisionConfig
+from denoising_diffusion_pytorch.policy.types import DecisionConfig
 
 
 class DecisionAggregator:

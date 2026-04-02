@@ -1,9 +1,9 @@
 from typing import Dict
 from .axis_candidate_range_builder import AxisCandidateRangeBuilder
-from .types import AxisCostVector, AxisCostSet, SliceCandidates
+from ...types import AxisCostVector, AxisCostSet, SliceCandidates
 
 
-class AxisSliceCandidateCoordinator:
+class ActionCandidateBuildingCoordinator:
     def __init__(
         self,
         candidate_builder   : AxisCandidateRangeBuilder,
