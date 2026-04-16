@@ -1,0 +1,38 @@
+{
+  "UNet": {
+    "model": "UNet",
+    "params_M": 35.7,
+    "steps": 2000,
+    "ms_per_step": 79.4,
+    "total_time_s": 158.8,
+    "final_loss": 0.015133,
+    "loss_at_500": 0.050012,
+    "loss_at_1000": 0.024394,
+    "loss_at_1500": 0.01775,
+    "loss_at_2000": 0.015133
+  },
+  "DiT-S_p4": {
+    "model": "DiT-S_p4",
+    "params_M": 33.1,
+    "steps": 2000,
+    "ms_per_step": 43.8,
+    "total_time_s": 87.5,
+    "final_loss": 0.014869,
+    "loss_at_500": 0.068699,
+    "loss_at_1000": 0.025096,
+    "loss_at_1500": 0.017463,
+    "loss_at_2000": 0.014869
+  },
+  "U-ViT-S_p4": {
+    "model": "U-ViT-S_p4",
+    "params_M": 26.0,
+    "steps": 2000,
+    "ms_per_step": 53.1,
+    "total_time_s": 106.2,
+    "final_loss": 0.030942,
+    "loss_at_500": 0.086821,
+    "loss_at_1000": 0.049825,
+    "loss_at_1500": 0.041071,
+    "loss_at_2000": 0.030942
+  }
+}

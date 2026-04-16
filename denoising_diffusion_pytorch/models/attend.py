@@ -67,11 +67,16 @@ class Attend(nn.Module):
 
         q, k, v = map(lambda t: t.contiguous(), (q, k, v))
 
-        # Check if there is a compatible device for flash attention
+        # Flash attention requires half precision; fall back to SDPA without
+        # backend restrictions when inputs are fp32 (e.g. during sampling)
+        if q.dtype == torch.float32:
+            out = F.scaled_dot_product_attention(
+                q, k, v,
+                dropout_p = self.dropout if self.training else 0.
+            )
+            return out
 
         config = self.cuda_config if is_cuda else self.cpu_config
-
-        # pytorch 2.0 flash attn: q, k, v, mask, dropout, causal, softmax_scale
 
         with torch.backends.cuda.sdp_kernel(**config._asdict()):
             out = F.scaled_dot_product_attention(
