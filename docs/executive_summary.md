@@ -69,10 +69,10 @@ At 344x344, DiT uses **84% less GPU memory** than UNet. This enables:
 
 ![Wall-clock time](figures/fig6_wallclock.png)
 
-For a full 800k-step training run at 344x344:
-- **Original:** ~62 hours
-- **DiT (same batch):** ~10 hours
-- **DiT (4x batch):** ~30 hours wall-clock, but processes 4x more data per step
+Normalized to process the same amount of data (3.2M images at 344x344):
+- **Original (bs=4, 800k steps):** ~62 hours
+- **DiT (bs=4, 800k steps):** ~10 hours
+- **DiT (bs=16, 200k steps):** ~8 hours (same total images, 4x batch = 4x fewer steps)
 
 ---
 
