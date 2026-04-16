@@ -29,7 +29,7 @@ We achieved **up to 6.5x faster training** with **no loss in model quality** by 
 
 ![Speed comparison at 344x344](figures/fig2_speed_344x344.png)
 
-The DiT architecture at 344x344 is **6.5x faster** per step at the same batch size. Additionally, it uses so little memory that we can increase the batch size from 4 to 16, which means fewer steps needed to converge.
+Normalized by batch size (ms per image), DiT at bs=4 is **6.5x faster** and at bs=16 is **8.1x faster** than the original UNet. The larger batch also means fewer steps needed to converge.
 
 ---
 
