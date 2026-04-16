@@ -1,6 +1,13 @@
 # scripts/run.py
 from __future__ import annotations
 
+import torch
+# --- Compute optimizations (Ampere+) ---
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
+torch.backends.cudnn.benchmark = True
+torch.set_float32_matmul_precision('high')
+
 import hydra
 from omegaconf import DictConfig
 

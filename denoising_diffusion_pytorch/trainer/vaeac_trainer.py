@@ -82,7 +82,8 @@ class Trainer(object):
         # shuffleしてから分割してくれる.
         train_dataset, val_dataset = torch.utils.data.random_split(self.dataset, [train_size, val_size])
         self.train_dl = cycle(torch.utils.data.DataLoader(
-            train_dataset, batch_size=train_batch_size, num_workers=8, shuffle=True,drop_last=True))
+            train_dataset, batch_size=train_batch_size, num_workers=min(os.cpu_count(), 8),
+            shuffle=True, drop_last=True, pin_memory=True, persistent_workers=True, prefetch_factor=2))
         self.val_dl = cycle(torch.utils.data.DataLoader(
             val_dataset, batch_size=1, num_workers=1, shuffle=True))
 
@@ -155,7 +156,7 @@ class Trainer(object):
 
                 self.optim.step()
                 self.scheduler.step()
-                self.optim.zero_grad()
+                self.optim.zero_grad(set_to_none=True)
                 self.step += 1
 
                 pbar.set_description(f'loss: {loss_val:.4f}')

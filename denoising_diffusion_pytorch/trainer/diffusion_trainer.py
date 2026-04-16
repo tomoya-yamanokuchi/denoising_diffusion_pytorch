@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch
 from torch.utils.data import DataLoader
 
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 
 from torchvision import transforms as T, utils
 
@@ -51,7 +51,7 @@ class Trainer(object):
         num_samples = 25,
         results_folder = './results',
         amp = False,
-        mixed_precision_type = 'fp16',
+        mixed_precision_type = 'bf16',
         split_batches = True,
         convert_image_to = None,
         calculate_fid = True,
@@ -97,18 +97,25 @@ class Trainer(object):
 
         # dataset and dataloader
 
-        # self.ds = Dataset(folder, self.image_size, augment_horizontal_flip = augment_horizontal_flip, convert_image_to = convert_image_to)
         self.ds = dataset
 
         if self.ds is not None:
             assert len(self.ds) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
-            dl = DataLoader(self.ds, batch_size = train_batch_size, shuffle = True, pin_memory = True, num_workers = cpu_count())
+            dl = DataLoader(
+                self.ds,
+                batch_size = train_batch_size,
+                shuffle = True,
+                pin_memory = True,
+                num_workers = min(cpu_count(), 8),
+                persistent_workers = True,
+                prefetch_factor = 2,
+            )
             dl = self.accelerator.prepare(dl)
             self.dl = cycle(dl)
 
-        # optimizer
+        # optimizer (fused CUDA kernel for Ampere+)
 
-        self.opt = Adam(diffusion_model.parameters(), lr = train_lr, betas = adam_betas)
+        self.opt = AdamW(diffusion_model.parameters(), lr = train_lr, betas = adam_betas, fused = True)
 
         # for logging results in a folder periodically
 
@@ -124,6 +131,14 @@ class Trainer(object):
         # step counter state
 
         self.step = 0
+
+        # compile the inner UNet for faster training (torch 2.0+)
+        # Compile only the UNet (not the full diffusion wrapper) to avoid recompilation from varying input shapes
+
+        if hasattr(self.model, 'model'):
+            self.model.model = torch.compile(self.model.model)
+        else:
+            self.model = torch.compile(self.model)
 
         # prepare model, dataloader, optimizer with accelerator
 
@@ -222,13 +237,10 @@ class Trainer(object):
                 pbar.set_description(f'loss: {total_loss:.4f}')
                 self.writer.add_scalar("Train_loss",total_loss,self.step)
 
-                accelerator.wait_for_everyone()
                 accelerator.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
 
                 self.opt.step()
-                self.opt.zero_grad()
-
-                accelerator.wait_for_everyone()
+                self.opt.zero_grad(set_to_none=True)
 
                 self.step += 1
                 if accelerator.is_main_process:

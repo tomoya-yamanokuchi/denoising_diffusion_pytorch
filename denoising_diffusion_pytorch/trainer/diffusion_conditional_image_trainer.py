@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch
 from torch.utils.data import DataLoader
 
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 
 from torchvision import transforms as T, utils
 
@@ -51,7 +51,7 @@ class Trainer(object):
         num_samples = 25,
         results_folder = './results',
         amp = False,
-        mixed_precision_type = 'fp16',
+        mixed_precision_type = 'bf16',
         split_batches = True,
         convert_image_to = None,
         calculate_fid = True,
@@ -117,14 +117,15 @@ class Trainer(object):
         # shuffleしてから分割してくれる.
         train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
         self.train_dl = cycle(torch.utils.data.DataLoader(
-            train_dataset, batch_size=train_batch_size, num_workers=8, shuffle=True, drop_last=True))
+            train_dataset, batch_size=train_batch_size, num_workers=min(cpu_count(), 8),
+            shuffle=True, drop_last=True, pin_memory=True, persistent_workers=True, prefetch_factor=2))
         self.val_dl = cycle(torch.utils.data.DataLoader(
             val_dataset, batch_size=1, num_workers=1, shuffle=False))
 
 
         # optimizer
 
-        self.opt = Adam(diffusion_model.parameters(), lr = train_lr, betas = adam_betas)
+        self.opt = AdamW(diffusion_model.parameters(), lr = train_lr, betas = adam_betas, fused = True)
 
         # for logging results in a folder periodically
 
@@ -142,6 +143,13 @@ class Trainer(object):
         # import ipdb; ipdb.set_trace()
 
         self.step = 0
+
+        # compile the inner model for faster training (torch 2.0+)
+
+        if hasattr(self.model, 'model'):
+            self.model.model = torch.compile(self.model.model)
+        else:
+            self.model = torch.compile(self.model)
 
         # prepare model, dataloader, optimizer with accelerator
 
@@ -241,13 +249,10 @@ class Trainer(object):
                 pbar.set_description(f'loss: {total_loss:.4f}')
                 self.writer.add_scalar("Train_loss",total_loss,self.step)
 
-                accelerator.wait_for_everyone()
                 accelerator.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
 
                 self.opt.step()
-                self.opt.zero_grad()
-
-                accelerator.wait_for_everyone()
+                self.opt.zero_grad(set_to_none=True)
 
                 self.step += 1
                 if accelerator.is_main_process:
