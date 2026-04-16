@@ -118,52 +118,44 @@ class Cond_image_dataloader(Dataset):
 
     def _get_pattern_mask(self):
         """
-        Generates a random pattern mask for the images.
-
-        The pattern mask is created by generating a random image and resizing it to a large size,
-        then thresholding it to create a binary mask.
+        Generates a random pattern mask via tiling instead of resizing to huge arrays.
+        Uses a small random image tiled to cover the sampling area, avoiding the 60K×60K allocation.
 
         Returns:
-            np.ndarray: A binary mask of shape (, ).
+            np.ndarray: A binary mask large enough for random cropping.
         """
-        dim_scale = 6 # 344/64
-        # Get the pattern mask
-        image = np.random.rand(600, 600)
-        if self.image_size == 344:
-            image = cv2.resize(image, (10000*dim_scale, 10000*dim_scale), cv2.INTER_CUBIC) # for 344 dim setting
-        else:
-            image = cv2.resize(image, (10000, 10000), cv2.INTER_CUBIC) # for 64 dim setting
-        image = (image > 0.25).astype(float)# for 64 dim setting
-        # image = (image > 0.45).astype(float)# for 343 dim setting # H100_real_models_dataset_v2_4
+        # Generate small random pattern and tile it to a reasonable size
+        # Instead of 600→60000 resize (~10GB), tile 600×600 to cover sampling needs
+        base_size = 600
+        image = np.random.rand(base_size, base_size)
+        image = cv2.resize(image, (base_size * 4, base_size * 4), cv2.INTER_CUBIC)
+        image = (image > 0.25).astype(np.float32)
+
+        # Tile to cover enough area for random cropping
+        # Need at least image_size extra in each direction for cropping
+        target_size = self.image_size * 10  # reasonable pool for random crops
+        n_tiles = (target_size // image.shape[0]) + 1
+        image = np.tile(image, (n_tiles, n_tiles))
         return image
 
 
     def _get_pattern_sample(self):
         """
         Samples a patch of the pattern mask for use as a mask on the image.
-
-        This method selects a random region from the precomputed `pattern_mask` of size `self.image_size` x `self.image_size`.
-        It ensures that the fraction of dropped pixels (i.e., pixels with a value of 0) is between 5% and 90%.
-
-        The fraction of dropped pixels is calculated by taking the mean value of the mask.
-        A mask is sampled repeatedly until the fraction of dropped pixels is within the acceptable range.
+        Ensures fraction of dropped pixels is between 5% and 90%.
+        Bounded to max 100 attempts to prevent infinite loops.
 
         Returns:
-            np.ndarray: A 2D binary mask (with shape `image_size` x `image_size`) sampled from the pattern mask.
+            np.ndarray: A 2D binary mask of shape (image_size, image_size).
         """
-        # Get a mask sampled from the pattern image
-        # Fraction of pixels dropped, this value has to be between 20 and 30 percent
-        frac = 0
-        dim_scale = 6
-        # while not (frac >= 0.2 and frac <= 0.999):
-        # while not (frac >= 0.05 and frac <= 0.9): # for 64 dim setting
-        while not (frac >= 0.05 and frac <= 0.9):  # for  343 dim setting # H100_real_models_dataset_v2_4
-            if self.image_size == 344:
-                y_coord, x_coord = np.random.randint((10000*dim_scale)-self.image_size, size=(2, )) # for 344 dim setting
-            else:
-                y_coord, x_coord = np.random.randint(10000-self.image_size, size=(2, )) # for 64 dim setting
+        max_extent = self.pattern_mask.shape[0] - self.image_size
+        for _ in range(100):
+            y_coord, x_coord = np.random.randint(max_extent, size=(2,))
             mask = self.pattern_mask[y_coord:y_coord+self.image_size, x_coord:x_coord+self.image_size]
-            frac = 1 - (mask).mean()
+            frac = 1 - mask.mean()
+            if 0.05 <= frac <= 0.9:
+                return mask
+        # fallback: return last sampled mask
         return mask
 
 
@@ -275,55 +267,28 @@ class Cond_image_dataloader(Dataset):
         return image
 
     def __getitem__(self, idx):
-        # Get the idx' valued item
-        # First fetch the image, then get the mask
-        # Return the final image
+        # Load as RGB directly via PIL (no BGR→RGB→PIL→Tensor→NumPy→BGR chain)
         filename = self.files[idx]
-        image = cv2.imread(filename)
-        assert (image is not None), filename
+        image = Image.open(filename).convert('RGB')
+        img_tensor = self.transform(image)  # (C, H, W) in [0, 1]
 
-        # OpenCV: BGR → RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        # NumPy → PIL.Image に変換
-        image = Image.fromarray(image)
-
-        # torchvision transforms を適用
-        transformed_image = self.transform(image)
-
-        # Tensor → NumPy へ変換
-        transformed_image = transformed_image.permute(1, 2, 0).numpy()
-
-        # RGB → BGR に戻す
-        transformed_image = cv2.cvtColor(transformed_image, cv2.COLOR_RGB2BGR)*255.0
-
-        # import ipdb;ipdb.set_trace()
-
-        image_ = transformed_image
-
+        # Optional horizontal flip (not for 344x344)
         if self.image_size != 344:
-            image_ = self._RandomHorizontalFlip(image_=image_)
+            if np.random.random() < 0.5:
+                img_tensor = torch.flip(img_tensor, dims=[2])
 
+        # Normalize to [-1, 1]
+        image_norm = img_tensor * 2 - 1  # (C, H, W)
 
-        # Convert image to right format (Crop and scale)
-        # original_image = cv2.resize(image, (self.image_size, self.image_size))
+        # Get mask and create observed image
+        image_np = image_norm.permute(1, 2, 0).numpy()  # (H, W, C) for _get_mask
+        mask = self._get_mask(image_np)
 
-        # image_ = self._RandomHorizontalFlip(image_=original_image)
-
-        # image_2 = self._RandomVerticalFlip(image_=image_1)
-        # image_ = self._RandomRotation90(image_=image_2)
-
-
-        # image_ = original_image
-
-        image = (image_[:, :, ::-1]/255.0)*2 - 1
-
-        mask = self._get_mask(image)
-        observed = (image_[:, :, ::-1]/255.0)*2 - 1
-        observed[mask.squeeze()==1,:]=-1.0
+        observed = image_np.copy()
+        observed[mask.squeeze() == 1, :] = -1.0
 
         return {
-            'image': torch.Tensor(image.transpose(2, 0, 1)),
-            'mask' : torch.Tensor(mask.transpose(2, 0, 1)),
-            'observed': torch.Tensor(observed.transpose(2, 0, 1)),
+            'image': image_norm,
+            'mask' : torch.from_numpy(mask.transpose(2, 0, 1)).float(),
+            'observed': torch.from_numpy(observed.transpose(2, 0, 1)).float(),
         }

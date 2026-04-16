@@ -405,10 +405,8 @@ class GaussianDiffusion(nn.Module):
         # ########################################################################################
         x_self_cond = None
         if self.self_condition and random() < 0.5:
-            # with torch.inference_mode():
             with torch.no_grad():
                 x_self_cond = self.model_predictions(x, t).pred_x_start
-                x_self_cond.detach_()
 
 
 
@@ -439,19 +437,18 @@ class GaussianDiffusion(nn.Module):
         #  Classifier-Free Guidance（CFG）approach
         # ########################################################################
         if mask is not None:
-            if random() < 0.8 :
-                binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float() # 各画素（3チャンネル）すべてが -1.0 なら未観測 → 0.0 それ以外（どれか1chでも ≠ -1.0）なら観測 → 1.0
-                # mask_cond = x * binary_mask # ノイズ付きマスク=forwrd processでサンプリングされた画像×マスクラベル　→　mask label = 1 : 画素値，binary_mask = 0 : 0で埋める.
-                mask_cond = mask * binary_mask # ノイズ付きマスク=forwrd processでサンプリングされた画像×マスクラベル　→　mask label = 1 : 画素値，binary_mask = 0 : 0で埋める.
+            binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float()
+            if random() < 0.8:
+                # observed pixels get mask values, unobserved get zero
+                mask_cond = torch.where(binary_mask.bool(), mask, torch.zeros_like(mask))
                 model_out = self.model(x, t, x_self_cond, mask_cond, binary_mask)
             else:
-                binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float()*0.0
-                # mask_cond = x * binary_mask
-                mask_cond = mask * binary_mask
-                model_out = self.model(x, t, x_self_cond, mask_cond, binary_mask)
-                
-             
-             
+                # CFG unconditional: drop all conditioning
+                zeros = torch.zeros_like(binary_mask)
+                mask_cond = torch.zeros_like(mask)
+                model_out = self.model(x, t, x_self_cond, mask_cond, zeros)
+                binary_mask = zeros  # for loss masking below
+
         if self.objective == 'pred_noise':
             target = noise
         elif self.objective == 'pred_x0':
@@ -465,8 +462,8 @@ class GaussianDiffusion(nn.Module):
         loss = F.mse_loss(model_out, target, reduction = 'none')
 
         if mask is not None:
-            mask_label = (binary_mask == 0).float()      # mask = [B, 1, H, W] binary mask ver  
-            loss = loss * mask_label  # 自動ブロードキャスト
+            # compute loss only on unobserved regions (binary_mask == 0)
+            loss = torch.where(binary_mask.bool(), torch.zeros_like(loss), loss)
 
         loss = reduce(loss, 'b ... -> b', 'mean')
         loss = loss * extract(self.loss_weight, t, loss.shape)
