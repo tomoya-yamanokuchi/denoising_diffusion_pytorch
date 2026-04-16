@@ -4,3 +4,6 @@ outputs/
 sw_dir/
 results/
 *.pkl
+.codex/
+.claude/
+.serena/
