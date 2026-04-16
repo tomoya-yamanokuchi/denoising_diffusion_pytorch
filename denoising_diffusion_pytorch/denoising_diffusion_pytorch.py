@@ -8,6 +8,7 @@ from multiprocessing import cpu_count
 
 import torch
 from torch import nn, einsum
+from torch.utils.checkpoint import checkpoint as grad_checkpoint
 from torch.cuda.amp import autocast
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
@@ -294,9 +295,11 @@ class Unet(nn.Module):
         attn_dim_head = 32,
         attn_heads = 4,
         full_attn = None,    # defaults to full attention only for inner most layer
-        flash_attn = False
+        flash_attn = False,
+        gradient_checkpointing = False
     ):
         super().__init__()
+        self.gradient_checkpointing = gradient_checkpointing
 
         # determine dimensions
 
@@ -405,19 +408,29 @@ class Unet(nn.Module):
 
         h = []
 
-        for block1, block2, attn, downsample in self.downs:
+        def _down_block(block1, block2, attn, downsample, x, t):
             x = block1(x, t)
             h.append(x)
-
             x = block2(x, t)
             x = attn(x) + x
             h.append(x)
-
             x = downsample(x)
+            return x
 
-        x = self.mid_block1(x, t)
-        x = self.mid_attn(x) + x
-        x = self.mid_block2(x, t)
+        for block1, block2, attn, downsample in self.downs:
+            if self.gradient_checkpointing and self.training:
+                x = grad_checkpoint(_down_block, block1, block2, attn, downsample, x, t, use_reentrant=False)
+            else:
+                x = _down_block(block1, block2, attn, downsample, x, t)
+
+        if self.gradient_checkpointing and self.training:
+            x = grad_checkpoint(self.mid_block1, x, t, use_reentrant=False)
+            x = self.mid_attn(x) + x
+            x = grad_checkpoint(self.mid_block2, x, t, use_reentrant=False)
+        else:
+            x = self.mid_block1(x, t)
+            x = self.mid_attn(x) + x
+            x = self.mid_block2(x, t)
 
         for block1, block2, attn, upsample in self.ups:
             x = torch.cat((x, h.pop()), dim = 1)

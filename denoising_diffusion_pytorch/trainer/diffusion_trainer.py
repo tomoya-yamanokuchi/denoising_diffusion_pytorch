@@ -122,7 +122,7 @@ class Trainer(object):
 
         if self.accelerator.is_main_process:
             self.ema = EMA(diffusion_model, beta = ema_decay, update_every = ema_update_every)
-            self.ema.to(self.device)
+            self.ema.to('cpu')  # keep EMA on CPU to save GPU memory; copy to GPU for eval
 
         self.results_folder = Path(results_folder)
         self.results_folder.mkdir(exist_ok = True)
@@ -258,12 +258,12 @@ class Trainer(object):
                     self.ema.update()
 
                     if self.step != 0 and divisible_by(self.step, self.save_and_sample_every):
-                    # if True:
+                        # move EMA to GPU for sampling, then back to CPU
+                        self.ema.to(device)
                         self.ema.ema_model.eval()
                         print(f"start eval process: {self.step}")
 
                         with torch.inference_mode():
-                            # milestone = self.step // self.save_and_sample_every
                             milestone = self.step
                             batches = num_to_groups(self.num_samples, self.batch_size)
                             all_images_list = list(map(lambda n: self.ema.ema_model.sample(batch_size=n), batches))
@@ -284,6 +284,10 @@ class Trainer(object):
                             self.save("latest")
                         else:
                             self.save(milestone)
+
+                        # move EMA back to CPU to free GPU memory
+                        self.ema.to('cpu')
+                        torch.cuda.empty_cache()
 
                 pbar.update(1)
 
