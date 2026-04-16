@@ -450,7 +450,7 @@ class Unet(nn.Module):
             x = torch.cat((x_self_cond, x), dim = 1)
 
         x = self.init_conv(x)
-        r = x.clone()
+        r = x
 
 
         # if mask_cond is not None:

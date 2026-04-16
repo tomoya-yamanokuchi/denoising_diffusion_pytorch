@@ -43,10 +43,9 @@ ModelPrediction =  namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
 #     return x
 
 def apply_conditioning(x, cond):
-    # import ipdb;ipdb.set_trace()
     for cond_num, items in cond.items():
         h_idx, w_idx = items["idx"]
-        x[:, :, h_idx, w_idx] = items["val"][:, h_idx, w_idx].clone()
+        x[:, :, h_idx, w_idx] = items["val"][:, h_idx, w_idx]
     return x
 
 # def default(val, d):
@@ -452,10 +451,8 @@ class GaussianDiffusion(nn.Module):
 
         x_self_cond = None
         if self.self_condition and random() < 0.5:
-            # with torch.inference_mode():
             with torch.no_grad():
                 x_self_cond = self.model_predictions(x, t).pred_x_start
-                x_self_cond.detach_()
 
         # predict and take gradient step
 

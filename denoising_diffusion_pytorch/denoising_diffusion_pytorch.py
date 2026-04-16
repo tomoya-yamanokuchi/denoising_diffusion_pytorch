@@ -38,10 +38,8 @@ ModelPrediction =  namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
 
 
 def apply_conditioning(x, cond):
-
     for cond_num ,items in cond.items():
-        # import ipdb;ipdb.set_trace()
-        x[:,items["idx"][0],items["idx"][1],items["idx"][2]] = items["val"][items["idx"]].clone()
+        x[:,items["idx"][0],items["idx"][1],items["idx"][2]] = items["val"][items["idx"]]
     return x
 
 
@@ -401,7 +399,7 @@ class Unet(nn.Module):
             x = torch.cat((x_self_cond, x), dim = 1)
 
         x = self.init_conv(x)
-        r = x.clone()
+        r = x
 
         t = self.time_mlp(time)
 
@@ -808,7 +806,6 @@ class GaussianDiffusion(nn.Module):
         if self.self_condition and random() < 0.5:
             with torch.inference_mode():
                 x_self_cond = self.model_predictions(x, t).pred_x_start
-                x_self_cond.detach_()
 
         # predict and take gradient step
 

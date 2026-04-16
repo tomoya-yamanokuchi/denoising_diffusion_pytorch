@@ -1,4 +1,5 @@
 import math
+import threading
 from pathlib import Path
 from multiprocessing import cpu_count
 
@@ -142,7 +143,12 @@ class Trainer1D(object):
             'version': __version__
         }
 
-        torch.save(data, str(self.results_folder / f'model-{milestone}.pt'))
+        cpu_data = {k: (v.cpu() if isinstance(v, torch.Tensor) else v) for k, v in data.items()}
+        save_path = str(self.results_folder / f'model-{milestone}.pt')
+        if hasattr(self, '_save_thread') and self._save_thread.is_alive():
+            self._save_thread.join()
+        self._save_thread = threading.Thread(target=torch.save, args=(cpu_data, save_path))
+        self._save_thread.start()
 
     def load(self, milestone):
         accelerator = self.accelerator
@@ -176,7 +182,7 @@ class Trainer1D(object):
             while self.step < self.train_num_steps:
                 self.model.train()
 
-                total_loss = 0.
+                total_loss_gpu = torch.tensor(0., device=device)
 
                 for _ in range(self.gradient_accumulate_every):
                     data = next(self.dl).to(device)
@@ -184,10 +190,11 @@ class Trainer1D(object):
                     with self.accelerator.autocast():
                         loss = self.model(data)
                         loss = loss / self.gradient_accumulate_every
-                        total_loss += loss.item()
+                        total_loss_gpu += loss.detach()
 
                     self.accelerator.backward(loss)
 
+                total_loss = total_loss_gpu.item()
                 pbar.set_description(f'loss: {total_loss:.4f}')
                 self.writer.add_scalar("Train_loss",total_loss,self.step)
 
