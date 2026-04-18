@@ -2,10 +2,8 @@ import os
 import pickle
 import glob
 import torch
-import pdb
 
 from collections import namedtuple
-from denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import load_ckpt,get_optimizers
 
 DiffusionExperiment = namedtuple('Diffusion', 'dataset renderer model diffusion ema trainer epoch')
 VAEExperiment = namedtuple('VAE', 'dataset renderer model diffusion ema trainer epoch')
@@ -135,6 +133,7 @@ def load_vaeac(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
 
     trainer.config.train_config["pretrained"] = os.path.join(*loadpath,f"model_checkpoint_{epoch}.pt")
 
+    from denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import load_ckpt, get_optimizers
     optim = get_optimizers(model, trainer.config.model_config)
     model, _, metadata = load_ckpt(model, optim, trainer.config.train_config)
     trainer.step = epoch

@@ -1,6 +1,5 @@
 import os
 import git
-import pdb
 
 PROJECT_PATH = os.path.dirname(
     os.path.realpath(os.path.join(__file__, '..', '..')))
