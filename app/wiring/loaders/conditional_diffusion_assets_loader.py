@@ -58,7 +58,7 @@ class ConditionalDiffusionAssetsLoader:
 
 
     def __build_network(self, cfg, device: str):
-        from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
+        from denoising_diffusion_pytorch.models.proposed.unet_2d_cond import Unet
         network = Unet(
             dim            = cfg.inferencer.network.dim,
             dim_mults      = cfg.inferencer.network.dim_mults,
@@ -71,7 +71,7 @@ class ConditionalDiffusionAssetsLoader:
     def _build_inferencer(self, cfg, device: str):
         network = self.__build_network(cfg, device)
         # ----
-        from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
+        from denoising_diffusion_pytorch.models.proposed.conditional_diffusion_cfg import GaussianDiffusion
         method = GaussianDiffusion(
             model      = network,
             image_size = cfg.dataset.image_size,

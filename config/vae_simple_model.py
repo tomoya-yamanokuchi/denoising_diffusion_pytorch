@@ -227,7 +227,7 @@ base = {
         ## model
         # 'model'             : 'models.unet_2d.Unet',
         # 'model'             : 'models.unet_2d_simple_devel.Unet',
-        'model'             : 'models.unet_2d_simple_devel2.Unet',
+        'model'             : 'models.proposed.unet_2d_cond.Unet',
 
         'dim_mults'         : (1, 2, 4, 8),
         'flash_attn'        : True,
@@ -240,7 +240,7 @@ base = {
         # 'diffusion'         : 'models.conditional_image_diffusion.GaussianDiffusion',
         # 'diffusion'         : 'models.conditional_image_diffusion_simple_devel.GaussianDiffusion',
         # 'diffusion'         : 'models.conditional_image_diffusion_cfg_devel.GaussianDiffusion',
-        'diffusion'         : 'models.conditional_image_diffusion_cfg_devel2.GaussianDiffusion',
+        'diffusion'         : 'models.proposed.conditional_diffusion_cfg.GaussianDiffusion',
 
 
         'beta_schedule'     : 'sigmoid', # default = 'sigmoid' ['sigmoid', 'cosine']

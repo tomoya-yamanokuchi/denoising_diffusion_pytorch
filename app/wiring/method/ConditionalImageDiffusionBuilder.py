@@ -20,7 +20,7 @@ class ConditionalImageDiffusionBuilder:
         )
 
     def build_model(self):
-        from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
+        from denoising_diffusion_pytorch.models.proposed.unet_2d_cond import Unet
         model = Unet(
             dim            = self.cfg.inferencer.network.dim,
             dim_mults      = self.cfg.inferencer.network.dim_mults,
@@ -33,7 +33,7 @@ class ConditionalImageDiffusionBuilder:
 
 
     def build_method(self) -> Any:
-        from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
+        from denoising_diffusion_pytorch.models.proposed.conditional_diffusion_cfg import GaussianDiffusion
         method = GaussianDiffusion(
             model      = self.model,
             image_size = self.cfg.dataset.image_size,
