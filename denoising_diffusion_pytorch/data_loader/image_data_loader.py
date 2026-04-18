@@ -210,7 +210,6 @@ class Dataset1D(pytorch_Dataset):
         if permute == "z":
             batch_2d_image  = patches
         else:
-            import ipdb;ipdb.set_trace()
         # elif permute == "y":
         #     batch_2d_image  = patches.transpose(1,0,2,3)
         # elif permute == "x":

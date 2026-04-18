@@ -423,7 +423,6 @@ class dismantling_env():
                         if action["loc"]==partial_obs[val]["range"][1] or action["loc"]==partial_obs[val]["range"][0]:
                             mini_batch_image = mini_batch_image
                         elif partial_obs[val]["range"][0]<action["loc"]<partial_obs[val]["range"][1]:
-                            # import ipdb;ipdb.set_trace()
                             mini_batch_image[:,:,:] = 0.0
                             update_flag = 0
 
@@ -452,7 +451,6 @@ class dismantling_env():
                         if action["loc"]==partial_obs[val]["range"][1] or action["loc"]==partial_obs[val]["range"][0]:
                             mini_batch_image = mini_batch_image
                         elif partial_obs[val]["range"][0]<action["loc"]<partial_obs[val]["range"][1]:
-                            # import ipdb;ipdb.set_trace()
                             mini_batch_image[:,:,:] = 0.0
                             update_flag = 0
 
@@ -483,7 +481,6 @@ class dismantling_env():
                             mini_batch_image = mini_batch_image
                         elif partial_obs[val]["range"][0]<action["loc"]<partial_obs[val]["range"][1]:
                             mini_batch_image[:,:,:] = 0.0
-                            # import ipdb;ipdb.set_trace()
 
                             update_flag = 0
 

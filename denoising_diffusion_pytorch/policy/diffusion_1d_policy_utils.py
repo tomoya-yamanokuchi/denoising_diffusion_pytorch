@@ -83,7 +83,6 @@ def get_2d_image_to_mini_batch_image(image, grid_3dim, permute):
     if permute == "z":
         batch_2d_image  = patches
     else:
-        import ipdb;ipdb.set_trace()
     # elif permute == "y":
     #     batch_2d_image  = patches.transpose(1,0,2,3)
     # elif permute == "x":

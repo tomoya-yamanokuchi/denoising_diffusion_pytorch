@@ -145,7 +145,6 @@ class CelebA(Dataset):
             # pp = 0.9
             mask = np.random.binomial(1.,pp,(image.shape))[:,:,:1]
             mask = mask.astype(float)
-            # import ipdb;ipdb.set_trace()
 
 
         # Half mask, randomly pick one from left, right top bottom

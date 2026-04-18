@@ -167,7 +167,6 @@ class Trainer(object):
             self.model.train()
 
             if i  == 0:
-                import ipdb;ipdb.set_trace()
 
             train_image  = data["train_image"].to(self.device)
             cond         = data["cond_image"].to(self.device)

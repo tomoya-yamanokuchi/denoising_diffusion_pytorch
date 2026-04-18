@@ -586,4 +586,3 @@ if __name__ == '__main__':
 
     y = model(x.cuda(), t.cuda())  # 出力：B x 6 x 1024
 
-    import ipdb;ipdb.set_trace()

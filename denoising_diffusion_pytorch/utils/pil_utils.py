@@ -75,7 +75,6 @@ def cv2_hsv_mask(image):
 
         # maskimg[((h > 0) & (h < 10)) & (s > 0) & (s < 10) & (v > 92) & (v < 101)] = 25  #GREEN
 
-        # import ipdb;ipdb.set_trace()
 
         # maskimg[((h > 50-10) & (h < 50+10)) & (s > 0) & (s < 100) & (v > 92-10) & (v < 101)] = 255  #GREEN
 

@@ -153,7 +153,6 @@ def one_step_voxel_render(k, s_grid_config,sample_images,save_path):
                                   s_grid_config["bounds"][5]-0.02,
                                 ))
 
-        # import ipdb;ipdb.set_trace()
 
 
 
@@ -172,7 +171,6 @@ def one_step_voxel_render(k, s_grid_config,sample_images,save_path):
         plotter = pv.Plotter(window_size=(512, 512),off_screen = True)
         step_image = sample_images[k]/255.0
         step_image = step_image.clip(0,1,step_image)
-        # import ipdb;ipdb.set_trace()
 
 
         updated_colors = box_array_handler.cast_2d_image_to_box_color(image=step_image,permute="z")
@@ -278,14 +276,11 @@ def one_step_voxel_render_for_cutting_process(k, s_grid_config,sample_images,act
         step_image = sample_images[k]/255.0
         step_image = step_image.clip(0,1,step_image)
 
-        # import ipdb;ipdb.set_trace()
 
 
         updated_colors = box_array_handler.cast_2d_image_to_box_color(image=step_image,permute="z")
 
         for idx,elements in enumerate(nearby_cells):
-        # import ipdb;ipdb.set_trace()
-            # import ipdb;ipdb.set_trace()
             # if np.all(updated_colors[int(elements)] == np.asarray([0.1,0.1,0.1])):
             # if np.all(updated_colors[int(elements)] >= np.asarray([0.1,0.7,0.7])) & np.all((updated_colors[int(elements)] <  np.asarray([0.3,0.9,0.9]))):
             #     plotter.add_mesh(nearby_cells[elements], color = updated_colors[int(elements)] ,opacity = 0.5 , show_edges=True)
@@ -462,14 +457,11 @@ def one_step_voxel_render_for_cutting_process_w_cost_map(k, s_grid_config,sample
         step_image = sample_images[k]/255.0
         step_image = step_image.clip(0,1,step_image)
 
-        # import ipdb;ipdb.set_trace()
 
 
         updated_colors = box_array_handler.cast_2d_image_to_box_color(image=step_image,permute="z")
 
         for idx,elements in enumerate(nearby_cells):
-        # import ipdb;ipdb.set_trace()
-            # import ipdb;ipdb.set_trace()
             # if np.all(updated_colors[int(elements)] == np.asarray([0.1,0.1,0.1])):
             # if np.all(updated_colors[int(elements)] >= np.asarray([0.1,0.7,0.7])) & np.all((updated_colors[int(elements)] <  np.asarray([0.3,0.9,0.9]))):
             #     plotter.add_mesh(nearby_cells[elements], color = updated_colors[int(elements)] ,opacity = 0.5 , show_edges=True)
@@ -711,7 +703,6 @@ def one_step_pcd_render_for_cutting_process(k, s_grid_config,sample_images,actio
         step_image = sample_images[k]/255.0
         step_image = step_image.clip(0,1,step_image)
 
-        # import ipdb;ipdb.set_trace()
 
 
         updated_colors = box_array_handler.cast_2d_image_to_box_color(image=step_image,permute="z")

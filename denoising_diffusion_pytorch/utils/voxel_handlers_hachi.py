@@ -132,7 +132,6 @@ class pv_box_array():
         vicinity_box_length = np.abs(self.grid_centers[0]-self.grid_centers[1]).max()
         side_length = vicinity_box_length/2.0
 
-        # import ipdb;ipdb.set_trace()
         ugrid = pv.voxelize(mesh,density=side_length)
         ugrid_cell_center = ugrid.cell_centers().points
 
@@ -381,7 +380,6 @@ class pv_box_array_multi_type_obj():
         #     if str(self.grid_centers.shape[0]-1) in load_nearby_cells:
         #             nearby_cells = load_nearby_cells
         #     else:
-        #         import ipdb;ipdb.set_trace()
         # else:
         #     # ファイルが存在しない場合
         #     print(f"{file_path} is not exist")
@@ -423,7 +421,6 @@ class pv_box_array_multi_type_obj():
         #         nearby_cells = load_nearby_cells
         #         print("f")
         #     else:
-        #         import ipdb;ipdb.set_trace()
 
         # except:
         #     nearby_cells = {}
@@ -444,7 +441,6 @@ class pv_box_array_multi_type_obj():
 
         #     print("hogege")
 
-        # import ipdb;ipdb.set_trace()
 
 
         return nearby_cells
@@ -883,7 +879,6 @@ if __name__ == '__main__':
     colors = updated_colors
 
 
-    import ipdb;ipdb.set_trace()
 
 
 

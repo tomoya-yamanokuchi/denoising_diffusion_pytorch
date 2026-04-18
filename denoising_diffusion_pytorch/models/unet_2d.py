@@ -203,74 +203,6 @@ class Attention(nn.Module):
         return self.to_out(out)
 
 
-# class MaskImageEmbedding(nn.Module):
-#     def __init__(self, time_dim=256, input_size=(32, 32)):
-#         super().__init__()
-#         self.time_dim = time_dim
-#         self.H, self.W = input_size
-
-#         # 位置情報（x, y）を正規化された座標として埋め込み
-#         xs = torch.linspace(0, 1, self.W).view(1, 1, 1, self.W).expand(1, 1, self.H, self.W)
-#         ys = torch.linspace(0, 1, self.H).view(1, 1, self.H, 1).expand(1, 1, self.H, self.W)
-#         self.register_buffer("pos_enc", torch.cat([xs, ys], dim=1))  # (1, 2, H, W)
-
-#         # マスク＋位置の3ch入力をエンコードして時刻次元に
-#         self.encoder = nn.Sequential(
-#             nn.Conv2d(5, 16, kernel_size=3, padding=1),
-#             nn.ReLU(),
-#             nn.Conv2d(16, 32, kernel_size=3, padding=1),
-#             nn.ReLU(),
-#             nn.AdaptiveAvgPool2d(1),
-#             nn.Flatten(),
-#             nn.Linear(32, time_dim)
-#         )
-
-#     def forward(self, mask):
-#         B, _, H, W = mask.shape # (B, 1, H, W)
-#         if (H, W) != (self.H, self.W):
-#             mask = nn.functional.interpolate(mask, size=(self.H, self.W), mode='bilinear')
-#         pos_enc = self.pos_enc.expand(B, -1, -1, -1)
-#         x = torch.cat([mask, pos_enc], dim=1)  # (B, 3, H, W)
-#         return self.encoder(x)  # (B, time_dim)
-
-
-## v4
-# class MaskImage_ResidualBlock(nn.Module):
-#     def __init__(self, channels):
-#         super().__init__()
-#         self.block = nn.Sequential(
-#             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-#             nn.ReLU(inplace=True),
-#             nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-#         )
-#         self.activation = nn.ReLU(inplace=True)
-
-#     def forward(self, x):
-#         return self.activation(x + self.block(x))
-
-# class MaskImageEmbedding(nn.Module):
-#     def __init__(self, time_dim=256, input_size=(32, 32)):
-#         super().__init__()
-#         self.time_dim = time_dim
-
-#         self.encoder = nn.Sequential(
-#             nn.Conv2d(4, 32, kernel_size=3, padding=1),
-#             nn.ReLU(inplace=True),
-#             MaskImage_ResidualBlock(32),
-#             MaskImage_ResidualBlock(32),
-#             nn.AdaptiveAvgPool2d(1),
-#             nn.Flatten(),
-#             nn.Linear(32, time_dim)
-#         )
-
-#     def forward(self, mask):
-#         # mask: (B, 3, H, W)
-#         mask_label = (mask != -1.0).any(dim=1, keepdim=True).float()  # (B, 1, H, W)
-#         x = torch.cat([mask, mask_label], dim=1)  # -> (B, 4, H, W)
-#         return self.encoder(x)  # -> (B, time_dim)
-    
-
-
 class MaskImageEmbedding(nn.Module):
     def __init__(self, time_dim=256, input_size=(32, 32)):
         super().__init__()
@@ -377,7 +309,6 @@ class Unet(nn.Module):
             nn.Linear(time_dim, time_dim)
         )
 
-        # import ipdb;ipdb.set_trace()
         # if mask_dim is not None:
         #     self.mask_img_mlp = MaskImageEmbedding(time_dim,(mask_dim,mask_dim))
 

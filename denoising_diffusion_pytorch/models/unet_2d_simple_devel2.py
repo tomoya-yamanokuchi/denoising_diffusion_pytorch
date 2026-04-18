@@ -374,7 +374,6 @@ class Unet(nn.Module):
             nn.Linear(time_dim, time_dim)
         )
 
-        # import ipdb;ipdb.set_trace()
         # if mask_dim is not None:
         #     self.mask_img_mlp = MaskImageEmbedding(time_dim,(mask_dim,mask_dim))
 

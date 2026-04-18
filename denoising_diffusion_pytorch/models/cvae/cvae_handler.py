@@ -18,7 +18,6 @@ class VAE_Handler_2dim_conv(nn.Module):
 
     def get_loss(self, image, cond):
 
-        # import ipdb;ipdb.set_trace()
 
         image_ = image
         # image_ = image.detach().cpu()
@@ -37,13 +36,11 @@ class VAE_Handler_2dim_conv(nn.Module):
         # train_loss = bce_loss
         # train_loss = bce_loss + KL_loss*1e-10  # default
 
-        # import ipdb;ipdb.set_trace()
         # if output_image.isnan():
 
         # if KL_loss > 100.0:
         # if torch.any(train_loss.isnan()) or torch.any(train_loss.isinf()):
         if torch.any(output_image.isnan()) or torch.any(output_image.isinf()):
-            import ipdb;ipdb.set_trace()
             train_loss = bce_loss
 
         return train_loss, {"shape_loss"    : bce_loss,
@@ -77,7 +74,6 @@ class VAE_Handler_2dim_conv(nn.Module):
 
     #     bce_loss= F.binary_cross_entropy(output_image, input_image, reduction='sum') # calculate loss
 
-    #     # import ipdb;ipdb.set_trace()
     #     # reconstruct_image = torch.reshape(output_image, (self.model.input_dim,self.model.input_dim))
     #     # reconstruct_image = torch.reshape(output_image,(image.shape[0],image.shape[1],image.shape[2]))
     #     reconstruct_image = output_image

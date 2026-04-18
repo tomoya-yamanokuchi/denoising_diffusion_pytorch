@@ -47,7 +47,6 @@ def divide_dataset_basic(path, fraction=0.85):
     for root, _, all_files in os.walk(join(path, '')):
         all_files = list(map(lambda x: join(root, x), all_files))
         break
-    # import ipdb;ipdb.set_trace
     np.random.shuffle(all_files)
 
     # Divide the dataset
@@ -208,7 +207,6 @@ class Cond_image_dataloader(Dataset):
             # pp = 0.9
             mask = np.random.binomial(1.,pp,(image.shape))[:,:,:1]
             mask = mask.astype(float)
-            # import ipdb;ipdb.set_trace()
 
 
         # Half mask, randomly pick one from left, right top bottom

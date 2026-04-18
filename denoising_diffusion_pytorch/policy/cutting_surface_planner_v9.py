@@ -146,18 +146,15 @@ class cutting_surface_planner():
                     "pos":voxel_indices,
                     "data":torch.cat((voxel_indices,voxel_values), dim=0)}}
 
-        # import ipdb;ipdb.set_trace()
 
         # sampled_seq = self.inferencer.model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
         sampled_seq = self.inferencer.ema_model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
 
-        # import ipdb;ipdb.set_trace()
 
         # get last step images [batch_size, [R,G,B,X,Y,Z], 1dim,]
         dd = sampled_seq[:,-1,:,:]
         sampled_image = self.trainer.get_1d_to_2d_images(dd).detach().cpu()
 
-        # import ipdb;ipdb.set_trace()
 
         # last_step_images = (torch.permute(sampled_image,(0,2,3,1))*255.0).numpy().astype(np.uint8)
         last_step_images = (torch.permute(sampled_image,(0,2,3,1))*255.0).clamp(0, 255).numpy().astype(np.uint8)
@@ -180,7 +177,6 @@ class cutting_surface_planner():
         obs        = step_results.observation
         slice_img  = obs.axis_images.z # 学習とテストで固定させておく
 
-        # import ipdb; ipdb.set_trace()
 
         cond_image_save_path = save_path+"/conditions/"
         create_folder(cond_image_save_path)
@@ -204,7 +200,6 @@ class cutting_surface_planner():
         elif self.policy_config.inference.model=="diffusion_1D":
             last_step_images = self.infer_image_by_diffusion_1D(slice_img)
         else:
-            import ipdb;ipdb.set_trace()
 
         raw_pred_image_save_path = save_path+f"/raw_pred_image/step_{iters}"
         create_folder(raw_pred_image_save_path)
@@ -216,7 +211,6 @@ class cutting_surface_planner():
 
         last_step_images_tmp = []
         for k in range(last_step_images.shape[0]):
-            # import ipdb; ipdb.set_trace()
             load_last_step_images = pil_image_load_to_numpy(raw_pred_image_save_path+f"/ensemble_z_{k}.png")
             last_step_images_tmp.append(load_last_step_images*255.0)
         last_step_images = np.asarray(last_step_images_tmp)

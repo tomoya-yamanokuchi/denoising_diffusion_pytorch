@@ -100,7 +100,6 @@ def model_load(logdir,epoch,model):
 
 def load_model(loadpath):
 
-    # import ipdb;ipdb.set_trace()
 
     # dataset_config      = load_config(*loadpath, 'dataset_config.pkl')
     model_config        = load_config(os.path.join(loadpath, 'model_config.pkl'))

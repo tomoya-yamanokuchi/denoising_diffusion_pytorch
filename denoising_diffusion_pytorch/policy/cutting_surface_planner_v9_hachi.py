@@ -72,7 +72,6 @@ class cutting_surface_planner():
             slice_range_obj = reversed(slice_range_btm)
             slice_range     = list(slice_range_obj)
         else:
-            import ipdb;ipdb.set_trace()
 
         return slice_range
 
@@ -93,7 +92,6 @@ class cutting_surface_planner():
 
             indices_of_ones = cost+offset
 
-            # import ipdb;ipdb.set_trace()
 
             if len(indices_of_ones)==0:
                 slice_range =-1
@@ -106,9 +104,7 @@ class cutting_surface_planner():
                 else:
                     slice_range  = random.choice(sprit_range_)
                     # print(f"split_enable | candidate : {sprit_range_}, set :{slice_range}")
-                    # import ipdb;ipdb.set_trace()
 
-            # import ipdb;ipdb.set_trace()
 
             return slice_range
 
@@ -360,7 +356,6 @@ class cutting_surface_planner():
 
 
         else:
-            import ipdb;ipdb.set_trace()
 
         return {"cost_z":cost_z,
                 "cost_x":cost_x,
@@ -380,7 +375,6 @@ class cutting_surface_planner():
 
 
         if self.policy_config["ctrl_mode"] == "no_cond":
-            # import ipdb;ipdb.set_trace()
             cond = None
         else:
             # cond = {0:{ "idx":torch.where(normalized_cond>-1.0),
@@ -407,7 +401,6 @@ class cutting_surface_planner():
         batch_images        = (torch.permute(sample_image,(0,1,3,4,2))*255.0).numpy().astype(np.uint8)
         last_step_images    = batch_images[:,-1,:,:,:]
 
-        # import ipdb;ipdb.set_trace()
 
         # # Resize & ToTensor
         # env_img_dim = self.ensemble_obs_model.init_imgs_y.shape[0]
@@ -447,7 +440,6 @@ class cutting_surface_planner():
                         # "val":normalized_cond}}
             mask =  normalized_cond.repeat(self.sample_image_num,1,1,1)
 
-        # import ipdb; ipdb.set_trace()
         omega = self.policy_config["cfg_omega"]
         ## infer image by diffusion model
         # sample_image        = self.diffusion.model.sample(batch_size=self.sample_image_num, return_all_timesteps=True, cond = cond, mask= mask).detach().cpu()
@@ -533,18 +525,15 @@ class cutting_surface_planner():
                     "pos":voxel_indices,
                     "data":torch.cat((voxel_indices,voxel_values), dim=0)}}
 
-        # import ipdb;ipdb.set_trace()
 
         # sampled_seq = self.diffusion.model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
         sampled_seq = self.diffusion.ema_model.sample(batch_size = self.sample_image_num, return_all_timesteps=True, cond = cond)
 
-        # import ipdb;ipdb.set_trace()
 
         # get last step images [batch_size, [R,G,B,X,Y,Z], 1dim,]
         dd = sampled_seq[:,-1,:,:]
         sampled_image = self.trainer.get_1d_to_2d_images(dd).detach().cpu()
 
-        # import ipdb;ipdb.set_trace()
 
         # last_step_images = (torch.permute(sampled_image,(0,2,3,1))*255.0).numpy().astype(np.uint8)
         last_step_images = (torch.permute(sampled_image,(0,2,3,1))*255.0).clamp(0, 255).numpy().astype(np.uint8)
@@ -577,7 +566,6 @@ class cutting_surface_planner():
                                 e.g.,{'[0, 2]': {'axis': 'z', 'range': [0, 2], 'offset': 0}}
         """
 
-        # import ipdb;ipdb.set_trace()
 
         ###################################################################################
         ## prior_based_ep_00がなかったときの実装
@@ -612,7 +600,6 @@ class cutting_surface_planner():
 
         if self.policy_config["ctrl_mode"] != "oracle_obs" and self.policy_config["ctrl_mode"] != "random" :
 
-            # import ipdb;ipdb.set_trace()
             if  tmp_action == "prior_based_ep_00":
                 normalized_cond = to_torch((np.ones_like(slice_img)*-1.0).transpose(2,0,1))
             else:
@@ -630,7 +617,6 @@ class cutting_surface_planner():
             elif self.policy_config["infer_model"]=="diffusion_1D":
                 last_step_images = self.infer_image_by_diffusion_1D(slice_img)
             else:
-                import ipdb;ipdb.set_trace()
 
             raw_pred_image_save_path = save_path+f"/raw_pred_image/step_{iters}"
             create_folder(raw_pred_image_save_path)
@@ -642,7 +628,6 @@ class cutting_surface_planner():
 
             last_step_images_tmp = []
             for k in range(last_step_images.shape[0]):
-                # import ipdb; ipdb.set_trace()
                 load_last_step_images = pil_image_load_to_numpy(raw_pred_image_save_path+f"/ensemble_z_{k}.png")
                 last_step_images_tmp.append(load_last_step_images*255.0)
             last_step_images = np.asarray(last_step_images_tmp)
@@ -668,7 +653,6 @@ class cutting_surface_planner():
                         "cost_r": cost_r_ensembles,
                         "cost_y": cost_y_ensembles}
 
-            # import ipdb; ipdb.set_trace()
 
             # 実際にはブルーだけを使っている
             edited_cost_b = self.get_outlier_removed_cost(cost_b_ensembles,mode=self.policy_config["decision_mode"]["mode"],t=iters)
@@ -686,7 +670,6 @@ class cutting_surface_planner():
             cost_y_y = edited_cost_y["cost_y"]
             cost_z_y = edited_cost_y["cost_z"]
 
-            # import ipdb;ipdb.set_trace()
 
             ## get ensemble image
             ensemble_image   = last_step_images.mean(0)/255.0
@@ -810,7 +793,6 @@ class cutting_surface_planner():
             elif np.abs(split_index-forward_index)>(split_index-back_ward_index):
                 split_range = (np.asarray([split_index,forward_index])).tolist()
             else:
-                # import ipdb;ipdb.set_trace()
                 forward_index,back_ward_index = self.find_nonzero_indices_both_2(lst=cost_,start_index = split_index_)
 
                 if  forward_index>back_ward_index:
@@ -824,10 +806,8 @@ class cutting_surface_planner():
                     else:
                         split_range = [split_index_,cost_.shape[0]]
                     # split_range = [split_index_,cost]
-                    # import ipdb;ipdb.set_trace()
 
             # if split_range is None:
-                # import ipdb;ipdb.set_trace()
                 print(f"===================: {split_range}")
                 self.split_obs_config[str(split_range)] = { "axis":axis,
                                                             "range":split_range,
@@ -864,7 +844,6 @@ class cutting_surface_planner():
 
             if len(slice_range)!=1:
 
-                import ipdb; ipdb.set_trace()
                 if slice_range[0]>slice_range[1]:
                     temp_slice_range = (np.asarray(slice_range[::-1])-offset)[1:]
                 else:
@@ -879,7 +858,6 @@ class cutting_surface_planner():
 
         # elif split_index!=-1:
         elif split_index ==-1000:
-            # import ipdb;ipdb.set_trace()
             # print(f"iter:{iters},split_idx:{split_index}")
             # slice_range = [split_index]
             a = 0
@@ -902,7 +880,6 @@ class cutting_surface_planner():
                 axis = "y"
                 offset = env2.grid_config['side_length']+env2.grid_config['side_length']
 
-            import ipdb; ipdb.set_trace()
 
             if len(slice_range)!=1:
 
@@ -918,7 +895,6 @@ class cutting_surface_planner():
             else:
                 a = 0
 
-            import ipdb;ipdb.set_trace()
             cost_map_logs["slice_candidate"]={"candidate_x":slice_range_x,
                                               "candidate_y":slice_range_y,
                                               "candidate_z":slice_range_z}
@@ -987,7 +963,6 @@ class cutting_surface_planner():
 
 
     def update_split_obs_config(self, slice_range ,grid_config):
-        # import ipdb; ipdb.set_trace()
         if min(slice_range)<grid_config['side_length']:
             axis = "z"
             offset= 0

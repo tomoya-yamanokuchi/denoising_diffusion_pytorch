@@ -131,7 +131,6 @@ def save_ckpt(model_and_optim, cfg, ckpt, seed, override=False , save_path = Non
         path = os.path.join(save_path, 'model_checkpoint_{}.pt'.format(ckpt))
         torch.save(state_dict, path)
         print('Saved checkpoint at {}\n'.format(path))
-        import ipdb;ipdb.set_trace()
 
 
 def get_losses(cfg):
@@ -225,7 +224,6 @@ def save_images(data, outs, cfg, save_index, suffix=''):
         - Observed image (x_b)
         - Output of the VAEAC
     '''
-    import ipdb;ipdb.set_trace()
     
     if cfg['model']['inp_channels'] == 1:
         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \

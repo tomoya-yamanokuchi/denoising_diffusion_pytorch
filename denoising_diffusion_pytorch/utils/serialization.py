@@ -34,7 +34,6 @@ def get_latest_epoch(loadpath):
 def load_config(*loadpath):
     loadpath = os.path.join(*loadpath)
 
-    # import ipdb; ipdb.set_trace()
     config = pickle.load(open(loadpath, 'rb'))
     print(f'[ utils/serialization ] Loaded config from {loadpath}')
     # print(config)
@@ -42,7 +41,6 @@ def load_config(*loadpath):
 
 def load_diffusion(*loadpath, epoch='latest', device='cuda:0'):
 
-    # import ipdb; ipdb.set_trace()
 
     dataset_config = load_config(*loadpath, 'dataset_config.pkl')
     # render_config = load_config(*loadpath, 'render_config.pkl')
@@ -54,7 +52,6 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0'):
     ## @TODO : remove results folder from within trainer class
     trainer_config._dict['results_folder'] = os.path.join(*loadpath)
 
-    # import ipdb;ipdb.set_trace()
     model_config._device = device
     diffusion_config._device = device
 
@@ -82,7 +79,6 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0'):
     print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
 
 
-    # import ipdb; ipdb.set_trace()
 
     trainer.load(epoch)
 
@@ -117,7 +113,6 @@ def load_vae(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
 
     trainer.load(epoch)
 
-    import ipdb; ipdb.set_trace()
 
     return VAEExperiment(dataset, renderer, vae, model, trainer.model, trainer, epoch)
 
@@ -135,7 +130,6 @@ def load_vaeac(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
 
     model     = model_config()
 
-    # import ipdb; ipdb.set_trace()
     trainer   = trainer_config(model, dataset)
 
 
@@ -149,6 +143,5 @@ def load_vaeac(*loadpath, epoch='latest',load_train_data=True, device='cuda:0'):
 
     renderer  = None
 
-    import ipdb; ipdb.set_trace()
 
     return VAEExperiment(dataset, renderer, model, model, model, trainer, epoch)

@@ -701,7 +701,6 @@ class GaussianDiffusion(nn.Module):
             img, x_start = self.p_sample(img, t, self_cond)
             if cond is not None:
                 img = apply_conditioning(x = img ,cond=cond)
-            # import ipdb;ipdb.set_trace()
             imgs.append(img)
 
         ret = img if not return_all_timesteps else torch.stack(imgs, dim = 1)
@@ -744,17 +743,14 @@ class GaussianDiffusion(nn.Module):
                   c * pred_noise + \
                   sigma * noise
             
-            # import ipdb;ipdb.set_trace()
             
             if cond is not None:
                 img = apply_conditioning(x = img ,cond=cond)
-                # import ipdb;ipdb.set_trace()
 
             imgs.append(img)
 
         ret = img if not return_all_timesteps else torch.stack(imgs, dim = 1)
 
-        # import ipdb;ipdb.set_trace()
 
         ret = self.unnormalize(ret)
         return ret

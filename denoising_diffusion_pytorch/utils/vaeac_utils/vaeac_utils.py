@@ -232,7 +232,6 @@ def re_normalize(image, cfg):
 #         - Observed image (x_b)
 #         - Output of the VAEAC
 #     '''
-#     import ipdb;ipdb.set_trace()
 
 #     if cfg['model']['inp_channels'] == 1:
 #         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \

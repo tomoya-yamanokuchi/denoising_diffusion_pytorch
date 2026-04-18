@@ -40,7 +40,6 @@ class LegacyPolicyPlannerAdapter:
             save_path                         = str(episode_ctx.path.artifact_episodic_root),
         )
 
-        import ipdb; ipdb.set_trace()
 
         # 次に採用した action を、次回の partial observation 更新用に記録
         self.policy.update_visibility_constraints(

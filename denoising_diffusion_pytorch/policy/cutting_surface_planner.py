@@ -97,7 +97,6 @@ class cutting_surface_planner():
         elif self.policy_config["ctrl_mode"] == "oracle_obs" or self.policy_config["ctrl_mode"] == "random":
             ensemble_image = self.oracle_image_z
 
-        # import ipdb;ipdb.set_trace()
 
 
 
@@ -139,7 +138,6 @@ class cutting_surface_planner():
 
 
 
-        # import ipdb;ipdb.set_trace()
 
 
 
@@ -174,7 +172,6 @@ class cutting_surface_planner():
                 cost_map.update({h:{"axis":val,"loc":j,"cost":cost_data[val][j]}})
                 h+=1
 
-        # import ipdb;ipdb.set_trace()
 
         ##  remove already observed actions
         un_observed_action_keys = set(cost_map.keys())-set(observation_history.keys())

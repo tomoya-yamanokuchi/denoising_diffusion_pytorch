@@ -92,7 +92,6 @@ class Trainer(object):
         #     os.makedirs(self.config.savepath)
         # lossesfile = open(os.path.join(self.config.savepath, 'losses.txt'), 'a+')
 
-        # import ipdb;ipdb.set_trace()
 
 
     def load(self, milestone):
@@ -156,7 +155,6 @@ class Trainer(object):
 
                 pbar.set_description(f'loss: {loss_val:.4f}')
 
-                # import ipdb;ipdb.set_trace()
 
                 # Log into the file after some epochs
                 # if self.step % self.config.train_config['train']['step-log'] == 0:

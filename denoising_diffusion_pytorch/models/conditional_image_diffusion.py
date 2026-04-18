@@ -27,7 +27,6 @@ ModelPrediction =  namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
 
 
 def apply_conditioning(x, cond):
-    # import ipdb;ipdb.set_trace()
     for cond_num, items in cond.items():
         h_idx, w_idx = items["idx"]
         x[:, :, h_idx, w_idx] = items["val"][:, h_idx, w_idx].clone()
@@ -249,7 +248,6 @@ class GaussianDiffusion(nn.Module):
             img, x_start = self.p_sample(img, t, self_cond)
             if cond is not None:
                 img = apply_conditioning(x = img ,cond=cond)
-            # import ipdb;ipdb.set_trace()
             imgs.append(img)
 
         ret = img if not return_all_timesteps else torch.stack(imgs, dim = 1)
@@ -309,7 +307,6 @@ class GaussianDiffusion(nn.Module):
                   c * pred_noise + \
                   sigma * noise
             
-            # import ipdb;ipdb.set_trace()
             if cond is not None:
                 sqrt_alphas_cumprod_t = self.sqrt_alphas_cumprod[time]
                 sqrt_one_minus_alphas_cumprod_t = self.sqrt_one_minus_alphas_cumprod[time]

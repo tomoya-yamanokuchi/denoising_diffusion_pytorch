@@ -19,11 +19,9 @@ ModelPrediction =  namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
 def apply_conditioning(x, cond):
     for cond_num ,items in cond.items():
         if cond_num==0:
-            # import ipdb;ipdb.set_trace()
             # x[:,items["idx"][0],items["idx"][1],items["idx"][2]] = items["val"][items["idx"]].clone()
             x[:,3:,items["idx"][0]] =  items["val"][:,items["idx"][0]].clone()
             x[:,:3,items["idx"][0]] =  items["pos"][:,items["idx"][0]].clone()
-            # import ipdb;ipdb.set_trace()
         else:
             pass
     return x

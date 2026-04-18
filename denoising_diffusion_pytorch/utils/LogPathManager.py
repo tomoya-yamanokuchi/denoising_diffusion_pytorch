@@ -91,7 +91,6 @@ def watch(args_to_watch):
         exp_name = exp_name.replace('(', '').replace(')', '')
         exp_name = exp_name.replace(', ', '-')
 
-        import ipdb; ipdb.set_trace()
 
         return exp_name
     return _fn

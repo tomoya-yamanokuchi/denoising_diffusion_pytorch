@@ -96,20 +96,8 @@ class Trainer(object):
 
         self.max_grad_norm = max_grad_norm
 
-        #########################
         # dataset and dataloader
-        #########################
 
-        # self.ds = Dataset(folder, self.image_size, augment_horizontal_flip = augment_horizontal_flip, convert_image_to = convert_image_to)
-
-        # self.ds = dataset
-        # if self.ds is not None:
-        #     assert len(self.ds) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
-        #     dl = DataLoader(self.ds, batch_size = train_batch_size, shuffle = True, pin_memory = True, num_workers = cpu_count())
-        #     dl = self.accelerator.prepare(dl)
-        #     self.dl = cycle(dl)
-
-        # import ipdb; ipdb.set_trace()
         assert len(dataset) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
         data_samples = len(dataset)
         train_size   = int(data_samples * 0.9)
@@ -141,7 +129,6 @@ class Trainer(object):
         self.sw_dir.mkdir(exist_ok = True)
         # step counter state
 
-        # import ipdb; ipdb.set_trace()
 
         self.step = 0
 

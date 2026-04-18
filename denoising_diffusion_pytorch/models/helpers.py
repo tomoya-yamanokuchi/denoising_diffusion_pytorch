@@ -15,7 +15,6 @@ from einops.layers.torch import Rearrange
 # def apply_conditioning(x, cond):
 
 #     for cond_num ,items in cond.items():
-#         # import ipdb;ipdb.set_trace()
 #         x[:,items["idx"][0],items["idx"][1],items["idx"][2]] = items["val"][items["idx"]].clone()
 #     return x
 

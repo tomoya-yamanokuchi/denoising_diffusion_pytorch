@@ -192,7 +192,6 @@ if __name__ == "__main__":
     # input = torch.randn(64, 64)
     # input_ = input.view(-1,64*64)
 
-    # import ipdb;ipdb.set_trace()
 
     # Net = VAE_2dim(input_dim=input.shape[0],latent_dim=32)
     # out, mu, log_var, z = Net(input_)
@@ -203,4 +202,3 @@ if __name__ == "__main__":
     # print(f"latent_tensor{z.shape}")
     # print(f"output_tensor{out.shape}")
 
-    import ipdb;ipdb.set_trace()

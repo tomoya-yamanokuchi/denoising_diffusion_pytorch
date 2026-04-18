@@ -207,7 +207,6 @@ class Trainer1D(object):
 
                         all_samples = torch.cat(all_samples_list, dim = 0)
                         
-                        # import ipdb;ipdb.set_trace()
 
                         all_samples_tp = torch.permute(all_samples,(0,2,1))
                         # all_samples_tp_index = all_samples_tp[:,:,:3]
@@ -218,7 +217,6 @@ class Trainer1D(object):
                         # all_samples_tp =  torch.permute(data[:self.num_samples,:],(0,2,1))
 
                         for i in range(all_samples_batch.shape[0]):
-                            # import ipdb;ipdb.set_trace()
                             all_samples_tp_index  = torch.round(all_samples_tp[:,:,:3]*(self.grid_3dim-1.0)).int()[i]
                             all_samples_tp_values = all_samples_tp[:,:,3:][i]
                             aa= torch.zeros(self.grid_3dim,self.grid_3dim,self.grid_3dim,3).to(device)
@@ -226,10 +224,8 @@ class Trainer1D(object):
 
                             aa[all_samples_tp_index[:,0],all_samples_tp_index[:,1],all_samples_tp_index[:,2]]=all_samples_tp_values
 
-                            # import ipdb;ipdb.set_trace()
                             # dd = aa.reshape(64,64,-1)
                             dd = self.get_slice_image(aa)
-                            # import ipdb;ipdb.set_trace()
 
                             pp = dd[None,:,:,:]
                             samples = torch.permute(pp,(0,3,1,2))
@@ -250,13 +246,11 @@ class Trainer1D(object):
     #     grid_2dim    = int(dim*4)
     #     grid_3dim    = dim
     #     batch_img_len = int(grid_2dim/grid_3dim)
-    #     # import ipdb;ipdb.set_trace()
 
     #     cast_image = torch.zeros((grid_2dim,grid_2dim,3)).to(self.device)
     #     # cast_image = torch.zeros((grid_2dim,grid_2dim,3))
 
 
-    #     # import ipdb;ipdb.set_trace()
 
     #     k = 0
     #     for j in range(batch_img_len):
@@ -292,7 +286,6 @@ class Trainer1D(object):
 
         all_samples_batch = torch.zeros(all_samples.shape[0],3,self.grid_2dim,self.grid_2dim).to(self.device)
         # all_samples_batch = torch.zeros(all_samples.shape[0],3,self.grid_2dim,self.grid_2dim)
-        # import ipdb;ipdb.set_trace()
 
         # data = next(self.dl).to(device)
         # all_samples_tp =  torch.permute(data[:self.num_samples,:],(0,2,1))
@@ -304,15 +297,12 @@ class Trainer1D(object):
             aa= torch.zeros(self.grid_3dim,self.grid_3dim,self.grid_3dim,3).to(self.device)
             # aa= torch.zeros(self.grid_3dim,self.grid_3dim,self.grid_3dim,3)
             all_samples_tp_index = torch.clip(all_samples_tp_index,0,15)
-            # import ipdb;ipdb.set_trace()
 
 
             aa[all_samples_tp_index[:,0],all_samples_tp_index[:,1],all_samples_tp_index[:,2]]=all_samples_tp_values
 
-            # import ipdb;ipdb.set_trace()
             # dd = aa.reshape(64,64,-1)
             dd = self.get_slice_image(aa)
-            # import ipdb;ipdb.set_trace()
 
             pp = dd[None,:,:,:]
             samples = torch.permute(pp,(0,3,1,2))

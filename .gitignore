@@ -4,6 +4,10 @@ outputs/
 sw_dir/
 results/
 *.pkl
+build/
+*.egg-info/
+__pycache__/
 .codex/
 .claude/
 .serena/
+.venv/

@@ -134,7 +134,6 @@ class pv_box_array():
         vicinity_box_length = np.abs(self.grid_centers[0]-self.grid_centers[1]).max()
         side_length = vicinity_box_length/2.0
 
-        # import ipdb;ipdb.set_trace()
         ugrid = pv.voxelize(mesh,density=side_length)
         ugrid_cell_center = ugrid.cell_centers().points
 
@@ -815,7 +814,6 @@ if __name__ == '__main__':
     colors = updated_colors
 
 
-    import ipdb;ipdb.set_trace()
 
 
 

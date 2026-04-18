@@ -18,7 +18,6 @@ class VisibilityConstraintSet:
         if constraint is None:
             return
 
-        # import ipdb; ipdb.set_trace()
         self.constraints.append(constraint)
 
     def add_from_action_candidates(

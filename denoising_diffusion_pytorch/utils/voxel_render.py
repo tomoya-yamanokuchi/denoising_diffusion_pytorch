@@ -53,7 +53,6 @@ class pv_voxel_render():
         # plotter.render()
         # plotter.write_frame()
         # plotter.app.processEvents()
-        # import ipdb;ipdb.set_trace()
 
         return plotter
 
@@ -74,7 +73,6 @@ class pv_voxel_render():
         for i in tqdm(range(sample_images.shape[0])):
             step_image = sample_images[i]/255.0
             updated_colors = self.box_array_handler.cast_2d_image_to_box_color(image=step_image,permute="z")
-            # import ipdb;ipdb.set_trace()
 
 
             plotter.clear()
@@ -105,7 +103,6 @@ class pv_voxel_render():
             plotter.write_frame()
             plotter.app.processEvents()
 
-            # import ipdb;ipdb.set_trace()
 
         plotter.show()
 
@@ -126,7 +123,6 @@ class pv_voxel_render():
             
             step_image = sample_images[i]/255.0
             step_image = step_image.clip(0,1,step_image)
-            # import ipdb;ipdb.set_trace()
             
 
             updated_colors = self.box_array_handler.cast_2d_image_to_box_color(image=step_image,permute="z")
@@ -318,7 +314,6 @@ if __name__ == '__main__':
             renderer = pv_voxel_render(s_grid_config=s_grind_config,tmp_mesh=gt_mesh)
             renderer = pv_voxel_render(s_grid_config=s_grind_config,tmp_mesh=gt_mesh)
             renderer.render_voxel_denoising(save_path="./hjge",sample_images=sampled_images)
-            import ipdb;ipdb.set_trace()
             # image_loss.append(load_data["loss"])
             # slice_tag = load_data["slice_tag"]
 
