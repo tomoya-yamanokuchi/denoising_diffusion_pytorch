@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from denoising_diffusion_pytorch.policy.cutting_surface_planner_v9 import PolicyConfig
+from denoising_diffusion_pytorch.policy.cutting_surface_planner import PolicyConfig
 
 
 from .conditional_diffusion_slice_image_inferencer import ConditionalDiffusionSliceImageInferencer

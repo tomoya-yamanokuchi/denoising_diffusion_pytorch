@@ -902,7 +902,7 @@ class cutting_surface_planner():
                 axis = "y"
                 offset = env2.grid_config['side_length']+env2.grid_config['side_length']
 
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
 
             if len(slice_range)!=1:
 

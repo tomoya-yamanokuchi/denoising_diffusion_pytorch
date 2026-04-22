@@ -177,15 +177,16 @@ class Parser(Tap):
             self._dict['savepath'] = args.savepath
             if 'suffix' in dir(args):
                 args.savepath = os.path.join(args.savepath, args.suffix)
+                import ipdb; ipdb.set_trace()
             if mkdir(args.savepath):
                 print(f'[ utils/setup ] Made savepath: {args.savepath}')
 
 
-            # import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
             self.save()
             self.save2(args)
 
-            # import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
 
 
     def get_commit(self, args):

@@ -4,7 +4,7 @@ from typing import Any, TYPE_CHECKING
 
 
 from ..types import ActionArtifacts, ActionPlan
-from ..cutting_surface_planner_v9 import cutting_surface_planner
+from ..cutting_surface_planner import cutting_surface_planner
 
 from denoising_diffusion_pytorch.utils.os_utils import create_folder
 from denoising_diffusion_pytorch.utils.normalization import LimitsNormalizer

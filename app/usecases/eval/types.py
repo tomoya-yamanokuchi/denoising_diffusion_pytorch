@@ -45,6 +45,7 @@ class EpisodeContext:
 @dataclass(frozen=True)
 class EpisodeResult:
     actions             : List[Any]
+    observations        : List[Any]
     rewards             : List[float]
     infos               : List[Any]
     removal_performance : List[float]

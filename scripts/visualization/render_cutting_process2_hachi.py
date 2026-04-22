@@ -21,16 +21,35 @@ if __name__ == '__main__':
 
 
     #///////////////////////////////////////////////////
-    tags = "epsilon_greedy_00"
+    # tags = "epsilon_greedy_00"
     # tags = "no_cond"
-    # tags = "oracle_obs"
+    tags = "oracle_obs"
     # tags = "random"
 
 
+    # root_folder = f"/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac_plans/dataset_4142435161_13901k_v1/dataset_4_3_eval/PT200000_T1000_D64_B32_test_v6_fix_start_multi_step_partial_obs_a0_long_vaeac_cal_cost_mean_ucb_9_t20_8_3_tmp/{tags}"
+    # root_folder = f"/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac_plans/dataset_4142435161_13901k_v1/dataset_4_3_eval/PT200000_T1000_D64_B32_test_v6_fix_start_multi_step_partial_obs_a0_long_vaeac_cal_cost_mean_ucb_9_t20_8_3_tmp1/{tags}"
+    # root_folder = f"/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac_plans/dataset_4142435161_13901k_v1/dataset_4_3_eval/PT200000_T1000_D64_B32_test_v6_fix_start_multi_step_partial_obs_a0_long_vaeac_cal_cost_mean_ucb_9_t20_8_3_tmp2/{tags}"
+
+    # root_folder = f"/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac_plans/dataset_4142435161_13901k_v1/dataset_4_3_eval/PT200000_T1000_D64_B32_test_v6_fix_start_multi_step_partial_obs_a0_long_vaeac_cal_cost_mean_ucb_9_t20_8_3_tmp2/{tags}"
+
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456_clip_ucb_raw_0.6_v11_11"
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT200000_B32_T8_partial_obs_vaeac_a123456_clip_ucb_raw_0.5_v11_11"
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456_clip_ucb_raw_0.5_v13_1"
+
     # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456789_clip_ucb_raw_0.5_v12_1/"
-    # root_folder_ = "/home/tomoya-y/denoising_diffusion_pytorch/logs/Image_diffusion_2D/eval/T8_partial_obs_PT2000_B_T8_partial_obs__a___v12_1_for_paper_render"
-    root_folder_ = "/home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/eval/T8_partial_obs_PT2000_B_T8_partial_obs__a___v12_1_for_paper_render"
-    #///////////////////////////////////////////////////
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT200000_B32_T8_partial_obs_vaeac_a123456789_clip_ucb_raw_0.5_v12_1/"
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT200000_B32_T8_partial_obs_diffusion_1D_a123456789_clip_ucb_raw_0.5_v12_1/"
+
+
+
+    root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456789_clip_ucb_raw_0.5_v12_1/"
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT100000_B32_T8_partial_obs_vaeac_a123456789_clip_ucb_raw_0.5_v13_2_tmp/"
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT100000_B32_T8_partial_obs_diffusion_1D_a123456789_clip_ucb_raw_0.5_v13_2/"
+
+    # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_vaeac_a123456_clip_ucb_raw_0.5_v13_2/"
+    # root_folder_  = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456_clip_ucb_raw_0.5_v13_1/"
+    # root_folder_  = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456_clip_ucb_raw_0.5_v14_1/"
 
     root_folder  = root_folder_+f'/{tags}'
 

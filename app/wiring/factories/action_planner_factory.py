@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from denoising_diffusion_pytorch.policy.planning.initial_action_provider import InitialActionProvider
 from denoising_diffusion_pytorch.policy.planning.legacy_policy_planner_adapter import LegacyPolicyPlannerAdapter
 from denoising_diffusion_pytorch.policy.planning.action_planner import ActionPlanner
-from denoising_diffusion_pytorch.policy.cutting_surface_planner_v9 import cutting_surface_planner
+from denoising_diffusion_pytorch.policy.cutting_surface_planner import cutting_surface_planner
 
 
 @dataclass(frozen=True)

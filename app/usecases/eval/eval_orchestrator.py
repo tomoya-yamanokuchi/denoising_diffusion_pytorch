@@ -13,6 +13,7 @@ class EvalOrchestrator:
         self.cfg                     = dependency.cfg
         self.case_context_factory    = dependency.case_context_factory
         self.episode_context_factory = dependency.episode_context_factory
+        self.episode_result_writer   = dependency.episode_result_writer
         self.episode_runner          = dependency.episode_runner
         self.policy_assets           = dependency.policy_assets
         self.mesh_factory            = dependency.mesh_factory
@@ -40,8 +41,13 @@ class EvalOrchestrator:
                     episode_idx    = k,
                 )
                 # ---
-                result = self.episode_runner.run(ep_ctx)
-                per_case.append(result)
+                episode_result = self.episode_runner.run(ep_ctx)
+                self.episode_result_writer.save(ep_ctx, episode_result)
+                # ---
+                per_case.append(episode_result)
             # ----
             results[case_ctx.name] = per_case
+
+        # import ipdb; ipdb.set_trace()
+
         return results

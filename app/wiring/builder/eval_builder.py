@@ -47,6 +47,7 @@ class EvalBuilder:
         run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
         self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
         self.artifact_static_root = run_dir
+        # import ipdb; ipdb.set_trace()
 
     # --------------------------------------------------
     # infra (IO / env)
@@ -80,6 +81,11 @@ class EvalBuilder:
             ctrl_mode            = self.cfg.eval.policy.control.mode,
             artifact_static_root = self.artifact_static_root,
         )
+
+
+    def build_episode_result_writer(self):
+        from app.usecases.eval.episode.episode_result_writer import EpisodeResultWriter
+        self.episode_result_writer = EpisodeResultWriter()
 
 
     def build_action_executer(self):
@@ -185,6 +191,7 @@ class EvalBuilder:
 
         # --- episode ---
         self.build_episode_context_factory()
+        self.build_episode_result_writer()
         self.build_episode_runner()
 
         self.build_orchestrator()

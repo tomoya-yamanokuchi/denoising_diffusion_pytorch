@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from ..types import EpisodeContext, EpisodeResult
 from .episode_step_observer import EpisodeStepObserver
+from .episode_collector import EpisodeCollector
 
 from denoising_diffusion_pytorch.policy.planning.action_executor import ActionExecutor
 
@@ -33,7 +34,10 @@ class EpisodeRunner:
             initial_info = env_reset_results.info,
         )
 
+
         action_plan = action_planner.initialize(context)
+
+        collector = EpisodeCollector()
 
         for step_idx in range(int(context.task_step)):
             step_outcome = self.action_executor.execute(
@@ -41,11 +45,16 @@ class EpisodeRunner:
                 action_candidates = action_plan.action_candidates,
             )
 
+            collector.add_step(
+                step_outcome      = step_outcome,
+                action_candidates = action_plan.action_candidates,
+            )
+
             self.step_observer.on_step_executed(
-                episode_ctx = context,
-                step_idx    = step_idx,
-                step_outcome= step_outcome,
-                artifacts   = action_plan.artifacts,
+                episode_ctx  = context,
+                step_idx     = step_idx,
+                step_outcome = step_outcome,
+                artifacts    = action_plan.artifacts,
             )
 
             if step_idx == context.task_step - 1:
@@ -59,14 +68,13 @@ class EpisodeRunner:
 
         self.step_observer.on_episode_finished(context)
 
-        # import ipdb; ipdb.set_trace()
 
-
-        # return EpisodeResult(
-        #     actions             = collector.actions,
-        #     rewards             = collector.rewards,
-        #     infos               = collector.infos,
-        #     removal_performance = collector.removal_performance,
-        #     intermediate_actions= collector.intermediate_actions,
-        #     last_info           = collector.last_info,
-        # )
+        return EpisodeResult(
+            actions              = collector.actions,
+            observations         = collector.observations,
+            rewards              = collector.rewards,
+            infos                = collector.infos,
+            removal_performance  = collector.removal_performance,
+            intermediate_actions = collector.intermediate_actions,
+            last_info            = collector.last_info,
+        )

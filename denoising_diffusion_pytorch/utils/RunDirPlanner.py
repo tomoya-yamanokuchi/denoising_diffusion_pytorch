@@ -38,7 +38,7 @@ class RunDirPlanner:
     """
     # logbase_key       : str = "log.logbase"
     exp_name_key      : str = "log.exp_name"
-    suffix_key        : str = "log.suffix"
+    control_mode      : str = "eval.policy.control.mode"  # optional, "control_mode" を watch から取る想定
     layout_key        : str = "log.layout"     # optional
     dataset_class_key: str  = "dataset.class"  # optional
 
@@ -79,10 +79,10 @@ class RunDirPlanner:
         # exp_name が "vaeac/..." のようにサブディレクトリを含んでもOK
         parts.append(Path(exp_name))
 
-        # suffix（任意）
-        suffix = select_str(cfg, self.suffix_key, default="")
-        if suffix:
-            parts.append(Path(suffix))
+        # control_mode
+        control_mode = select_str(cfg, self.control_mode, default="")
+        if control_mode:
+            parts.append(Path(control_mode))
 
         run_dir = join_and_normalize(parts)
 
