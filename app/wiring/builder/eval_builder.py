@@ -87,11 +87,11 @@ class EvalBuilder:
         self.action_executer = ActionExecutor()
 
     def build_step_observer(self):
-        from denoising_diffusion_pytorch.eval.episode_step_observer import EpisodeStepObserver
+        from app.usecases.eval.episode.episode_step_observer import EpisodeStepObserver
         self.step_observer = EpisodeStepObserver(verbose = True)
 
     def build_episode_runner(self):
-        from denoising_diffusion_pytorch.eval.episode_runner import EpisodeRunner
+        from app.usecases.eval.episode.episode_runner import EpisodeRunner
         self.episode_runner = EpisodeRunner(
             action_executor = self.action_executer,
             step_observer   = self.step_observer,

@@ -10,6 +10,7 @@ from denoising_diffusion_pytorch.policy.planning.action_selection.selection_poli
 from denoising_diffusion_pytorch.policy.planning.action_selection.action_candidates_selector import ActionCandidatesSelector
 from denoising_diffusion_pytorch.policy.planning.candidate_building.action_candidate_building_coordinator import ActionCandidateBuildingCoordinator
 
+from denoising_diffusion_pytorch.policy.inference.slice_image_inferencer_factory import SliceImageInferencerFactory
 
 class PolicyFactory:
     def __init__(self, assets: PolicyAssets):
@@ -36,20 +37,21 @@ class PolicyFactory:
 
         action_candidates_selector = ActionCandidatesSelector(
             candidate_coordinator = ActionCandidateBuildingCoordinator(
-                candidate_builder=axis_candidate_range_builder,
-                expected_side_length=side_length,
+                candidate_builder    = axis_candidate_range_builder,
+                expected_side_length = side_length,
             ),
             selection_policy = SelectionPolicy(),
         )
 
+        slice_image_inferencer = SliceImageInferencerFactory.build(
+            inferencer    = self._assets.trained_assets.inferencer,
+            policy_config = self._assets.policy_config,
+        )
+
         return cutting_surface_planner(
             obs_model                  = obs_model,
-            # ---
-            inferencer                 = self._assets.trained_assets.inferencer,
-            trainer                    = self._assets.trained_assets.trainer,
+            slice_image_inferencer     = slice_image_inferencer,
             policy_config              = self._assets.policy_config,
-            # ---
             action_candidates_selector = action_candidates_selector,
-
         )
 

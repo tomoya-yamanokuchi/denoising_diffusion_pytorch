@@ -5,14 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
-from ..env.voxel_cut_sim_v1 import dismantling_env
-from .episode_paths import EpisodePaths
-from .episode_image_writer import EpisodeImageWriter
-from .episode_artifact_manager import EpisodeArtifactManager
 
-# from ..policy.cutting_surface_planner_v9 import cutting_surface_planner
-from ..policy.planning.action_planner import ActionPlanner
-from ..policy.planning.action_definition.action_candidates import ActionCandidates
+from .episode.episode_paths import EpisodePaths
+from .episode.episode_image_writer import EpisodeImageWriter
+from .episode.episode_artifact_manager import EpisodeArtifactManager
+
+from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import dismantling_env
+from denoising_diffusion_pytorch.policy.planning.action_planner import ActionPlanner
+from denoising_diffusion_pytorch.policy.planning.action_definition.action_candidates import ActionCandidates
 
 
 @dataclass(frozen=True)
@@ -58,7 +58,7 @@ class EpisodeRolloutSnapshot:
     steps: Tuple[StepOutcome, ...]  # 不変で「結果」感を出す
 
 
-from ..env.types import DismantlingStepResult
+from denoising_diffusion_pytorch.env.types import DismantlingStepResult
 @dataclass(frozen=True)
 class StepOutcome:
     executed_action_candidates: ActionCandidates

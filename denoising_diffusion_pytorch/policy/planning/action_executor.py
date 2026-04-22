@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from ...env.types import DismantlingStepResult
 from ...env.voxel_cut_sim_v1 import dismantling_env
 from ..types import ActionCandidates
-from ...eval.types import StepOutcome
+from app.usecases.eval.types import StepOutcome
 
 
 @dataclass

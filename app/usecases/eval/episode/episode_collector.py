@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
-from .types import StepOutcome, EpisodeRolloutSnapshot
+from ..types import StepOutcome, EpisodeRolloutSnapshot
 
 
 @dataclass

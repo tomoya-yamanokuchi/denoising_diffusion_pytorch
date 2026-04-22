@@ -8,7 +8,7 @@ from ..types import ActionPlan
 from ..types import ActionArtifacts
 
 if TYPE_CHECKING:
-    from ...eval.types import EpisodeContext, StepOutcome
+    from ....app.usecases.eval.types import EpisodeContext, StepOutcome
 
 
 class ActionPlanner:

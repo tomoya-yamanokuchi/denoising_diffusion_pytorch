@@ -3,7 +3,7 @@ from typing import Any, Dict
 from omegaconf import DictConfig
 from app.wiring.factories.env_factory import EnvFactory
 from app.wiring.factories.obs_model_factory import VoxelObsModelFactory
-from denoising_diffusion_pytorch.eval.types import CaseContext
+from app.usecases.eval.types import CaseContext
 
 @dataclass
 class CaseContextFactory:

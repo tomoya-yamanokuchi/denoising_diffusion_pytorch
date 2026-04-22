@@ -2,8 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .types import EpisodeContext, StepOutcome
-from ..policy.types import ActionArtifacts
+from ..types import EpisodeContext, StepOutcome
+from denoising_diffusion_pytorch.policy.types import ActionArtifacts
 from .episode_image_writer import EpisodeImageWriter
 
 

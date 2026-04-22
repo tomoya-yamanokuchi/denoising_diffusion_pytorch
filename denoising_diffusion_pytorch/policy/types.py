@@ -67,15 +67,15 @@ class GlobalAxisCandidates:
 
 @dataclass(frozen=True)
 class SliceCandidates:
-    x: Tuple[int, ...]
-    y: Tuple[int, ...]
-    z: Tuple[int, ...]
+    x: ActionCandidates
+    y: ActionCandidates
+    z: ActionCandidates
 
 
 @dataclass(frozen=True)
 class SliceSelectionResult:
-    slice_range     : Tuple[int, ...]
-    slice_candidates: SliceCandidates
+    optimal_selected_slice_range      : ActionCandidates
+    slice_range_candidates_across_axes: SliceCandidates
 
 
 @dataclass(frozen=True)
@@ -148,3 +148,11 @@ class PolicyConfig:
     segmentation          : SegmentationConfig
     decision              : DecisionConfig
     voxel_grid_side_length: int
+
+
+import torch
+
+
+@dataclass(frozen=True)
+class PlanningPolicyInput:
+    normalized_cond: torch.Tensor | None

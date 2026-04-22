@@ -3,12 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .types import EpisodeContext, EpisodeResult
-from ..policy.planning.action_executor import ActionExecutor
-
-
-# .ActionExecutor import ActionExecutor
+from ..types import EpisodeContext, EpisodeResult
 from .episode_step_observer import EpisodeStepObserver
+
+from denoising_diffusion_pytorch.policy.planning.action_executor import ActionExecutor
 
 
 @dataclass

@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
 
-from denoising_diffusion_pytorch.eval.types import CaseContext, EpisodeContext
-from denoising_diffusion_pytorch.eval.episode_paths import EpisodePaths
-from denoising_diffusion_pytorch.eval.episode_image_writer import EpisodeImageWriter
-from denoising_diffusion_pytorch.eval.episode_artifact_manager import EpisodeArtifactManager
+from app.usecases.eval.types import CaseContext, EpisodeContext
+from app.usecases.eval.episode.episode_paths import EpisodePaths
+from app.usecases.eval.episode.episode_image_writer import EpisodeImageWriter
+from app.usecases.eval.episode.episode_artifact_manager import EpisodeArtifactManager
 from denoising_diffusion_pytorch.policy.planning.action_planner import ActionPlanner
 
 @dataclass

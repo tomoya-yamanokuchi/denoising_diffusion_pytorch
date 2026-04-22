@@ -6,6 +6,5 @@ from typing import Any
 class TrainedModelAssets:
     infer_model: str
     inferencer : Any
-    trainer    : Any
     dataset    : Any
     epoch      : int

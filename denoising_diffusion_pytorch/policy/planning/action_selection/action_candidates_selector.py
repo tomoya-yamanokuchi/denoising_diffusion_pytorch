@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from denoising_diffusion_pytorch.policy.planning.action_definition.action_candidates import ActionCandidates
 import numpy as np
 from typing import Dict
 
@@ -30,14 +31,32 @@ class ActionCandidatesSelector:
         observation_history: Dict[int, dict],
     ) -> SliceSelectionResult:
 
-        slice_candidates = self.candidate_coordinator.build(
+        slice_range_candidates_across_axes = self.candidate_coordinator.build(
             axis_costs          = axis_costs,
             observation_history = observation_history,
         )
 
-        slice_range = self.selection_policy.choose(slice_candidates)
+        optimal_selected_slice_range = self.selection_policy.choose(slice_range_candidates_across_axes)
+
+        if optimal_selected_slice_range is None:
+            optimal_selected_slice_range = self._build_fallback_candidates(
+                side_length = len(axis_costs.x),
+            )
 
         return SliceSelectionResult(
-            slice_range      = slice_range,
-            slice_candidates = slice_candidates,
+            optimal_selected_slice_range       = optimal_selected_slice_range,
+            slice_range_candidates_across_axes = slice_range_candidates_across_axes,
         )
+
+
+    def _build_fallback_candidates(
+        self,
+        side_length: int,
+    ) -> ActionCandidates:
+        fallback = ActionCandidates.from_global_indices(
+            global_indices = [0], # fallback global index。旧実装との整合性のため、0固定。
+            side_length   = side_length,
+        )
+        if fallback is None:
+            raise RuntimeError("Failed to construct legacy fallback ActionCandidates.")
+        return fallback

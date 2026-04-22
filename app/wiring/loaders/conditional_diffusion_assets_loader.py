@@ -44,7 +44,6 @@ class ConditionalDiffusionAssetsLoader:
         return TrainedModelAssets(
             infer_model= infer_model,
             inferencer = inferencer,
-            trainer    = trainer,
             dataset    = dataset,
             epoch      = epoch,
         )

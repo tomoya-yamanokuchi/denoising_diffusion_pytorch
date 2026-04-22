@@ -1,9 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 # from .types import MacroAction
-# from ..eval.types import CaseContext
-from ..types import ActionCandidates
+from denoising_diffusion_pytorch.policy.types import ActionCandidates
+
+if TYPE_CHECKING:
+    from app.usecases.eval.types import CaseContext
 
 
 # @dataclass(frozen=True)
