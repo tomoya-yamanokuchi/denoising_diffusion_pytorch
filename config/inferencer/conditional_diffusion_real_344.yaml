@@ -1,0 +1,32 @@
+name     : conditional_diffusion
+USER_NAME: user
+# device   : "cuda:0"
+
+diffusion:
+  beta_schedule     : sigmoid
+  timesteps         : 1000
+  sampling_timesteps: 20
+
+network:
+  dim: 128
+  dim_mults: [1, 2, 4, 8]
+  flash_attn: true
+  self_condition: false
+
+trainer:
+  train_batch_size         : 18
+  train_lr                 : 8e-5
+  train_num_steps          : 800000
+  save_and_sample_every    : 2000
+  gradient_accumulate_every: 5
+  ema_decay                : 0.995
+  amp                      : true
+  calculate_fid            : false
+
+watch:
+  - { key: log.prefix, label: "" }
+  - { key: log.n_diffusion_step, label: "T" }
+  - { key: diffusion.sampling_timestep, label: "S" }
+  - { key: dataset.image_size, label: "D" }
+  - { key: log.tag, label: "" }
+

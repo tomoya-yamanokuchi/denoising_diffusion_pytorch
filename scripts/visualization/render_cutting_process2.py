@@ -29,7 +29,8 @@ if __name__ == '__main__':
 
     # root_folder_ = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/dataset_4142435161_13901k_v1_2/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456789_clip_ucb_raw_0.5_v12_1/"
     # root_folder_ = "/home/tomoya-y/denoising_diffusion_pytorch/logs/Image_diffusion_2D/eval/T8_partial_obs_PT2000_B_T8_partial_obs__a___v12_1_for_paper_render"
-    root_folder_ = "/home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/eval/T8_partial_obs_PT2000_B_T8_partial_obs__a___v12_1_for_paper_render"
+    # root_folder_ = "/home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/eval/T8_partial_obs_PT2000_B_T8_partial_obs__a___v12_1_for_paper_render"
+    root_folder_ = "/home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/eval/T8_partial_obs_PT100000_B_T8_partial_obs__a___v12_1_for_paper_render"
     #///////////////////////////////////////////////////
 
     root_folder  = root_folder_+f'/{tags}'

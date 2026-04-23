@@ -18,8 +18,12 @@ class ConditionalDiffusionAssetsLoader:
         infer_model: str = None,
     ) -> TrainedModelAssets:
 
+        # self.model_dir = self.checkpoint_path_resolver.resolve(run_dir, epoch)
+        self.run_dir = run_dir
+
         cfg = self.config_loader.load(run_dir)
 
+        # import ipdb; ipdb.set_trace()
         if cfg.inferencer.name != "conditional_diffusion":
             raise NotImplementedError(
                 f"Unsupported method: {cfg.inferencer.name}"
@@ -80,9 +84,11 @@ class ConditionalDiffusionAssetsLoader:
 
     def _build_trainer(self, cfg, model, dataset):
         from denoising_diffusion_pytorch.trainer.diffusion_conditional_image_trainer import Trainer
+
         return Trainer(
             diffusion_model = model,
             dataset         = dataset,
+            results_folder  = self.run_dir,
             **cfg.inferencer.trainer,
         )
 

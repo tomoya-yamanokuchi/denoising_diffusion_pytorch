@@ -55,8 +55,7 @@ class Attend(nn.Module):
 
         device_properties = torch.cuda.get_device_properties(torch.device('cuda'))
 
-        # if device_properties.major == 8 and device_properties.minor == 0:
-        if device_properties.major >= 8:
+        if device_properties.major == 8 and device_properties.minor == 0:
             print_once('A100 GPU detected, using flash attention if input tensor is on cuda')
             self.cuda_config = AttentionConfig(True, False, False)
         else:
@@ -64,28 +63,23 @@ class Attend(nn.Module):
             self.cuda_config = AttentionConfig(False, True, True)
 
     def flash_attn(self, q, k, v):
-        # _, heads, q_len, _, k_len, is_cuda, device = *q.shape, k.shape[-2], q.is_cuda, q.device
+        _, heads, q_len, _, k_len, is_cuda, device = *q.shape, k.shape[-2], q.is_cuda, q.device
 
         q, k, v = map(lambda t: t.contiguous(), (q, k, v))
 
         # Check if there is a compatible device for flash attention
 
-        # config = self.cuda_config if is_cuda else self.cpu_config
+        config = self.cuda_config if is_cuda else self.cpu_config
 
         # pytorch 2.0 flash attn: q, k, v, mask, dropout, causal, softmax_scale
 
-        try:
-            with torch.backends.cuda.sdp_kernel(enable_flash=True, enable_math=False, enable_mem_efficient=False):
-                return F.scaled_dot_product_attention(
-                    q, k, v,
-                    dropout_p=self.dropout if self.training else 0.
-                )
-        except RuntimeError:
-            with torch.backends.cuda.sdp_kernel(enable_flash=False, enable_math=True, enable_mem_efficient=False):
-                return F.scaled_dot_product_attention(
-                    q, k, v,
-                    dropout_p=self.dropout if self.training else 0.
-                )
+        with torch.backends.cuda.sdp_kernel(**config._asdict()):
+            out = F.scaled_dot_product_attention(
+                q, k, v,
+                dropout_p = self.dropout if self.training else 0.
+            )
+
+        return out
 
     def forward(self, q, k, v):
         """

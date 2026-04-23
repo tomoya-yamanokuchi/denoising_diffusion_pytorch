@@ -1,4 +1,4 @@
-name      : celeba
+name      : real_models_sheetsander_z49
 path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
 # ---
 class     : Image_diffusion_2D
@@ -9,4 +9,4 @@ type      : pattern
 p         : 0.2
 
 # --- dataset specific ---
-image_size: 64
+image_size: 344

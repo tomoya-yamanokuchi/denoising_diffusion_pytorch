@@ -48,6 +48,4 @@ class EvalOrchestrator:
             # ----
             results[case_ctx.name] = per_case
 
-        # import ipdb; ipdb.set_trace()
-
         return results

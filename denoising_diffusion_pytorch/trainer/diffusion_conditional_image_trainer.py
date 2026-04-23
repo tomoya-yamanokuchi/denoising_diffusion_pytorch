@@ -62,6 +62,8 @@ class Trainer(object):
     ):
         super().__init__()
 
+        # import ipdb; ipdb.set_trace()
+
         # accelerator
 
         self.accelerator = Accelerator(
@@ -135,6 +137,7 @@ class Trainer(object):
         self.results_folder = Path(results_folder)
         self.results_folder.mkdir(exist_ok = True)
 
+        # import ipdb; ipdb.set_trace()
         self.sw_dir = Path(results_folder+"/sw_dir/")
         self.sw_dir.mkdir(exist_ok = True)
         # step counter state
@@ -198,6 +201,7 @@ class Trainer(object):
         accelerator = self.accelerator
         device = accelerator.device
 
+        # import ipdb; ipdb.set_trace()
         data = torch.load(str(self.results_folder / f'model-{milestone}.pt'), map_location=device)
 
         model = self.accelerator.unwrap_model(self.model)
