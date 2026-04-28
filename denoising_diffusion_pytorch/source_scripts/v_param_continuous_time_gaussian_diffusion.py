@@ -4,7 +4,7 @@ from torch import sqrt
 from torch import nn, einsum
 import torch.nn.functional as F
 from torch.special import expm1
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 
 from tqdm import tqdm
 from einops import rearrange, repeat, reduce
@@ -79,7 +79,7 @@ class VParamContinuousTimeGaussianDiffusion(nn.Module):
         # sampling
 
         self.num_sample_steps = num_sample_steps
-        self.clip_sample_denoised = clip_sample_denoised        
+        self.clip_sample_denoised = clip_sample_denoised
 
     @property
     def device(self):
@@ -150,7 +150,7 @@ class VParamContinuousTimeGaussianDiffusion(nn.Module):
 
     # training related functions - noise prediction
 
-    @autocast(enabled = False)
+    @autocast("cuda", enabled=False)
     def q_sample(self, x_start, times, noise = None):
         noise = default(noise, lambda: torch.randn_like(x_start))
 

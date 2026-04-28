@@ -11,4 +11,5 @@ class EpisodeArtifactManager:
         return self._root
 
     def create_episodic_artifact_root_directory(self):
+        # import ipdb; ipdb.set_trace()
         create_folder(str(self._root))

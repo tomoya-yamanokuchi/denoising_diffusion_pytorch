@@ -1,3 +1,4 @@
 # config/path/local.yaml  （= cfg.path.*）
 workspace: /home/dev/workspace
-logs: ${.workspace}/denoising_diffusion_pytorch/logs
+# logs     : ${.workspace}/denoising_diffusion_pytorch/logs
+logs     : ${.workspace}/dataset/nedo_dismantling_log

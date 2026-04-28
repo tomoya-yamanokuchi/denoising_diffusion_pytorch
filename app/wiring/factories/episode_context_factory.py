@@ -41,4 +41,5 @@ class EpisodeContextFactory:
         )
 
     def _build_artifact_episodic_root(self, case_name: str, episode_idx: int) -> Path:
+        # import ipdb; ipdb.set_trace()
         return Path(self.artifact_static_root) / case_name / f"episode_{episode_idx}"

@@ -1,0 +1,6 @@
+name  : unet
+# ----
+dim           : 128 # 64
+dim_mults     : [1, 2, 4, 8]
+flash_attn    : true
+self_condition: false

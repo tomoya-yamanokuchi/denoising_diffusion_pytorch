@@ -1,5 +1,5 @@
 name      : celeba
-path      : /home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+path      : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
 # ---
 class     : Image_diffusion_2D
 min       : -1

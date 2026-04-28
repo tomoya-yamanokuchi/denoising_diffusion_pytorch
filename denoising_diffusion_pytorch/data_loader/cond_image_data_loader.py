@@ -114,6 +114,7 @@ class Cond_image_dataloader(Dataset):
             T.Resize(image_size,interpolation=InterpolationMode.NEAREST),
             T.ToTensor()  # 最後に Tensor 化
         ])
+        # import ipdb; ipdb.set_trace()
 
 
     def _get_pattern_mask(self):

@@ -1,6 +1,3 @@
-defaults:
-  - _self_
-
 name     : conditional_diffusion
 USER_NAME: user
 
@@ -8,6 +5,15 @@ diffusion:
   beta_schedule     : sigmoid
   timesteps         : 1000
   sampling_timesteps: 20
+
+
+network:
+  architecture  : unet
+  # ----
+  dim           : 64
+  dim_mults     : [1, 2, 4, 8]
+  flash_attn    : true
+  self_condition: false
 
 trainer:
   train_batch_size         : 96

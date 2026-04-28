@@ -1,0 +1,8 @@
+name  : dit
+# ----
+dim           : 64
+depth         : 12
+heads         : 6
+dim_head      : 64
+patch_size    : 4
+

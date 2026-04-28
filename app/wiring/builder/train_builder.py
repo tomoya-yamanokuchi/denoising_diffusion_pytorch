@@ -26,29 +26,14 @@ class TrainBuilder:
     """
     # --- input ----
     cfg       : DictConfig
-    # # --- output ----
-    # run_dir   : Optional[Path] = None
-    # exp_name  : Optional[str]  = None
-    # dataset   : Any            = None
-    # model     : Any            = None
-    # method    : Any            = None
-    # trainer   : Any            = None
-    # image_size: Optional[int]  = None
 
-    # --------------------------------------------------
-    # 1. config validation
-    # --------------------------------------------------
+    def set_config(self):
+        self.cfg_usecase = self.cfg.usecase
+        self.cfg_root    = self.cfg
+
     def validate_config_top(self) -> None:
         from app.wiring.services.validate_key_config import validate_key_config
         validate_key_config(self.cfg, ["usecase"])
-
-    def set_config_root_as_usecase_root(self):
-        self.usecase = self.cfg.usecase.name
-        self.cfg     = self.cfg.usecase
-
-    def validate_config_usecase(self) -> None:
-        from app.wiring.services.validate_key_config import validate_key_config
-        validate_key_config(self.cfg, ["watch", "inferencer", "dataset"])
 
     def build_config_artifact_writer(self) -> None:
         from app.wiring.services.train_config_artifact_writer import TrainConfigArtifactWriter
@@ -67,14 +52,15 @@ class TrainBuilder:
         from app.wiring.services.run_dir_manager import RunDirManager
         from denoising_diffusion_pytorch.utils.RunDirPlanner import RunDirPlanner
         from denoising_diffusion_pytorch.utils.RunDirInitializer import RunDirInitializer
+        # import ipdb; ipdb.set_trace()
         self.run_dir_mgr = RunDirManager(
             planner     = RunDirPlanner.from_cfg(self.cfg),
             initializer = RunDirInitializer(),
         )
 
     def build_run_dir(self) -> None:
-        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
-        self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
+        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg_usecase)
+        self.run_dir_mgr.init(self.cfg_usecase, run_dir, _exp_name)
         self.artifact_static_root = run_dir
 
 
@@ -83,15 +69,18 @@ class TrainBuilder:
         - Sub builder に差分を閉じ込める。
         - Sub builder には最低限、build_dataset/build_model/build_method/build_trainer というメソッドがある想定。
         """
-        name = self.cfg.inferencer.name
+        name = self.cfg_usecase.inferencer.name
         if name not in _METHOD_BUILDERS:
             raise ValueError(f"Unknown train method: {name}. Known: {list(_METHOD_BUILDERS.keys())}")
 
         Sub = _METHOD_BUILDERS[name]
         sub: TrainMethodBuilder = Sub(
-            cfg = self.cfg,
+            cfg_root             = self.cfg_root,
+            cfg_usecase          = self.cfg_usecase,
             artifact_static_root = self.artifact_static_root,
         )  # IntelliSenseが効く
+
+        # import ipdb; ipdb.set_trace()
 
         self.dataset    = sub.build_dataset()
         self.model      = sub.build_model()
@@ -106,8 +95,7 @@ class TrainBuilder:
     def build_all(self) -> "TrainContext":
         # --- load config ---
         self.validate_config_top()
-        self.set_config_root_as_usecase_root()
-        self.validate_config_usecase()
+        self.set_config()
 
         # --- plan dir ---
         self.build_run_dir_manager()

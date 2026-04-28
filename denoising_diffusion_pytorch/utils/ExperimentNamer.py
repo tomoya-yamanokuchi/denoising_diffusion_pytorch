@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterable, List, Mapping, Sequence, Tuple, Union
 
+import ipdb
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 _TEMPLATE_RE = re.compile(r"\{([^{}]+)\}")
@@ -54,6 +55,7 @@ class ExperimentNamer:
 
             print(f"path = {path}, label = {label}, val = {val}")
 
+            # import ipdb; ipdb.set_trace()
             if ("log.tag" == path) and (cfg.name == "eval"):
                 val = self.render_template(
                     template=cfg.log.tag_template, cfg=cfg)

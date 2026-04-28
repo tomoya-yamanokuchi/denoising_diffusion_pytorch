@@ -6,7 +6,7 @@ from collections import namedtuple
 
 import torch
 from torch import nn
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 import torch.nn.functional as F
 
 from einops import rearrange, reduce, repeat
@@ -187,10 +187,10 @@ class GaussianDiffusion(nn.Module):
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
     def model_predictions(self, x, t, x_self_cond = None, mask = None, binary_mask = None, clip_x_start = False, rederive_pred_noise = False):
-        
+
         if mask is not None:
             model_output = self.model(x, t, x_self_cond, mask, binary_mask)
-                
+
         else:
             model_output = self.model(x, t, x_self_cond)
 
@@ -275,27 +275,27 @@ class GaussianDiffusion(nn.Module):
 
         if cond is not None:
             x_0_org = cond[0]["val"]
-            
+
 
         for time, time_next in tqdm(time_pairs, desc = f'sampling with omega {omega}'):
             time_cond = torch.full((batch,), time, device = device, dtype = torch.long)
             self_cond = x_start if self.self_condition else None
-            
-            
+
+
             binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float()  # → [B, 1, H, W]
             # mask_cond = x_0_org * binary_mask  # [B, 3, H, W] # 観測領域にもノイズ注入
             mask_cond = mask * binary_mask  # [B, 3, H, W] # 観測領域にもノイズ注入
             pred_noise, x_start, *_  = self.model_predictions(img, time_cond, self_cond, mask_cond, binary_mask)
-           
+
 
             binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float()*0.0  # → [B, 1, H, W]
             # mask_cond = x_0_org * binary_mask  # [B, 3, H, W] # 観測領域にもノイズ注入
-            mask_cond = mask* binary_mask  # [B, 3, H, W] # 観測領域にもノイズ注入 
+            mask_cond = mask* binary_mask  # [B, 3, H, W] # 観測領域にもノイズ注入
             pred_noise_no_cond, x_start_no_cond, *_ = self.model_predictions(img, time_cond, self_cond, mask_cond, binary_mask)
-    
-                
-    
-    
+
+
+
+
             self.omega = omega #default 0.2
             if time_next < 0:
                 # img = x_start
@@ -319,13 +319,13 @@ class GaussianDiffusion(nn.Module):
             img_cond = x_start * alpha_next.sqrt() + \
                   c * pred_noise + \
                   sigma * noise
-                  
+
             img_non_cond =  x_start_no_cond * alpha_next.sqrt() + \
                   c * pred_noise_no_cond + \
                   sigma * noise
-                
+
             img = (1+self.omega)*img_cond-self.omega*(img_non_cond)
-            
+
             # import ipdb;ipdb.set_trace()
             if cond is not None:
                 sqrt_alphas_cumprod_t = self.sqrt_alphas_cumprod[time]
@@ -371,7 +371,7 @@ class GaussianDiffusion(nn.Module):
 
         return img
 
-    @autocast(enabled = False)
+    @autocast("cuda", enabled=False)
     def q_sample(self, x_start, t, noise = None):
         noise = default(noise, lambda: torch.randn_like(x_start))
 
@@ -423,7 +423,7 @@ class GaussianDiffusion(nn.Module):
         # model_out = self.model(x, t, x_self_cond, mask)
 
         ####################################################
-        # convert binary mask and mask x 
+        # convert binary mask and mask x
         # 各画素（3チャンネル）すべてが -1.0 なら未観測 → 0.0
         # それ以外（どれか1chでも ≠ -1.0）なら観測 → 1.0
         ######################################################
@@ -449,9 +449,9 @@ class GaussianDiffusion(nn.Module):
                 # mask_cond = x * binary_mask
                 mask_cond = mask * binary_mask
                 model_out = self.model(x, t, x_self_cond, mask_cond, binary_mask)
-                
-             
-             
+
+
+
         if self.objective == 'pred_noise':
             target = noise
         elif self.objective == 'pred_x0':
@@ -465,7 +465,7 @@ class GaussianDiffusion(nn.Module):
         loss = F.mse_loss(model_out, target, reduction = 'none')
 
         if mask is not None:
-            mask_label = (binary_mask == 0).float()      # mask = [B, 1, H, W] binary mask ver  
+            mask_label = (binary_mask == 0).float()      # mask = [B, 1, H, W] binary mask ver
             loss = loss * mask_label  # 自動ブロードキャスト
 
         loss = reduce(loss, 'b ... -> b', 'mean')

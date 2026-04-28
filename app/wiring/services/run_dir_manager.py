@@ -19,4 +19,5 @@ class RunDirManager:
         return Path(run_dir), exp_name
 
     def init(self, cfg: DictConfig, run_dir: Path, exp_name: Optional[str]) -> None:
+        # import ipdb; ipdb.set_trace()
         self.initializer.init(cfg, run_dir, exp_name=exp_name)

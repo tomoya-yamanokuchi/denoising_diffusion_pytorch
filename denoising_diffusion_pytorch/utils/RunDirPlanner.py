@@ -69,6 +69,7 @@ class RunDirPlanner:
         - method : logbase/<cfg.name>/exp_name（必要なら追加）
         """
         # parts = [Path(logbase)]
+        # import ipdb; ipdb.set_trace()
         parts = [Path(cfg.path.logs)]
 
         if layout == "dataset":
@@ -79,11 +80,12 @@ class RunDirPlanner:
         # exp_name が "vaeac/..." のようにサブディレクトリを含んでもOK
         parts.append(Path(exp_name))
 
-        # control_mode
+        # ----- control_mode -----
         control_mode = select_str(cfg, self.control_mode, default="")
         if control_mode:
             parts.append(Path(control_mode))
 
+        # ----- 最終的な run_dir を組み立てる -----
         run_dir = join_and_normalize(parts)
 
         return run_dir, exp_name

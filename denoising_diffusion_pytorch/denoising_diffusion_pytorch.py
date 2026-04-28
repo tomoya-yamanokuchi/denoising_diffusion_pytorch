@@ -8,7 +8,7 @@ from multiprocessing import cpu_count
 
 import torch
 from torch import nn, einsum
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
@@ -732,9 +732,9 @@ class GaussianDiffusion(nn.Module):
             img = x_start * alpha_next.sqrt() + \
                   c * pred_noise + \
                   sigma * noise
-            
+
             # import ipdb;ipdb.set_trace()
-            
+
             if cond is not None:
                 img = apply_conditioning(x = img ,cond=cond)
                 # import ipdb;ipdb.set_trace()
@@ -774,7 +774,7 @@ class GaussianDiffusion(nn.Module):
 
         return img
 
-    @autocast(enabled = False)
+    @autocast("cuda", enabled=False)
     def q_sample(self, x_start, t, noise = None):
         noise = default(noise, lambda: torch.randn_like(x_start))
 

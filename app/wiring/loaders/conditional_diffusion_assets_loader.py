@@ -21,12 +21,13 @@ class ConditionalDiffusionAssetsLoader:
         # self.model_dir = self.checkpoint_path_resolver.resolve(run_dir, epoch)
         self.run_dir = run_dir
 
-        cfg = self.config_loader.load(run_dir)
+        cfg         = self.config_loader.load(run_dir)
+        cfg_usecase = cfg.usecase
 
         # import ipdb; ipdb.set_trace()
-        if cfg.inferencer.name != "conditional_diffusion":
+        if cfg_usecase.inferencer.name != "conditional_diffusion":
             raise NotImplementedError(
-                f"Unsupported method: {cfg.inferencer.name}"
+                f"Unsupported method: {cfg_usecase.inferencer.name}"
             )
 
         dataset    = self._build_dataset(cfg)
@@ -62,11 +63,12 @@ class ConditionalDiffusionAssetsLoader:
 
     def __build_network(self, cfg, device: str):
         from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
+
         network = Unet(
-            dim            = cfg.inferencer.network.dim,
-            dim_mults      = cfg.inferencer.network.dim_mults,
-            flash_attn     = cfg.inferencer.network.flash_attn,
-            self_condition = cfg.inferencer.network.self_condition,
+            dim            = cfg.network.dim,
+            dim_mults      = cfg.network.dim_mults,
+            flash_attn     = cfg.network.flash_attn,
+            self_condition = cfg.network.self_condition,
             mask_dim       = cfg.dataset.image_size,
         )
         return network.to(device)

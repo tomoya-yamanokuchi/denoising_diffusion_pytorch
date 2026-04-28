@@ -1,3 +1,14 @@
+# defaults:
+#   - usecase   : train
+#   - inferencer: conditional_diffusion
+#   - network   : unet
+#   - dataset   : celeba
+#   - path      : local
+#   - log       : train
+#   - watch     : train_base
+#   - _self_
+
+
 defaults:
-  - usecase  : train
+  - usecase: train
   - _self_

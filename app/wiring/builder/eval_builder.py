@@ -19,17 +19,12 @@ class EvalBuilder:
     # --------------------------------------------------
     # 1. config validation
     # --------------------------------------------------
+    def set_config(self):
+        self.cfg = self.cfg.usecase
+
     def validate_config_top(self) -> None:
         from app.wiring.services.validate_key_config import validate_key_config
         validate_key_config(self.cfg, ["usecase"])
-
-    def set_config_root_as_usecase_root(self):
-        self.usecase = self.cfg.usecase.name
-        self.cfg     = self.cfg.usecase
-
-    def validate_config_usecase(self) -> None:
-        from app.wiring.services.validate_key_config import validate_key_config
-        validate_key_config(self.cfg, ["watch", "inferencer", "eval", "env"])
 
     # --------------------------------------------------
     # 2. directory management
@@ -166,8 +161,7 @@ class EvalBuilder:
     def build_all(self) -> "EvalContext":
         # --- config ---
         self.validate_config_top()
-        self.set_config_root_as_usecase_root()
-        self.validate_config_usecase()
+        self.set_config()
 
         # --- dir ---
         self.build_run_dir_manager()

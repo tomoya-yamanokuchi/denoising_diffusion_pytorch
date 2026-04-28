@@ -1,10 +1,11 @@
 defaults:
-  - /path      : local
-  - /log       : train
-  - /watch     : train_base
-  - /inferencer: conditional_diffusion
-  - /dataset   : celeba
+  - /path                    : local
+  - /log                     : train
+  - /watch                   : train_base
+  - /inferencer              : conditional_diffusion
+  - /network@_global_.network: unet_dim64
+  - /dataset                 : celeba
   - _self_
 
-name  : train
-device: cuda:0
+name      : train
+device    : cuda:0

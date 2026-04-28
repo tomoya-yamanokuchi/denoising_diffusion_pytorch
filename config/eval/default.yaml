@@ -2,9 +2,11 @@ defaults:
   - cases : simple
   - policy: default
 
-eval_data_path: /home/dev/.../geom_test_1
+# eval_data_path: /home/dev/.../geom_test_1
 
-train_run_dir: /home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/train/D64
+# train_run_dir: /home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/train/D64
+
+train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/D64
 
 # epoch   : "2000"  #"10000"
 # epoch   : "4000"  #"10000"

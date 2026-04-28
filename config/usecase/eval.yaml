@@ -1,12 +1,13 @@
 defaults:
-  - /path      : local
-  - /log       : eval
-  - /watch     : eval_base
-  - /inferencer: conditional_diffusion  # ここは評価対象のアルゴリズム
-  - /eval      : default
-  - /env       : default
-  - /dataset   : celeba
+  - /path                    : local
+  - /log                     : eval
+  - /watch                   : eval_base
+  - /inferencer              : conditional_diffusion
+  - /network@_global_.network: unet
+  - /eval                    : default
+  - /env                     : default
+  - /dataset                 : celeba
   - _self_
 
-name: eval
-device: cuda:0
+name      : eval
+device    : cuda:0

@@ -1,17 +1,13 @@
+defaults:
+  - _self_
+
 name     : conditional_diffusion
 USER_NAME: user
-# device   : "cuda:0"
 
 diffusion:
   beta_schedule     : sigmoid
   timesteps         : 1000
   sampling_timesteps: 20
-
-network:
-  dim: 128
-  dim_mults: [1, 2, 4, 8]
-  flash_attn: true
-  self_condition: false
 
 trainer:
   train_batch_size         : 18

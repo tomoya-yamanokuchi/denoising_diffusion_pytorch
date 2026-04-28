@@ -6,7 +6,7 @@ from collections import namedtuple
 
 import torch
 from torch import nn
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 import torch.nn.functional as F
 
 from einops import rearrange, reduce, repeat
@@ -277,16 +277,16 @@ class GaussianDiffusion(nn.Module):
         for time, time_next in tqdm(time_pairs, desc = 'sampling loop time step'):
             time_cond = torch.full((batch,), time, device = device, dtype = torch.long)
             self_cond = x_start if self.self_condition else None
-            
-            
+
+
             ############################## edited for tmp2 ###########################################
             # binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float()  # → [B, 1, H, W] # add for tmp2
             # img = binary_mask * mask + (1 - binary_mask) * img # add for tmp2
             # pred_noise, x_start, *_ = self.model_predictions(img, time_cond, self_cond, mask = binary_mask, clip_x_start = True, rederive_pred_noise = True)
             ####################################################################################
-            
+
             pred_noise, x_start, *_ = self.model_predictions(img, time_cond, self_cond, mask = mask, clip_x_start = True, rederive_pred_noise = True)
-            
+
             if time_next < 0:
                 img = x_start
                 if cond is not None:
@@ -308,7 +308,7 @@ class GaussianDiffusion(nn.Module):
             img = x_start * alpha_next.sqrt() + \
                   c * pred_noise + \
                   sigma * noise
-            
+
             # import ipdb;ipdb.set_trace()
             if cond is not None:
                 sqrt_alphas_cumprod_t = self.sqrt_alphas_cumprod[time]
@@ -354,7 +354,7 @@ class GaussianDiffusion(nn.Module):
 
         return img
 
-    @autocast(enabled = False)
+    @autocast("cuda", enabled=False)
     def q_sample(self, x_start, t, noise = None):
         noise = default(noise, lambda: torch.randn_like(x_start))
 
@@ -404,7 +404,7 @@ class GaussianDiffusion(nn.Module):
         # ########################################################################
         model_out = self.model(x, t, x_self_cond, mask)
         ####################################################
-        # convert binary mask and mask x 
+        # convert binary mask and mask x
         # 各画素（3チャンネル）すべてが -1.0 なら未観測 → 0.0
         # それ以外（どれか1chでも ≠ -1.0）なら観測 → 1.0
         ######################################################
@@ -424,8 +424,8 @@ class GaussianDiffusion(nn.Module):
         #         mask = torch.zeros_like(mask)
         #         model_out = self.model(x, t, x_self_cond, mask, cfg=True)
         #         binary_mask = (mask != -1.0).any(dim=1, keepdim=True).float()*0.0  # → [B, 1, H, W]
-             
-             
+
+
         if self.objective == 'pred_noise':
             target = noise
         elif self.objective == 'pred_x0':
@@ -439,7 +439,7 @@ class GaussianDiffusion(nn.Module):
         loss = F.mse_loss(model_out, target, reduction = 'none')
 
         if mask is not None:
-            mask_label = (binary_mask == 0).float()      # mask = [B, 1, H, W] binary mask ver  
+            mask_label = (binary_mask == 0).float()      # mask = [B, 1, H, W] binary mask ver
             loss = loss * mask_label  # 自動ブロードキャスト
 
         loss = reduce(loss, 'b ... -> b', 'mean')
