@@ -29,7 +29,7 @@ setup(
     'vtk==9.3.1',
     'pyvista==0.43.3',
     'pyvistaqt==0.9.0',
-    'ray==1.10.0',
+    # 'ray==1.10.0',
     'protobuf==3.20.3',
     # 'PyQt5==5.15.10',
     # 'seaborn==0.13.2'
