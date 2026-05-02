@@ -24,13 +24,12 @@ class ConditionalDiffusionAssetsLoader:
         cfg         = self.config_loader.load(run_dir)
         cfg_usecase = cfg.usecase
 
-        # import ipdb; ipdb.set_trace()
         if cfg_usecase.inferencer.name != "conditional_diffusion":
             raise NotImplementedError(
                 f"Unsupported method: {cfg_usecase.inferencer.name}"
             )
 
-        dataset    = self._build_dataset(cfg)
+        dataset    = self._build_dataset(cfg_usecase)
         inferencer = self._build_inferencer(cfg, device)
         trainer    = self._build_trainer(cfg, inferencer, dataset)
 
@@ -51,10 +50,12 @@ class ConditionalDiffusionAssetsLoader:
             inferencer = inferencer,
             dataset    = dataset,
             epoch      = epoch,
+            cfg_train  = cfg,
         )
 
     def _build_dataset(self, cfg):
         from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
+
         return Cond_image_dataloader(
             cfg=cfg,
             image_size=cfg.dataset.image_size,
@@ -69,7 +70,7 @@ class ConditionalDiffusionAssetsLoader:
             dim_mults      = cfg.network.dim_mults,
             flash_attn     = cfg.network.flash_attn,
             self_condition = cfg.network.self_condition,
-            mask_dim       = cfg.dataset.image_size,
+            mask_dim       = cfg.usecase.dataset.image_size,
         )
         return network.to(device)
 
@@ -79,8 +80,8 @@ class ConditionalDiffusionAssetsLoader:
         from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
         method = GaussianDiffusion(
             model      = network,
-            image_size = cfg.dataset.image_size,
-            **cfg.inferencer.diffusion,
+            image_size = cfg.usecase.dataset.image_size,
+            **cfg.usecase.inferencer.diffusion,
         )
         return method.to(device)
 
@@ -91,7 +92,7 @@ class ConditionalDiffusionAssetsLoader:
             diffusion_model = model,
             dataset         = dataset,
             results_folder  = self.run_dir,
-            **cfg.inferencer.trainer,
+            **cfg.usecase.inferencer.trainer,
         )
 
 

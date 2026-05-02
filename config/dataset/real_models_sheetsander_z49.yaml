@@ -1,5 +1,6 @@
 name      : real_models_sheetsander_z49
-path      : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+# path      : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+path : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/sheetsander_cast_images_z_49
 # ---
 class     : Image_diffusion_2D
 min       : -1

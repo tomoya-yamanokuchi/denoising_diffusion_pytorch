@@ -5,6 +5,7 @@ import torch
 
 from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
 
+from ..resize_utils import _crop_images_to_hw, _pad_cond_to_model_size
 from .slice_image_inferencer import SliceImageInferencer
 from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
 
@@ -29,6 +30,13 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
             raise ValueError(
                 "normalized_cond must not be None for conditional diffusion inference."
             )
+        # --- prepare cond and mask ---
+        model_size = int(self.inferencer.ema_model.image_size)
+        normalized_cond, original_hw = _pad_cond_to_model_size(
+            cond       = normalized_cond,
+            model_size = model_size,
+        )
+
 
         if self.control_mode == "no_cond":
             cond = None
@@ -46,11 +54,11 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
             mask = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
 
         sample_image = self.inferencer.ema_model.sample(
-            batch_size=self.sample_image_num,
-            return_all_timesteps=True,
-            cond=cond,
-            mask=mask,
-            omega=self.guidance_scale,
+            batch_size           = self.sample_image_num,
+            return_all_timesteps = True,
+            cond                 = cond,
+            mask                 = mask,
+            omega                = self.guidance_scale,
         ).detach().cpu()
 
         batch_images = (
@@ -58,4 +66,6 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         ).clamp(0, 255).cpu().numpy().astype(np.uint8)
 
         last_step_images = batch_images[:, -1, :, :, :]
+        last_step_images = _crop_images_to_hw(last_step_images, original_hw)
         return last_step_images
+

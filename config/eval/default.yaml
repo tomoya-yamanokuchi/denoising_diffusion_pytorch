@@ -6,11 +6,14 @@ defaults:
 
 # train_run_dir: /home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/train/D64
 
-train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/D64
+# train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/D64
+train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/D344
 
 # epoch   : "2000"  #"10000"
 # epoch   : "4000"  #"10000"
-epoch   : "100000"  # 20 epochごとに評価
+# epoch   : "100000"  # 20 epochごとに評価
+epoch   : "40000"  # 20 epochごとに評価
+
 
 task_step: 8
 observation_mode: partial_obs

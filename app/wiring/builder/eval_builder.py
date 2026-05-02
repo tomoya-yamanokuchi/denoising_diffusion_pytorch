@@ -19,8 +19,12 @@ class EvalBuilder:
     # --------------------------------------------------
     # 1. config validation
     # --------------------------------------------------
+    # def set_config(self):
+    #     self.cfg = self.cfg.usecase
+
     def set_config(self):
-        self.cfg = self.cfg.usecase
+        self.cfg_usecase = self.cfg.usecase
+        self.cfg_root    = self.cfg
 
     def validate_config_top(self) -> None:
         from app.wiring.services.validate_key_config import validate_key_config
@@ -39,8 +43,8 @@ class EvalBuilder:
         )
 
     def build_run_dir(self) -> None:
-        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
-        self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
+        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg_usecase)
+        self.run_dir_mgr.init(self.cfg_usecase, run_dir, _exp_name)
         self.artifact_static_root = run_dir
         # import ipdb; ipdb.set_trace()
 
@@ -53,13 +57,13 @@ class EvalBuilder:
 
     def build_env_factory(self) -> None:
         from app.wiring.factories.env_factory import EnvFactory
-        self.env_factory = EnvFactory(grid_config=self.cfg.env.grid)
+        self.env_factory = EnvFactory(grid_config=self.cfg_usecase.env.grid)
 
 
     def build_obs_model_factory(self):
         from app.wiring.factories.obs_model_factory import VoxelObsModelFactory
         # ---
-        self.obs_model_factory = VoxelObsModelFactory(grid_config=self.cfg.env.grid)
+        self.obs_model_factory = VoxelObsModelFactory(grid_config=self.cfg_usecase.env.grid)
 
     def build_case_context_factory(self):
         from app.wiring.factories.case_context_factory import CaseContextFactory
@@ -71,9 +75,9 @@ class EvalBuilder:
     def build_episode_context_factory(self):
         from app.wiring.factories.episode_context_factory import EpisodeContextFactory
         self.episode_context_factory = EpisodeContextFactory(
-            grid_config          = self.cfg.env.grid,
-            task_step            = self.cfg.eval.task_step,
-            ctrl_mode            = self.cfg.eval.policy.control.mode,
+            grid_config          = self.cfg_usecase.env.grid,
+            task_step            = self.cfg_usecase.eval.task_step,
+            ctrl_mode            = self.cfg_usecase.eval.policy.control.mode,
             artifact_static_root = self.artifact_static_root,
         )
 
@@ -114,22 +118,24 @@ class EvalBuilder:
 
     def build_trained_model_assets(self) -> None:
         # ----
-        infer_model = str(self.cfg.eval.policy.infer_model)
+        infer_model = str(self.cfg_usecase.eval.policy.infer_model)
         loader      = self.trained_model_assets_loader_factory.create(infer_model)
         # -----
         self.trained_model_assets = loader.load(
-            run_dir     = self.cfg.eval.train_run_dir,
-            epoch       = getattr(self.cfg.eval, "epoch", "latest"),
-            device      = str(self.cfg.device),
+            run_dir     = self.cfg_usecase.eval.train_run_dir,
+            epoch       = getattr(self.cfg_usecase.eval, "epoch", "latest"),
+            device      = str(self.cfg_usecase.device),
             infer_model = infer_model,
         )
+        # ----
+        self.cfg_train = self.trained_model_assets.cfg_train  # ロードしたモデルの config を eval の builder で保持しておく。 --- IGNORE ---
 
 
     def build_policy_config(self) -> None:
         from app.wiring.mappers.policy_config_mapper import build_policy_config
         self.policy_config = build_policy_config(
-            cfg_policy             = self.cfg.eval.policy,
-            voxel_grid_side_length = self.cfg.env.grid.side_length,
+            cfg_policy             = self.cfg_usecase.eval.policy,
+            voxel_grid_side_length = self.cfg_usecase.env.grid.side_length,
         )
 
 
@@ -149,7 +155,7 @@ class EvalBuilder:
         from denoising_diffusion_pytorch.policy.planning.initial_action_provider import InitialActionProvider
         self.action_planner_factory = ActionPlannerFactory(
             initial_action_provider = InitialActionProvider(
-                voxel_grid_side_length = self.cfg.env.grid.side_length
+                voxel_grid_side_length = self.cfg_usecase.env.grid.side_length
             ),
         )
 

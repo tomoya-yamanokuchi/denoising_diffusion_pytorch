@@ -5,7 +5,7 @@ defaults:
   # - /inferencer              : conditional_diffusion
   # - /network@_global_.network: unet_dim64
   - /eval                    : default
-  # - /env                     : default
+  - /env                     : complex
   # - /dataset                 : celeba
   - _self_
 

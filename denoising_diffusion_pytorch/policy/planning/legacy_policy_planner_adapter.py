@@ -2,7 +2,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, TYPE_CHECKING
 
-
 from ..types import ActionArtifacts, ActionPlan
 from ..cutting_surface_planner import cutting_surface_planner
 
@@ -115,3 +114,5 @@ class LegacyPolicyPlannerAdapter:
         return PlanningPolicyInput(
             normalized_cond=normalized_cond,
         )
+
+

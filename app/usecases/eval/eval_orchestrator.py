@@ -10,7 +10,7 @@ from app.wiring.builder.eval_builder import EvalBuilder
 @dataclass
 class EvalOrchestrator:
     def __init__(self, dependency: EvalBuilder):
-        self.cfg                     = dependency.cfg
+        self.cfg                     = dependency.cfg_usecase
         self.case_context_factory    = dependency.case_context_factory
         self.episode_context_factory = dependency.episode_context_factory
         self.episode_result_writer   = dependency.episode_result_writer
