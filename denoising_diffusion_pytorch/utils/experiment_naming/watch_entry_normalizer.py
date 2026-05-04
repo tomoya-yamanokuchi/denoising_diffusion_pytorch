@@ -44,6 +44,7 @@ def normalize_watch_entry(
             ))
             continue
 
+        # dict形式
         if isinstance(item, dict):
             kind = str(item.get("kind", item.get("type", "config"))).lower()
             label = item.get("label", "")
@@ -70,14 +71,23 @@ def normalize_watch_entry(
                 ))
                 continue
 
-            if kind != "config":
-                raise ValueError(f"Unsupported watch item kind: {kind}")
-
             path = item.get("key", item.get("path", None))
             if path is None:
                 raise KeyError(
                     "watch item must have 'key' unless it uses kind: date or value"
                 )
+
+            if kind in {"basename", "path_name", "dirname"}:
+                out.append(WatchEntry(
+                    kind=kind,
+                    key=str(path),
+                    label="" if label is None else str(label),
+                    as_dir=as_dir,
+                ))
+                continue
+
+            if kind != "config":
+                raise ValueError(f"Unsupported watch item kind: {kind}")
 
             out.append(WatchEntry(
                 kind="config",

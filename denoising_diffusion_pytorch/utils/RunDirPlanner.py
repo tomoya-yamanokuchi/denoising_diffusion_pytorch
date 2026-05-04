@@ -55,16 +55,17 @@ class RunDirPlanner:
         exp_name = select_str(cfg, self.exp_name_key, default="")
 
         if not exp_name:
+            print("No exp_name found in config, building from watch spec...")
             exp_name = build_exp_name_from_watch(cfg)
 
         layout = select_str(cfg, self.layout_key, default="flat")
 
         parts = [Path(cfg.path.logs)]
 
-        if layout == "dataset":
-            dataset_class = select_str(cfg, self.dataset_class_key, default="")
-            if dataset_class:
-                parts.append(Path(dataset_class))
+        # if layout == "dataset":
+        #     dataset_class = select_str(cfg, self.dataset_class_key, default="")
+        #     if dataset_class:
+        #         parts.append(Path(dataset_class))
 
         # exp_name が "train/20260504/..." のようにサブディレクトリを含んでもOK
         parts.append(Path(exp_name))
@@ -75,4 +76,5 @@ class RunDirPlanner:
 
         run_dir = join_and_normalize(parts)
 
+        # import ipdb; ipdb.set_trace()
         return run_dir, exp_name

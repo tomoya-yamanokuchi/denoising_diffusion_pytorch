@@ -6,7 +6,7 @@ defaults:
 # train_run_dir: /home/dev/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/train/D64
 # train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/D64
 # train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/D344
-train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/Image_diffusion_2D/train/conditional_diffusion/unet_D64_T1000_S20_simple_20260504_160530
+train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_20260504_160530
 
 # ------ epoch and evaluation settings ------
 # epoch   : "2000"

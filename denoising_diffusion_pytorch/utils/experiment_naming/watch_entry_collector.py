@@ -8,9 +8,8 @@ from .watch_entry import WatchItem
 
 
 DEFAULT_WATCH_ENTRY_PATHS: Sequence[str] = (
-    "inferencer.watch.train.watch_base",
-    # "inferencer.watch",
-    # "watch.watch_extra",
+    "inferencer.watch.train.watch_base", # for train
+    "watch.eval.watch_base", # for eval
 )
 
 
@@ -32,8 +31,6 @@ def collect_watch_entries(
 
     for path in paths:
         watch_entry = OmegaConf.select(cfg, path)
-
-        # import ipdb; ipdb.set_trace()
 
         if not watch_entry:
             continue

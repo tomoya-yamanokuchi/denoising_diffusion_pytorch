@@ -1,7 +1,7 @@
 defaults:
   - /path                    : local
   - /log                     : eval
-  - /watch/eval              : eval_base
+  - /watch/eval              : conditional_diffusion_eval
   - /eval                    : default
   - /env                     : simple
   - _self_

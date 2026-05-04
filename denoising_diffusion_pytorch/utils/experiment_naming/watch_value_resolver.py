@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Any, Optional
+from pathlib import Path
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
@@ -31,16 +32,34 @@ class WatchValueResolver:
 
     def resolve(self, entry: WatchEntry, cfg: Any) -> Any:
         if entry.kind == "date":
-            # return datetime.now().strftime(entry.fmt)
             return datetime.now(ZoneInfo(entry.timezone)).strftime(entry.fmt)
 
         if entry.kind == "literal":
             return entry.value
 
+        if entry.kind == "basename":
+            value = select_value(cfg, entry.key)
+            if value is None:
+                return None
+            return Path(str(value)).name
+
+        if entry.kind == "path_name":
+            value = select_value(cfg, entry.key)
+            if value is None:
+                return None
+            return Path(str(value)).name
+
+        if entry.kind == "dirname":
+            value = select_value(cfg, entry.key)
+            if value is None:
+                return None
+            return Path(str(value)).parent.name
+
         if entry.kind == "config":
             return self._resolve_config_value(entry, cfg)
 
         raise ValueError(f"Unsupported watch entry kind: {entry.kind}")
+
 
     def _resolve_config_value(self, entry: WatchEntry, cfg: Any) -> Any:
         if entry.key is None:

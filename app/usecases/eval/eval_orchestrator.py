@@ -22,7 +22,7 @@ class EvalOrchestrator:
 
 
     def run(self) -> Dict[str, Any]:
-        cases_list = self.cfg.eval.cases
+        cases_list = self.cfg.eval.cases.cases
         results: Dict[str, Any] = {}
         for case_spec in cases_list:
             # ----------
