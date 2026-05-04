@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - /path: local
+  - /visualization: render_cutting_process
+  - _self_
+
+name  : visualize_cutting_process
+device: cuda:0

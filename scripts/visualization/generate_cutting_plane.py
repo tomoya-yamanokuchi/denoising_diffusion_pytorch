@@ -84,12 +84,13 @@ def convert_action_idx_to_plane(action_idx, action_table, action_pos_candidate):
         raise ValueError(f"Unknown axis: {axis}")
 
     return {
-            'axis': axis,
-            'position': float(pos),
+            'axis'       : axis,
+            'position'   : float(pos),
             'translation': translation.tolist(),
-            'rotation': rotation.tolist(),
-            'action': act,
-            'loc_index': loc_idx,}
+            'rotation'   : rotation.tolist(),
+            'action'     : act,
+            'loc_index'  : loc_idx,
+    }
 
 
 def get_cutting_plane(action_data,s_grid_config):
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     # data_folder = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456_clip_ucb_raw_0.5_v14_1/epsilon_greedy_00/Object_6/episode_0/"
     # data_folder = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_conditional_diffusion_a123456_clip_ucb_raw_0.5_v14_1/oracle_obs/Object_6/episode_5/"
     data_folder = "/home/haxhi/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/diffusion_plans/real_model/real_models_dataset_v2_18/dataset_SheetSander_024_eval3/PT100000_B32_T8_partial_obs_vaeac_a123456_clip_ucb_raw_0.5_v13_2/epsilon_greedy_00/Object_6/episode_0/"
-    
+
 
     data   =  f"{data_folder}/visualization_data.pickle"
     dim_3D = 49
