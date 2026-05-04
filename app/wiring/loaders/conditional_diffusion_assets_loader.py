@@ -18,18 +18,15 @@ class ConditionalDiffusionAssetsLoader:
         infer_model: str = None,
     ) -> TrainedModelAssets:
 
-        # self.model_dir = self.checkpoint_path_resolver.resolve(run_dir, epoch)
         self.run_dir = run_dir
+        cfg = self.config_loader.load(run_dir) # == cfg_usecase (train config)
 
-        cfg         = self.config_loader.load(run_dir)
-        cfg_usecase = cfg.usecase
-
-        if cfg_usecase.inferencer.name != "conditional_diffusion":
+        if cfg.inferencer.name != "conditional_diffusion":
             raise NotImplementedError(
-                f"Unsupported method: {cfg_usecase.inferencer.name}"
+                f"Unsupported method: {cfg.inferencer.name}"
             )
 
-        dataset    = self._build_dataset(cfg_usecase)
+        dataset    = self._build_dataset(cfg)
         inferencer = self._build_inferencer(cfg, device)
         trainer    = self._build_trainer(cfg, inferencer, dataset)
 
@@ -66,11 +63,11 @@ class ConditionalDiffusionAssetsLoader:
         from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
 
         network = Unet(
-            dim            = cfg.network.dim,
-            dim_mults      = cfg.network.dim_mults,
-            flash_attn     = cfg.network.flash_attn,
-            self_condition = cfg.network.self_condition,
-            mask_dim       = cfg.usecase.dataset.image_size,
+            dim            = cfg.inferencer.network.dim,
+            dim_mults      = cfg.inferencer.network.dim_mults,
+            flash_attn     = cfg.inferencer.network.flash_attn,
+            self_condition = cfg.inferencer.network.self_condition,
+            mask_dim       = cfg.dataset.image_size,
         )
         return network.to(device)
 
@@ -80,8 +77,8 @@ class ConditionalDiffusionAssetsLoader:
         from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
         method = GaussianDiffusion(
             model      = network,
-            image_size = cfg.usecase.dataset.image_size,
-            **cfg.usecase.inferencer.diffusion,
+            image_size = cfg.dataset.image_size,
+            **cfg.inferencer.diffusion,
         )
         return method.to(device)
 
@@ -92,7 +89,7 @@ class ConditionalDiffusionAssetsLoader:
             diffusion_model = model,
             dataset         = dataset,
             results_folder  = self.run_dir,
-            **cfg.usecase.inferencer.trainer,
+            **cfg.inferencer.trainer,
         )
 
 

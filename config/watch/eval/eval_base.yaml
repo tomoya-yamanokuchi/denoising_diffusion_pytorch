@@ -4,4 +4,3 @@ watch_base:
   - { key: eval.observation_mode, label: "" }
   - { key: log.tag,               label: "" }
 
-watch_extra: []   # evalは常に空にしてもいい

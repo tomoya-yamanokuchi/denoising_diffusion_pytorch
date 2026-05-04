@@ -1,0 +1,10 @@
+defaults:
+  - /path                    : local
+  - /log                     : eval
+  - /watch/eval              : eval_base
+  - /eval                    : default
+  - /env                     : simple
+  - _self_
+
+name      : eval
+device    : cuda:0
