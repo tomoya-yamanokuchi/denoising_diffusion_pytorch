@@ -41,3 +41,9 @@ ray:
   log_to_driver     : false
   num_cpus          : null
   shutdown_on_finish: true
+
+# ray:
+#   enabled: true
+#   log_to_driver: false
+#   num_cpus: 1
+#   shutdown_on_finish: true
