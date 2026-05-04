@@ -1,4 +1,5 @@
 defaults:
+  - network : unet_D64
   - _self_
 
 name     : conditional_diffusion

@@ -1,4 +1,4 @@
-name  : unet
+name  : unet_D64
 # ----
 dim           : 64
 dim_mults     : [1, 2, 4, 8]

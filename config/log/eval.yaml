@@ -1,5 +1,5 @@
 logbase : logs
-prefix  : eval/
+prefix  : eval
 layout  : dataset
 tag     : null
 suffix  : null

@@ -2,9 +2,8 @@ defaults:
   - /path                    : local
   - /log                     : train
   - /watch                   : train_base
-  - /inferencer              : conditional_diffusion
-  - /network@_global_.network: unet_dim64
-  - /dataset                 : celeba
+  - /inferencer              : conditional_diffusion_simple
+  - /dataset                 : simple
   - _self_
 
 name      : train

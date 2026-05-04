@@ -251,7 +251,9 @@ base = {
         ## dataset
         "loader":"data_loader.cond_image_data_loader.Cond_image_dataloader",
         "dataset_config": {"dataset" : {"name": "celeba",
-                                        "path": "/home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1",
+                                        # "path": "/home/dev/workspace/dataset/nedo/dataset_4142435161_13900k/voxel_images_w_multi_color_v1",
+                                        "path": "/home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13900k/voxel_images_w_multi_color_v1",
+                                        # ---
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_x_49',
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_wo_body_x_49',
                                         # "path": '/home/user/dataset/denoising_diffusion_pytorch/dataset/real_models/dataset_v2/sheetsander_cast_images_wo_body_z_49',
@@ -541,9 +543,8 @@ base = {
         # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_flower_image_v1/',
 
         # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/vaeac/D64_H100_simple_models_dataset_13901k_v1/',
-        'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_flower_image_v1/',
-
-
+        # 'diffusion_loadpath': 'f:/home/{USER_NAME}/workspace/denoising_diffusion_pytorch/logs/Image_diffusion_2D/conditional_diffusion2/T1000_D64_flower_image_v1/',
+        'diffusion_loadpath': 'f:/home/dev/{USER_NAME}/dataset/nedo_dismantling_log/Image_diffusion_2D/conditional_diffusion2/T1000_D64_flower_image_v1/',
 
         # 'diffusion_epoch'   : '5000',
         # 'diffusion_epoch'   : '16000',

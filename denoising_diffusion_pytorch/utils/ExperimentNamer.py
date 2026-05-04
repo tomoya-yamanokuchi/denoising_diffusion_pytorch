@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterable, List, Mapping, Sequence, Tuple, Union
 
+
 import ipdb
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
@@ -19,6 +20,8 @@ WatchItem = Union[
     DictConfig,                  # Hydra/OmegaConf mapping node
     ListConfig,                  # Hydra/OmegaConf sequence node
 ]
+
+WatchTuple = Tuple[str, str, bool]
 
 
 import re
@@ -37,44 +40,43 @@ def _normalize_template_ws(s: str) -> str:
 @dataclass(frozen=True)
 class ExperimentNamer:
     """watch spec から exp_name を作るだけの小さな責務クラス。"""
-    watch: List[Tuple[str, str]]
+    watch: List[WatchTuple]
 
     @staticmethod
     def from_cfg(watch_spec: Iterable[WatchItem]) -> "ExperimentNamer":
         return ExperimentNamer(watch=_normalize_watch_spec(watch_spec))
 
     def make(self, cfg: Any) -> str:
-        """
-        cfg: DictConfig を推奨（OmegaConf.select が使える）
-             dict / namespace でも一応動くが、dot-path は DictConfig 前提。
-        """
         parts: List[str] = []
 
-        for path, label in self.watch:
+        for path, label, as_dir in self.watch:
             val = _select_value(cfg, path)
 
-            print(f"path = {path}, label = {label}, val = {val}")
-
-            # import ipdb; ipdb.set_trace()
             if ("log.tag" == path) and (cfg.name == "eval"):
                 val = self.render_template(
-                    template=cfg.log.tag_template, cfg=cfg)
+                    template=cfg.log.tag_template, cfg=cfg
+                )
 
             if val is None:
                 continue
 
-            # 旧実装互換：dict値は "k-v_k-v" のように連結
             if isinstance(val, dict):
                 val = "_".join(f"{k}-{v}" for k, v in val.items())
 
-            parts.append(f"{label}{val}")
+            part = f"{label}{val}"
+
+            if as_dir:
+                part = f"{part}/"
+
+            parts.append(part)
 
         exp_name = "_".join(parts)
 
-        # 旧 sanitize の挙動を維持
         exp_name = exp_name.replace("/_", "/")
         exp_name = exp_name.replace("(", "").replace(")", "")
         exp_name = exp_name.replace(", ", "-")
+
+        import ipdb; ipdb.set_trace()
 
         return exp_name
 
@@ -146,26 +148,33 @@ def _select_value(cfg: Any, path: str) -> Any:
     return None
 
 
-def _normalize_watch_spec(spec: Iterable[WatchItem]) -> List[Tuple[str, str]]:
-    out: List[Tuple[str, str]] = []
+def _normalize_watch_spec(spec: Iterable[WatchItem]) -> List[WatchTuple]:
+    out: List[WatchTuple] = []
+
     for item in spec or []:
-        # Hydra の DictConfig/ListConfig を普通コンテナ化
         if isinstance(item, (DictConfig, ListConfig)):
             item = OmegaConf.to_container(item, resolve=True)
 
-        # 2要素ペア（["path", "D"] / ("path","D")）
+        # 旧形式: ["path", "D"] / ("path", "D")
         if isinstance(item, (list, tuple)) and len(item) == 2 and not isinstance(item, dict):
             path, label = item
-            out.append((str(path), "" if label is None else str(label)))
+            out.append((str(path), "" if label is None else str(label), False))
             continue
 
-        # dict形式（{"key": "...", "label": "..." }）
+        # dict形式: {"key": "...", "label": "...", "as_dir": true}
         if isinstance(item, dict):
             path = item.get("key", None)
             if path is None:
                 raise KeyError("watch item must have 'key'")
+
             label = item.get("label", "")
-            out.append((str(path), "" if label is None else str(label)))
+            as_dir = bool(item.get("as_dir", False))
+
+            out.append((
+                str(path),
+                "" if label is None else str(label),
+                as_dir,
+            ))
             continue
 
         raise TypeError(f"Unsupported watch spec item: {type(item)}: {item}")

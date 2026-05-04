@@ -1,5 +1,5 @@
 logbase : logs
-prefix  : train/
+prefix  : train
 layout  : dataset
 tag     : null
 suffix  : null

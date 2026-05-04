@@ -1,6 +1,6 @@
-name  : unet
+name  : unet_D128
 # ----
-dim           : 128 # 64
+dim           : 128
 dim_mults     : [1, 2, 4, 8]
 flash_attn    : true
 self_condition: false
