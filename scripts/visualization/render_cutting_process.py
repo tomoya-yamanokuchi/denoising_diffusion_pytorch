@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Iterable, List, Optional
 
 import hydra
@@ -264,6 +265,8 @@ def render_episode(
         str(data_folder / "last_remain_voxels_w_ocv_masked.png"),
     )
 
+    start_time = perf_counter()
+
     pv_voxel_render_parallel().render_cutting_process_v3(
         save_path=str(save_folder),
         s_grind_config=s_grid_config,
@@ -271,7 +274,13 @@ def render_episode(
         action_table=action_table,
         sample_images=cutting_process_2d_map_flip,
         save_tag=save_name,
+        use_ray=bool(cfg.visualization.renderer.use_ray),
+        max_in_flight=cfg.visualization.ray.get("max_in_flight", None),
+        save_eps=bool(cfg.visualization.renderer.save_eps),
     )
+
+    elapsed = perf_counter() - start_time
+    print(f"[render] {data_folder} finished in {elapsed:.2f} sec")
 
 
 def render_root_folder(
