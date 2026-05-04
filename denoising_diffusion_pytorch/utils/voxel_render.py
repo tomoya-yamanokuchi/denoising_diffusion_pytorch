@@ -11,7 +11,7 @@ import ray
 
 from denoising_diffusion_pytorch.utils.voxel_handlers import pv_box_array
 from denoising_diffusion_pytorch.utils.os_utils import save_json ,get_folder_name,create_folder,pickle_utils
-from denoising_diffusion_pytorch.utils.render_parallel import one_step_voxel_render,one_step_voxel_render_for_cutting_process,one_step_pcd_render_for_cutting_process,one_step_voxel_render_for_cutting_process_w_cost_map
+from denoising_diffusion_pytorch.utils.render_parallel import one_step_voxel_render,one_step_voxel_render_for_cutting_process,one_step_voxel_render_for_cutting_process_local,one_step_pcd_render_for_cutting_process,one_step_voxel_render_for_cutting_process_w_cost_map
 
 class pv_voxel_render():
 
@@ -210,27 +210,51 @@ class pv_voxel_render_parallel():
         denoising_process_3d[0].save(save_path+"/../"+f"voxel_diffusion.gif", save_all=True, append_images=denoising_process_3d[1:], optimize=False, duration=50, loop=0)
 
 
-    def render_cutting_process_v3(self, save_path, s_grind_config, action, action_table, sample_images, save_tag):
+    def render_cutting_process_v3(self, save_path, s_grind_config, action, action_table, sample_images, save_tag, use_ray: bool = True, max_in_flight: int | None = None, save_eps: bool = False):
 
-        sample_images_obj = ray.put(sample_images)
-        s_grid_config_obj = ray.put(s_grind_config)
-        action_obj        = ray.put(action)
-        action_table_obj  = ray.put(action_table)
-        save_path_obj     = ray.put(save_path)
+        length = sample_images.shape[0]
+        if max_in_flight is None:
+            max_in_flight = length
+        max_in_flight = max(1, min(int(max_in_flight), length))
 
-        # length = 10
-        length  =sample_images.shape[0]
+        cutting_process_3d = []
 
-        result_obj = [one_step_voxel_render_for_cutting_process.remote(
-            k,
-            s_grid_config_obj,
-            sample_images_obj,
-            action_obj,
-            action_table_obj,
-            save_path_obj) for k in range(length)]
+        if not use_ray:
+            for k in range(length):
+                cutting_process_3d.append(
+                    one_step_voxel_render_for_cutting_process_local(
+                        k=k,
+                        s_grid_config=s_grind_config,
+                        sample_images=sample_images,
+                        action=action,
+                        action_table=action_table,
+                        save_path=save_path,
+                        save_eps=save_eps,
+                    )
+                )
+        else:
+            sample_images_obj = ray.put(sample_images)
+            s_grid_config_obj = ray.put(s_grind_config)
+            action_obj = ray.put(action)
+            action_table_obj = ray.put(action_table)
+            save_path_obj = ray.put(save_path)
 
+            for start in range(0, length, max_in_flight):
+                end = min(start + max_in_flight, length)
+                result_refs = [
+                    one_step_voxel_render_for_cutting_process.remote(
+                        k,
+                        s_grid_config_obj,
+                        sample_images_obj,
+                        action_obj,
+                        action_table_obj,
+                        save_path_obj,
+                        save_eps,
+                    )
+                    for k in range(start, end)
+                ]
+                cutting_process_3d.extend(ray.get(result_refs))
 
-        cutting_process_3d = ray.get(result_obj)
         cutting_process_3d[0].save(save_path+"/../"+f"cutting_process_{save_tag}.gif", save_all=True, append_images=cutting_process_3d[1:], optimize=False, duration=500, loop=0)
 
 

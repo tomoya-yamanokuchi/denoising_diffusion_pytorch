@@ -213,7 +213,8 @@ def one_step_voxel_render(k, s_grid_config,sample_images,save_path):
 
 
 
-        data = plotter.save_graphic(save_path+f'/screenshot_{k}.eps')
+        if save_eps:
+            plotter.save_graphic(save_path+f'/screenshot_{k}.eps')
         # imgs =plotter.screenshot(save_path+f'/screenshot_{i}.png')
         imgs =plotter.screenshot()
         pil_image = Image.fromarray(np.asarray(imgs))
@@ -222,8 +223,7 @@ def one_step_voxel_render(k, s_grid_config,sample_images,save_path):
         
         return pil_image
 
-@ray.remote
-def one_step_voxel_render_for_cutting_process(k, s_grid_config,sample_images,action,action_table,save_path):
+def one_step_voxel_render_for_cutting_process_local(k, s_grid_config,sample_images,action,action_table,save_path, save_eps: bool = False):
 
 
         tmp_mesh = pv.Box(bounds=(s_grid_config["bounds"][0],
@@ -405,7 +405,20 @@ def one_step_voxel_render_for_cutting_process(k, s_grid_config,sample_images,act
 
         return pil_image
     
-    
+
+@ray.remote
+def one_step_voxel_render_for_cutting_process(k, s_grid_config,sample_images,action,action_table,save_path, save_eps: bool = False):
+    return one_step_voxel_render_for_cutting_process_local(
+        k=k,
+        s_grid_config=s_grid_config,
+        sample_images=sample_images,
+        action=action,
+        action_table=action_table,
+        save_path=save_path,
+        save_eps=save_eps,
+    )
+
+
 @ray.remote
 def one_step_voxel_render_for_cutting_process_w_cost_map(k, s_grid_config,sample_images,action,action_table,cost_map,save_path):
 
