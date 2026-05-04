@@ -2,95 +2,77 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
+
+from denoising_diffusion_pytorch.utils.experiment_naming import collect_watch_entries
 from denoising_diffusion_pytorch.utils.omega_config_util import select_str
 
 
 def join_and_normalize(parts: list[Path]) -> Path:
-    # 先頭が絶対パスならそのまま（logbaseが絶対パスのケース）
-    p = parts[0]
-    for x in parts[1:]:
-        p = p / x
+    # 先頭が絶対パスならそのまま
+    path = parts[0]
 
-    # 危険な ".." などがあればここで落とす/潰す設計もできるが
-    # まずは normalize だけ
-    return p.expanduser()
+    for part in parts[1:]:
+        path = path / part
+
+    return path.expanduser()
 
 
 def build_exp_name_from_watch(cfg: DictConfig) -> str:
     from denoising_diffusion_pytorch.utils.ExperimentNamer import ExperimentNamer
-    watch    = OmegaConf.select(cfg, "watch.watch_base")
-    namer    = ExperimentNamer.from_cfg(watch)
+    watch = collect_watch_entries(cfg)
+    namer = ExperimentNamer.from_cfg(
+        watch,
+        dedupe_by_key=True,
+    )
     exp_name = namer.make(cfg)
+
     return exp_name if exp_name else "exp"
 
 
 @dataclass(frozen=True)
 class RunDirPlanner:
     """
-    cfg から「run_dir を決める」だけの責務。
+    cfg から run_dir を決める Application Service。
 
-    - exp_name が未計算なら watch から作る（ExperimentNamer を利用）
-    - logbase + exp_name (+ 任意で dataset/name/suffix) などのレイアウトを適用
-    - mkdir はしない（RunDirInitializer に委譲）
+    - log.exp_name があればそれを使う
+    - なければ watch spec から exp_name を生成する
+    - cfg.path.logs / layout / dataset / exp_name / control_mode から run_dir を作る
     """
-    # logbase_key       : str = "log.logbase"
-    exp_name_key      : str = "log.exp_name"
-    control_mode      : str = "eval.policy.control.mode"  # optional, "control_mode" を watch から取る想定
-    layout_key        : str = "log.layout"     # optional
-    dataset_class_key: str  = "dataset.class"  # optional
+
+    exp_name_key     : str = "log.exp_name"
+    control_mode_key : str = "eval.policy.control.mode"
+    layout_key       : str = "log.layout"
+    dataset_class_key: str = "dataset.class"
 
     @classmethod
     def from_cfg(cls, cfg: DictConfig) -> "RunDirPlanner":
-        # 必要なら cfg からキー名を上書きできるようにしても良いが、
-        # まずは固定で十分
         return cls()
 
     def plan(self, cfg: DictConfig) -> Tuple[Path, str]:
-        """
-        Returns:
-          (run_dir_path, exp_name_str)
-        """
-
-        # logbase  = select_str(cfg, self.logbase_key, default="logs")
         exp_name = select_str(cfg, self.exp_name_key, default="")
 
-        # exp_name が未設定/空なら watch から作る
         if not exp_name:
             exp_name = build_exp_name_from_watch(cfg)
 
-        # layout（任意）
         layout = select_str(cfg, self.layout_key, default="flat")
-        """
-        - flat   : logbase/exp_name
-        - dataset: logbase/<dataset.name>/exp_name
-        - method : logbase/<cfg.name>/exp_name（必要なら追加）
-        """
-        # parts = [Path(logbase)]
-        # import ipdb; ipdb.set_trace()
+
         parts = [Path(cfg.path.logs)]
 
         if layout == "dataset":
-            ds_name = select_str(cfg, self.dataset_class_key, default="")
-            if ds_name:
-                parts.append(Path(ds_name))
+            dataset_class = select_str(cfg, self.dataset_class_key, default="")
+            if dataset_class:
+                parts.append(Path(dataset_class))
 
-        # exp_name が "vaeac/..." のようにサブディレクトリを含んでもOK
+        # exp_name が "train/20260504/..." のようにサブディレクトリを含んでもOK
         parts.append(Path(exp_name))
 
-        # ----- control_mode -----
-        control_mode = select_str(cfg, self.control_mode, default="")
+        control_mode = select_str(cfg, self.control_mode_key, default="")
         if control_mode:
             parts.append(Path(control_mode))
 
-        # ----- 最終的な run_dir を組み立てる -----
         run_dir = join_and_normalize(parts)
 
         return run_dir, exp_name
-
-
-
-
-

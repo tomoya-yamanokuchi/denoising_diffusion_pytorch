@@ -1,5 +1,6 @@
 defaults:
-  - network : unet_D64
+  - /watch/train: conditional_diffusion
+  - network : unet_D64 # <--
   - _self_
 
 name     : conditional_diffusion
@@ -11,19 +12,11 @@ diffusion:
   sampling_timesteps: 20
 
 trainer:
-  train_batch_size         : 96
+  train_batch_size         : 96 # <--
   train_lr                 : 8e-5
   train_num_steps          : 800000
   save_and_sample_every    : 2000
-  gradient_accumulate_every: 2
+  gradient_accumulate_every: 2 # <--
   ema_decay                : 0.995
   amp                      : true
   calculate_fid            : false
-
-watch:
-  - { key: log.prefix, label: "" }
-  - { key: log.n_diffusion_step, label: "T" }
-  - { key: diffusion.sampling_timestep, label: "S" }
-  - { key: dataset.image_size, label: "D" }
-  - { key: log.tag, label: "" }
-

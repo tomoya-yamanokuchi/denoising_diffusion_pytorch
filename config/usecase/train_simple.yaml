@@ -1,7 +1,6 @@
 defaults:
   - /path                    : local
   - /log                     : train
-  - /watch                   : train_base
   - /inferencer              : conditional_diffusion_simple
   - /dataset                 : simple
   - _self_

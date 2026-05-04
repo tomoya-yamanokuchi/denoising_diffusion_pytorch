@@ -1,6 +1,0 @@
-watch_base:
-  - { key: log.prefix,          label: "",  as_dir: true }
-  - { key: inferencer.name,     label: "" , as_dir: true }
-  - { key: inferencer.network.name, label: "" }
-  - { key: dataset.name,        label: ""}
-  - { key: log.tag,             label: "" }

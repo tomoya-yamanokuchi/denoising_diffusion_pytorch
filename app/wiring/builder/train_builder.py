@@ -28,8 +28,9 @@ class TrainBuilder:
     cfg       : DictConfig
 
     def set_config(self):
-        self.cfg_usecase = self.cfg.usecase
-        self.cfg_root    = self.cfg
+        # self.cfg_usecase = self.cfg.usecase
+        # self.cfg_root    = self.cfg
+        self.cfg = self.cfg.usecase
 
     def validate_config_top(self) -> None:
         from app.wiring.services.validate_key_config import validate_key_config
@@ -59,8 +60,8 @@ class TrainBuilder:
         )
 
     def build_run_dir(self) -> None:
-        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg_usecase)
-        self.run_dir_mgr.init(self.cfg_usecase, run_dir, _exp_name)
+        run_dir, _exp_name = self.run_dir_mgr.plan(self.cfg)
+        self.run_dir_mgr.init(self.cfg, run_dir, _exp_name)
         self.artifact_static_root = run_dir
 
 
@@ -69,18 +70,15 @@ class TrainBuilder:
         - Sub builder に差分を閉じ込める。
         - Sub builder には最低限、build_dataset/build_model/build_method/build_trainer というメソッドがある想定。
         """
-        name = self.cfg_usecase.inferencer.name
+        name = self.cfg.inferencer.name
         if name not in _METHOD_BUILDERS:
             raise ValueError(f"Unknown train method: {name}. Known: {list(_METHOD_BUILDERS.keys())}")
 
         Sub = _METHOD_BUILDERS[name]
         sub: TrainMethodBuilder = Sub(
-            cfg_root             = self.cfg_root,
-            cfg_usecase          = self.cfg_usecase,
+            cfg                  = self.cfg,
             artifact_static_root = self.artifact_static_root,
         )  # IntelliSenseが効く
-
-        # import ipdb; ipdb.set_trace()
 
         self.dataset    = sub.build_dataset()
         self.model      = sub.build_model()
