@@ -21,10 +21,15 @@ class Envs:
     policy: dismantling_env  # dismantling_env (partial observation for policy)
 
 @dataclass(frozen=True)
+class InitialGlobalActionRange:
+    start: int
+    stop : int
+
+@dataclass(frozen=True)
 class CaseContext:
     name                         : str
     dataset_dir                  : str
-    initial_global_action_indices: List[int]
+    initial_global_action_range  : InitialGlobalActionRange
     mesh_components              : Any
     envs                         : Envs
     obs_model                    : Any

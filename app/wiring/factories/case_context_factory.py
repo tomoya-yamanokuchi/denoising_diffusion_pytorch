@@ -17,7 +17,7 @@ class CaseContextFactory:
         return CaseContext(
             name                          = cfg_case.name,
             dataset_dir                   = cfg_case.dataset_dir,
-            initial_global_action_indices = cfg_case.initial_global_action_indices,
+            initial_global_action_range   = cfg_case.initial_global_action_range,
             mesh_components               = mesh_components,
             envs                          = envs,
             obs_model                     = obs_model,
