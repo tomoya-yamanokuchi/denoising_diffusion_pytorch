@@ -1,10 +1,8 @@
 defaults:
   - /path                    : local
   - /log                     : train
-  - /watch                   : train_base
-  - /inferencer              : conditional_diffusion_real_344
-  - /network@_global_.network: unet_dim128
-  - /dataset                 : real_models_sheetsander_z49
+  - /inferencer              : conditional_diffusion_real
+  - /dataset                 : real_sheetsander_z49
   - _self_
 
 name  : train

@@ -1,0 +1,15 @@
+defaults:
+  - cases : complex
+  - policy: default
+
+# ---- training run directory settings ----
+train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D128_T1000_S20_real_sheetsander_z49_20260504_202728
+
+# ------ epoch and evaluation settings ------
+epoch   : "70000"
+
+# ------ eval settings ------
+task_step       : 8
+observation_mode: partial_obs
+num_episodes    : 6            # iter: [0, 6] # Objectごとの評価回数
+

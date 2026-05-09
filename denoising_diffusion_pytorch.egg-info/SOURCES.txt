@@ -31,6 +31,7 @@ denoising_diffusion_pytorch/utils/benchmark_model_utils.py
 denoising_diffusion_pytorch/utils/cloud.py
 denoising_diffusion_pytorch/utils/colab.py
 denoising_diffusion_pytorch/utils/config.py
+denoising_diffusion_pytorch/utils/cutting_process_render_worker.py
 denoising_diffusion_pytorch/utils/git_utils.py
 denoising_diffusion_pytorch/utils/image_mask.py
 denoising_diffusion_pytorch/utils/make_save_path.py
@@ -46,3 +47,11 @@ denoising_diffusion_pytorch/utils/timer.py
 denoising_diffusion_pytorch/utils/voxel_handlers.py
 denoising_diffusion_pytorch/utils/voxel_handlers_hachi.py
 denoising_diffusion_pytorch/utils/voxel_render.py
+denoising_diffusion_pytorch/utils/experiment_naming/__init__.py
+denoising_diffusion_pytorch/utils/experiment_naming/experiment_name_builder.py
+denoising_diffusion_pytorch/utils/experiment_naming/name_part_formatter.py
+denoising_diffusion_pytorch/utils/experiment_naming/name_sanitizer.py
+denoising_diffusion_pytorch/utils/experiment_naming/watch_entry.py
+denoising_diffusion_pytorch/utils/experiment_naming/watch_entry_collector.py
+denoising_diffusion_pytorch/utils/experiment_naming/watch_entry_normalizer.py
+denoising_diffusion_pytorch/utils/experiment_naming/watch_value_resolver.py

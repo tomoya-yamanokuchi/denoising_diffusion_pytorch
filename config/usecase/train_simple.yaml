@@ -5,5 +5,5 @@ defaults:
   - /dataset                 : simple
   - _self_
 
-name      : train
-device    : cuda:0
+name  : train
+device: cuda:0

@@ -27,6 +27,7 @@ class EvalOrchestrator:
         for case_spec in cases_list:
             # ----------
             dataset_dir     = case_spec.dataset_dir
+            import ipdb; ipdb.set_trace()
             mesh_components = self.mesh_factory.create(dataset_dir)
             case_ctx        = self.case_context_factory.create(case_spec, mesh_components)
             policy          = self.policy_factory.create(obs_model=case_ctx.obs_model)

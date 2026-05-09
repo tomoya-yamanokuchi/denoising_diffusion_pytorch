@@ -1,6 +1,6 @@
-name  : dit
+name  : dit_D128
 # ----
-dim           : 64
+dim           : 128
 depth         : 12
 heads         : 6
 dim_head      : 64
