@@ -11,4 +11,5 @@ __pycache__/
 .claude/
 .serena/
 .venv/
-.DS_Store.wrangler/
+.DS_Store
+.wrangler/
