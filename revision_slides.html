@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoxelDiffusionCut — Revision Briefing</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --panel-2: #f1f5f9;
+    --accent: #0284c7;
+    --accent-2: #b45309;
+    --accent-3: #7c3aed;
+    --text: #0f172a;
+    --text-dim: #64748b;
+    --border: #e2e8f0;
+    --good: #059669;
+    --warn: #dc2626;
+    --comments: #dc2626;
+    --response: #059669;
+    --strategy: #7c3aed;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 18px; }
+  .brand { font-size: 13px; letter-spacing: 0.16em; color: var(--text-dim); font-weight: 600; }
+  .brand strong { color: var(--text); font-weight: 700; }
+  .item-title { font-size: 14px; font-weight: 600; color: var(--text); margin-left: auto; margin-right: auto; }
+  .item-title .item-id { color: var(--accent-2); font-weight: 700; margin-right: 10px; letter-spacing: 0.06em; }
+  .lang { display: flex; gap: 4px; padding: 3px; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; }
+  .lang button { background: transparent; color: var(--text-dim); border: none; padding: 5px 14px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.08em; }
+  .lang button.active { background: var(--accent-3); color: #fff; }
+  main { flex: 1; min-height: 0; padding: 16px 20px 8px; display: flex; flex-direction: column; gap: 12px; }
+  .progress { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-dim); letter-spacing: 0.10em; font-weight: 600; }
+  .progress-track { flex: 1; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-3)); transition: width 0.3s; }
+  .columns { flex: 1; min-height: 0; display: grid; grid-template-columns: 0.85fr 1.15fr 1.15fr; gap: 14px; }
+  .column { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; }
+  .column-header { padding: 11px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .column-tag { font-size: 10px; font-weight: 800; letter-spacing: 0.15em; padding: 3px 9px; border-radius: 4px; }
+  .col-comments .column-tag { background: rgba(220, 38, 38, 0.10); color: var(--comments); }
+  .col-response .column-tag { background: rgba(5, 150, 105, 0.10); color: var(--response); }
+  .col-strategy .column-tag { background: rgba(124, 58, 237, 0.10); color: var(--strategy); }
+  .column-subtitle { font-size: 11px; color: var(--text-dim); }
+  .column-body { flex: 1; overflow-y: auto; padding: 16px 20px; font-size: 13.5px; line-height: 1.7; color: var(--text); }
+  .column-body p { margin: 0 0 12px; }
+  .column-body p.lead { color: var(--text-dim); font-style: italic; padding-left: 12px; border-left: 3px solid var(--border); font-size: 12.5px; }
+  .column-body strong { color: var(--accent); font-weight: 600; }
+  .column-body em { color: var(--text); font-style: italic; }
+  .column-body code { background: var(--panel-2); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: "SF Mono", Menlo, monospace; color: var(--accent-2); }
+  .column-body ul, .column-body ol { margin: 0 0 12px; padding-left: 20px; }
+  .column-body li { margin: 3px 0; }
+  .column-body .grid { display: grid; grid-template-columns: 130px 1fr; gap: 5px 12px; margin: 10px 0; font-size: 12.5px; }
+  .column-body .grid dt { color: var(--text-dim); font-weight: 600; }
+  .column-body .grid dd { margin: 0; }
+  .column-body .card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 10px 0; }
+  .column-body .card.q { border-left: 3px solid var(--warn); }
+  .column-body .card.a { border-left: 3px solid var(--good); }
+  .column-body .card.s { border-left: 3px solid var(--accent-3); }
+  .column-body .card-label { font-size: 9.5px; letter-spacing: 0.15em; font-weight: 800; color: var(--text-dim); margin-bottom: 5px; }
+  .column-body .deliv { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .column-body .deliv span { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--border); color: var(--text-dim); font-weight: 600; font-family: "SF Mono", Menlo, monospace; }
+  footer { padding: 10px 24px; background: var(--panel); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .footer-info { font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; }
+  .footer-info kbd { background: var(--panel-2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; font-size: 10px; font-family: inherit; }
+  .nav-btns { margin-left: auto; display: flex; gap: 6px; }
+  .nav-btns button { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 6px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; }
+  .nav-btns button:hover:not(:disabled) { background: var(--border); }
+  .nav-btns button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .index-chips { display: flex; gap: 3px; margin-left: 10px; }
+  .index-chips button { width: 28px; height: 22px; padding: 0; font-size: 10px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text-dim); border-radius: 4px; cursor: pointer; font-weight: 700; }
+  .index-chips button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .index-chips button:hover { color: var(--text); }
+  ::-webkit-scrollbar { width: 7px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+  @media (max-width: 1200px) {
+    .columns { grid-template-columns: 1fr; overflow-y: auto; }
+    .column { min-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><strong>VoxelDiffusionCut</strong> · APIN-D-26-02746 · Revision Briefing</div>
+  <div class="item-title"><span class="item-id" id="itemId">AE</span><span id="itemLabel">Associate Editor</span></div>
+  <div class="lang" id="langNav">
+    <button data-lang="en" class="active">EN</button>
+    <button data-lang="jp">日本語</button>
+  </div>
+</header>
+
+<main>
+  <div class="progress">
+    <span id="progressLabel">1 / 11</span>
+    <div class="progress-track"><div class="progress-bar" id="progressBar" style="width: 9%"></div></div>
+  </div>
+  <div class="columns">
+    <section class="column col-comments">
+      <div class="column-header"><span class="column-tag">COMMENTS</span><span class="column-subtitle" id="hdrComments">Reviewer / AE concern (verbatim)</span></div>
+      <div class="column-body" id="bodyComments"></div>
+    </section>
+    <section class="column col-response">
+      <div class="column-header"><span class="column-tag">RESPONSE</span><span class="column-subtitle" id="hdrResponse">What we will write back to the reviewer</span></div>
+      <div class="column-body" id="bodyResponse"></div>
+    </section>
+    <section class="column col-strategy">
+      <div class="column-header"><span class="column-tag">STRATEGY</span><span class="column-subtitle" id="hdrStrategy">For the author: how we will implement</span></div>
+      <div class="column-body" id="bodyStrategy"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-info">Use <kbd>←</kbd> <kbd>→</kbd> to navigate items · <kbd>L</kbd> toggle language</div>
+  <div class="index-chips" id="indexChips"></div>
+  <div class="nav-btns">
+    <button id="prevBtn">← Prev</button>
+    <button id="nextBtn">Next →</button>
+  </div>
+</footer>
+
+<script>
+const ITEMS = [
+  { id: 'AE',    label: { en: 'Associate Editor — overall',         jp: '担当編集者 — 総括' } },
+  { id: 'R3-1',  label: { en: 'Real-environment noise',             jp: '実環境ノイズ' } },
+  { id: 'R3-2',  label: { en: 'Parameter justification',            jp: 'パラメータ根拠' } },
+  { id: 'R3-3',  label: { en: 'Iterative-loop convergence',         jp: '反復ループ収束性' } },
+  { id: 'R3-4',  label: { en: 'Voxelization fidelity',              jp: 'ボクセル化精度' } },
+  { id: 'R3-5',  label: { en: 'CFG guidance scale',                 jp: 'CFGガイダンス強度' } },
+  { id: 'R3-6',  label: { en: 'Baseline fairness',                  jp: 'ベースライン公平性' } },
+  { id: 'R3-7',  label: { en: 'Distribution coverage',              jp: 'データ分布' } },
+  { id: 'R3-8',  label: { en: 'DDIM scalability',                   jp: 'DDIMスケーラビリティ' } },
+  { id: 'R3-9',  label: { en: 'Color-attribute features',           jp: '色属性特徴' } },
+  { id: 'R3-10', label: { en: 'Safety-critical evaluation',         jp: '安全性評価' } },
+];
+
+const SUBTITLES = {
+  en: { c: 'Reviewer / AE concern (verbatim)', r: 'What we will write back to the reviewer', s: 'For the author: how we will implement' },
+  jp: { c: 'レビュアー / AE の懸念（原文）',    r: '返信書簡に記載する内容',                  s: '著者向け：実装方針' }
+};
+
+const CONTENT = {
+  comments: {
+    'AE': {
+      en: `<p class="lead">One of the received reviews is not applicable to the submitted manuscript and has therefore not been considered. The manuscript presents a potentially interesting framework, but requires major revision.</p>
+        <p>The authors should:</p>
+        <ul>
+          <li>Substantially strengthen the justification of key parameters (cutting-risk threshold, guidance scale, sampling settings, voxel resolution)</li>
+          <li>Clarify the convergence and reliability of the iterative estimation–planning loop</li>
+          <li>Improve the fairness and transparency of the baseline comparisons</li>
+          <li>Provide stronger evidence regarding scalability and deployment feasibility under more realistic sensing and cutting conditions</li>
+          <li>Moderate claims, given that the current validation is entirely simulation-based and assumes ideal cutting execution and noise-free observations</li>
+        </ul>`,
+      jp: `<p class="lead">受領したレビューのうち1件は本論文に該当せず、考慮していない。本論文は興味深いフレームワークを提示しているが、Major revision が必要である。</p>
+        <p>著者には以下を要請する：</p>
+        <ul>
+          <li>主要パラメータ（cutting-risk threshold、guidance scale、サンプリング設定、ボクセル解像度）の根拠を大幅に強化</li>
+          <li>反復推定–計画ループの収束性および信頼性の明確化</li>
+          <li>ベースライン比較の公平性および透明性の向上</li>
+          <li>より現実的なセンシング・切断条件下でのスケーラビリティおよびデプロイ可能性に関するより強い証拠の提示</li>
+          <li>現状の検証がシミュレーションのみで、理想的切断・ノイズフリー観測を仮定していることを踏まえた主張の緩和</li>
+        </ul>`
+    },
+    'R3-1': {
+      en: `<p class="lead">The framework is overlooked regarding real environment constraints where noise affects cutting accuracy severely causing unreliable deployment scenarios across diverse dismantling conditions.</p>
+        <p>The reviewer's underlying complaint is transfer-style: noise, sensing complexity, and deployment conditions are absent from validation.</p>`,
+      jp: `<p class="lead">実環境の制約に対するフレームワークの考慮が不十分。ノイズが切断精度に深刻な影響を与え、多様な解体条件において信頼性のない展開シナリオを引き起こす。</p>
+        <p>レビュアーの根本的な懸念は転移性（transfer-style）：ノイズ、センシング複雑性、デプロイ条件が検証に欠けている。</p>`
+    },
+    'R3-2': {
+      en: `<p class="lead">VoxelDiffusionCut reveals ambiguous parameter behavior since tuning strategy is unjustified, reducing interpretability of diffusion behavior among varying internal structure estimation tasks during execution stages.</p>
+        <p>What reviewers want behind "justification": a selection criterion decided <em>before</em> looking at success rate — not just a sweep table.</p>`,
+      jp: `<p class="lead">VoxelDiffusionCut のパラメータ挙動が曖昧であり、チューニング戦略の根拠が示されていないため、内部構造推定タスクにおける拡散モデル挙動の解釈可能性が低下している。</p>
+        <p>「根拠」の本意：成功率を見る<em>前に</em>決定された選択基準であり、単なるスイープ表ではない。</p>`
+    },
+    'R3-3': {
+      en: `<p class="lead">Reliability becomes questionable because iterative estimation remains unclear due to missing convergence explanation, which weakens confidence in sequential updates modifying planning reliability.</p>
+        <p>Hidden risk: presence-score Δ may shrink mechanically as material is cut away — a tautology, not real convergence.</p>`,
+      jp: `<p class="lead">反復推定の収束性に関する説明が欠如しているため、信頼性が疑わしい。逐次更新が計画信頼性に及ぼす影響への信頼が低下している。</p>
+        <p>潜在的リスク：presence-score Δ は素材切除に伴い機械的に減少しうる — 真の収束ではなく恒真命題。</p>`
+    },
+    'R3-4': {
+      en: `<p class="lead">Complex geometry handling through voxelization with part attribute encoding appears limited when representing fine structures, leading to coarse approximations that reduce structural precision in internal component boundaries.</p>`,
+      jp: `<p class="lead">パーツ属性エンコーディングを伴うボクセル化による複雑形状の取り扱いは、微細構造の表現に限界があり、粗い近似となり内部部品境界の構造精度が低下する。</p>`
+    },
+    'R3-5': {
+      en: `<p class="lead">Classifier-Free Guidance presents baseless configuration as guidance scaling influence is unevaluated systematically, leading to uncertain conditioning strength across different observation scenarios.</p>`,
+      jp: `<p class="lead">Classifier-Free Guidance の設定根拠が示されておらず、ガイダンススケーリングの影響が体系的に評価されていない。観測シナリオごとの条件付け強度が不確実。</p>`
+    },
+    'R3-6': {
+      en: `<p class="lead">Performance interpretation becomes deficient because baseline configurations are not consistently aligned, causing unfair comparison among methods affecting credibility of conclusions derived using VAEAC modeling approach.</p>`,
+      jp: `<p class="lead">ベースライン構成が一貫して整合していないため、性能解釈が不十分で手法間の不公平な比較を生じている。VAEAC を用いた結論の信頼性に影響する。</p>`
+    },
+    'R3-7': {
+      en: `<p class="lead">Broader applicability is damaged since data generation using synthetic structural distributions is minimal, which restricts exposure to real variations about unseen product configurations during deployment stages.</p>`,
+      jp: `<p class="lead">合成構造分布を用いたデータ生成が最小限のため、より広い適用性が損なわれている。未見の製品構成の実バリエーションへの曝露が制限されている。</p>`
+    },
+    'R3-8': {
+      en: `<p class="lead">DDIM sampling shows obscure computational characteristics as scalability for higher resolution voxel grids remains unexplored, creating doubt about real-time applicability within industrial dismantling pipelines.</p>`,
+      jp: `<p class="lead">DDIM サンプリングの計算特性が不透明、高解像度ボクセルグリッドへのスケーラビリティが未検証で、産業用パイプラインのリアルタイム適用性に疑問が生じている。</p>`
+    },
+    'R3-9': {
+      en: `<p class="lead">Practical deployment becomes challenging because feature encoding is unreasonable due to reliance on simplified color attributes, ignoring realistic sensing complexities and decreasing applicability of voxel feature encoding in deployment scenarios.</p>`,
+      jp: `<p class="lead">特徴エンコーディングが単純化された色属性に依存し、現実的なセンシング複雑性を無視しているため、実用的デプロイメントが困難。ボクセル特徴エンコーディングの適用性が低下している。</p>`
+    },
+    'R3-10': {
+      en: `<p class="lead">Evaluation clarity diminishes since assessment using cutting action planning formulation is vague, where safety-critical factors are unexamined thoroughly, weakening effectiveness across inexact operational conditions.</p>
+        <p>"Safety-critical" implies worst-case, not average.</p>`,
+      jp: `<p class="lead">切断行動計画の定式化を用いた評価が曖昧で、安全関連要因が十分に検証されていない。不正確な運用条件下での有効性が弱まっている。</p>
+        <p>「Safety-critical」は平均ではなく最悪ケースを意味する。</p>`
+    },
+  },
+
+  response: {
+    'AE': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We thank the AE for a clear, prioritized review and we <strong>agree</strong> with every one of the five axes raised. The original submission overclaimed in two specific ways: (i) parameter choices presented as settled without exposing selection logic, and (ii) Abstract/Introduction wording implied a deployment-ready system. Both are corrected. Where the AE asks for "deployment feasibility under more realistic sensing and cutting conditions," we acknowledge that real-machine validation is not within our research infrastructure and we reinterpret the request as <strong>operating-envelope characterization</strong>, argued openly in the new Discussion §6.2.</div>
+        <p><strong>How the five axes are addressed in the revised manuscript:</strong></p>
+        <ul>
+          <li><strong>AE-1.</strong> Every swept hyperparameter is now paired with one criterion decided <em>before</em> consulting success. New §5.1.6 "Parameter selection rationale" walks through this logic for ω, <code>ucb_lb</code>, <code>ucb_beta</code>, <code>sampling_timesteps</code>, voxel resolution, <code>task_step</code> (Table 4).</li>
+          <li><strong>AE-2.</strong> Empirical diagnostics restricted to the uncut sub-volume (§5.3); a calibrated stopping rule deployed on held-out test episodes (Table 5). No theoretical claim.</li>
+          <li><strong>AE-3.</strong> Baseline-budget audit table (§5.1, Table 2). VAEAC rerun under matched compute (§5.7, Table 6).</li>
+          <li><strong>AE-4.</strong> Operating envelope characterized through <strong>five artifacts</strong>: §5.4 (mask-domain noise budgets), §5.5 (worst-case + CVaR safety), §5.8 (DDIM speed–quality Pareto), §4.5 (<code>feature_provider</code> abstraction), and §5.9 (geometric envelope via external-mesh OOD with explicit color-semantics-inheritance caveat). §6.2 argues sim-only sufficiency.</li>
+          <li><strong>AE-5.</strong> Abstract, Introduction contributions, and Conclusion rewritten with simulation-scoped verbs. §6.4 Limitation acknowledges real-machine integration as a natural extension that is <em>not required</em> for the claimed contributions.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The revised contribution is a planning-and-analysis framework characterized along four axes — parameter sensitivity, empirical convergence, fair comparison, and operating envelope under controlled corruption — with claims scoped accordingly. This matches venue convention in TAMP, MPC, and disassembly-sequence-planning, where algorithmic contributions are evaluated in simulation and physical deployment is the subject of follow-on systems work. The operating-envelope characterization gives integrators the specification surface needed to compose their own perception and cutting modules around our planner.</div>
+        <p class="lead">Cross-reference: §4.5 (feature_provider) · §5.1 (audit) · §5.1.6 (param rationale) · §5.3 (convergence) · §5.4 (robustness) · §5.5 (safety) · §5.7 (VAEAC) · §5.8 (DDIM) · §5.9 (OOD) · §6.2 (Scope of Evaluation) · §6.3 (spec surface) · §6.4 (Limitation).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div>明確で優先順位の付けられた審査をいただいたことに感謝します。指摘された5軸すべてに<strong>同意</strong>します。原稿には2点で過剰な主張がありました：(i) パラメータ選択が選択ロジックを明示せず確定事項として提示、(ii) Abstract/Introduction の文言がデプロイ可能なシステムを示唆。両者を修正しました。「より現実的なセンシング・切断条件下での deployment feasibility」については、実機検証が研究インフラの範囲外であることを認め、要請を<strong>operating-envelope characterization</strong>として再解釈し、新規 Discussion §6.2 にて公明に論じます。</div>
+        <p><strong>改訂稿における5軸への対応：</strong></p>
+        <ul>
+          <li><strong>AE-1.</strong> 各スイープハイパーパラメータに、成功率確認<em>前</em>に決定された基準を1つずつ対応付け。新規 §5.1.6「Parameter selection rationale」にて ω, <code>ucb_lb</code>, <code>ucb_beta</code>, <code>sampling_timesteps</code>, ボクセル解像度, <code>task_step</code> の論理を提示（Table 4）。</li>
+          <li><strong>AE-2.</strong> 経験的診断を未切断サブボリュームに限定（§5.3）、校正済み停止規則を保留テストエピソードに実適用（Table 5）。理論的主張なし。</li>
+          <li><strong>AE-3.</strong> ベースライン・バジェット監査表（§5.1, Table 2）。VAEAC を matched compute で再訓練（§5.7, Table 6）。</li>
+          <li><strong>AE-4.</strong> <strong>5 つの artifact</strong> で operating envelope を特徴付け：§5.4（マスクドメインノイズ予算）、§5.5（最悪ケース + CVaR 安全性）、§5.8（DDIM 速度–品質パレート）、§4.5（<code>feature_provider</code> 抽象化）、§5.9（外部メッシュ OOD による幾何学的 envelope、色セマンティクス継承を明示）。§6.2 でシミュレーション充足性を論じる。</li>
+          <li><strong>AE-5.</strong> Abstract、Introduction 貢献、Conclusion をシミュレーションスコープの動詞で書き直し。§6.4 Limitation で実機統合を、現貢献に<em>必須ではない</em>自然な拡張として明記。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>改訂版の貢献は 4 軸（パラメータ感度・経験的収束・公平な比較・制御ノイズ下の operating envelope）に沿って特徴付けられた計画・分析フレームワークであり、主張はそれに応じてスコープされる。TAMP、MPC、解体シーケンス計画における慣行に従い、本クラスのアルゴリズム貢献はシミュレーション評価で、物理的デプロイメントは後続のシステムワークの対象となる。Operating-envelope characterization により、インテグレータが自前の知覚・切断モジュールを我々の計画器の周りに組み立てる仕様面を提供する。</div>
+        <p class="lead">対応箇所：§4.5（feature_provider）· §5.1（監査）· §5.1.6（パラメータ根拠）· §5.3（収束）· §5.4（robustness）· §5.5（safety）· §5.7（VAEAC）· §5.8（DDIM）· §5.9（OOD）· §6.2（Scope of Evaluation）· §6.3（仕様面表）· §6.4（Limitation）。</p>`
+    },
+    'R3-1': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>partially agree</strong>. The reviewer is correct that the original validation did not stress-test the planner against observation noise or cutting-execution error. We disagree, however, with the implicit suggestion that this can only be addressed by physical deployment: the planner consumes mask-domain input regardless of how that mask is produced, so noise injected at the mask domain is the methodologically correct proxy for sensing realism within an algorithmic-contribution paper. RGB-domain jitter would be filtered by the color-range threshold and would not actually stress the planner — that is why we target the mask.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>New §5.4 "Robustness ablation". Mask-domain noise: random binary flip <code>p ∈ {0, 0.01, 0.05, 0.1}</code>, morphological dilation/erosion radius <code>r ∈ {0, 1, 2, 3}</code> voxels, false-positive blob count <code>{0, 1, 2, 3}</code> per mask.</li>
+          <li>Cutting-execution error: translational plane perturbation <code>Δ ∈ {0, ±1, ±2}</code> voxels along the cut normal — reported as a separate row in Table 3.</li>
+          <li>Three representative objects (Boxy_0, Boxy_1, Boxy_2) evaluated across the noise grid; success rate, over-cut, and damage-to-target are reported.</li>
+          <li><strong>Non-axis-aligned cutting is explicitly placed outside the cutting-action class</strong> modeled in this paper (§6.4 Limitation). The simulator is axis-aligned by construction; supporting oblique cuts would require a multi-week refactor and is independent of the algorithmic contribution.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>Mask-domain corruption stresses exactly the signal the planner observes. The translational-Δ perturbation captures the dominant cutting-execution error within the axis-aligned cutting-action class. Together with the explicit scope statement on oblique cuts, the reviewer's concern is fully and honestly answered within the contribution scope. Going further (real-machine validation) would not change the algorithmic claim; it is the subject of follow-on systems work, acknowledged in §6.4.</div>
+        <p class="lead">Cross-reference: §5.4 (Table 3, Figure 4) · §6.4 (cutting-action class scope) · §4.5 (MaskCorruptionProvider).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>部分的に同意</strong>します。原稿の検証が観測ノイズや切断実行誤差に対するストレステストを欠いていた点は正しい指摘です。一方で、これを物理的デプロイメントでしか解決できないという暗黙の前提には同意しません：計画器はマスクの生成元によらずマスクドメイン入力を消費するため、マスクドメインでノイズを注入することが本アルゴリズム貢献論文において方法論的に正しいセンシング現実性の代理です。RGB ドメインの jitter は color-range 閾値で除去されるため計画器をストレスせず、それゆえマスクを標的とします。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>新規 §5.4「Robustness ablation」。マスクドメインノイズ：random binary flip <code>p ∈ {0, 0.01, 0.05, 0.1}</code>、形態学的 dilation/erosion 半径 <code>r ∈ {0, 1, 2, 3}</code> ボクセル、false-positive blob 数 <code>{0, 1, 2, 3}</code> /マスク。</li>
+          <li>切断実行誤差：切断面 translational 摂動 <code>Δ ∈ {0, ±1, ±2}</code> ボクセル（cut normal 方向）— Table 3 の独立行として報告。</li>
+          <li>代表 3 オブジェクト（Boxy_0, Boxy_1, Boxy_2）× ノイズグリッドで評価；成功率、over-cut、対象ダメージを報告。</li>
+          <li><strong>非軸対称切断は本論文がモデル化する切断行動クラスの範囲外</strong>と明示（§6.4 Limitation）。シミュレータは構造上軸対称であり、斜め切断のサポートには数週間規模のリファクタリングが必要で、アルゴリズム貢献とは独立。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>マスクドメイン corruption は計画器が観測する信号を正確にストレスする。Translational-Δ 摂動は軸対称切断行動クラス内の支配的な切断実行誤差を捉える。斜め切断に関する明示的スコープ宣言と合わせ、レビュアーの懸念は貢献スコープ内で完全かつ正直に答えられている。実機検証はアルゴリズム主張を変えず、§6.4 で言及される後続システムワークの対象。</div>
+        <p class="lead">対応箇所：§5.4（Table 3, Figure 4）· §6.4（切断行動クラス scope）· §4.5（MaskCorruptionProvider）。</p>`
+    },
+    'R3-2': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong>. A sweep table without a pre-declared criterion legitimately reads as post-hoc, and the original submission was guilty of this. We have unified all parameter sweeps into a single E2 evaluation matrix on a fixed episode set, and we now pair each parameter with one named criterion <em>decided before</em> consulting downstream success.</div>
+        <p><strong>The pre-declared selection criteria (new §5.1.6 Table 4):</strong></p>
+        <dl class="grid">
+          <dt>ω (CFG)</dt><dd>Minimum Brier score on dev set, sliced by observation regime (early/mid/late)</dd>
+          <dt><code>ucb_lb</code></dt><dd>Pareto knee on damage-vs-removal curve (dev split)</dd>
+          <dt><code>ucb_beta</code></dt><dd>Variance-of-decisions stability threshold</dd>
+          <dt><code>sampling_timesteps</code></dt><dd>Latency budget at chosen resolution</dd>
+          <dt>Voxel resolution</dt><dd>Boundary-IoU ≥ τ at minimum FLOPs</dd>
+          <dt><code>task_step</code></dt><dd>Marginal success gain &lt; 1 % per added step</dd>
+        </dl>
+        <p>§5.1.6 (~1.5 pages total, consolidated, not six fragmented paragraphs) explains each criterion's motivation and reports the sweep value the criterion selects. Method bloat is explicitly avoided per page-budget discipline.</p>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>Converting six independent sweeps into one matrix with pre-declared criteria turns "we picked the best post-hoc" into a principled procedure. The reviewer's interpretability concern is answered structurally: the diffusion behavior at the chosen value can now be explained ("at ω=0.2 the Brier score is minimized in the mid-observation regime; below this point sample diversity collapses below threshold X"), and the table itself documents that the criterion was set before optimization.</div>
+        <p class="lead">Cross-reference: §5.1.6 (Table 4) · §5.2 (E2 sweep matrix) · §5.5, 4.7 (downstream uses of the selected values).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>します。事前宣言基準のないスイープ表が事後的に見える点は正当な指摘であり、原稿はこれに該当していました。全パラメータスイープを固定エピソードセット上の単一の E2 評価マトリクスに統合し、各パラメータに対し下流成功率を確認する<em>前に</em>決定された名前付き基準を1つずつ対応付けました。</div>
+        <p><strong>事前宣言された選択基準（新規 §5.1.6 Table 4）：</strong></p>
+        <dl class="grid">
+          <dt>ω (CFG)</dt><dd>観測レジーム（早/中/後期）でスライスした dev set 上の Brier score 最小</dd>
+          <dt><code>ucb_lb</code></dt><dd>Damage-vs-removal 曲線の Pareto knee（dev split）</dd>
+          <dt><code>ucb_beta</code></dt><dd>決定分散の安定性閾値</dd>
+          <dt><code>sampling_timesteps</code></dt><dd>選択解像度におけるレイテンシ予算</dd>
+          <dt>ボクセル解像度</dt><dd>最小 FLOPs における境界 IoU ≥ τ</dd>
+          <dt><code>task_step</code></dt><dd>1 ステップ追加あたりの限界成功率向上 &lt; 1 %</dd>
+        </dl>
+        <p>§5.1.6（合計約 1.5 ページ、6 段の断片ではなく統合形式）にて各基準の動機を説明し、基準が選択するスイープ値を報告。ページバジェット規律により Method 肥大化を明示的に回避。</p>
+        <div class="card a"><div class="card-label">これで十分な理由</div>独立した 6 スイープを事前宣言基準を伴う 1 マトリクスに変換することで、「事後的にベストを選んだ」が原則的手続きに変わる。レビュアーの解釈可能性の懸念は構造的に答えられている：選択値での拡散挙動が説明可能となり（「ω=0.2 で中期観測レジームの Brier が最小、それ以下ではサンプル多様性が閾値 X を下回る」）、表自体が最適化前に基準が設定されたことを文書化する。</div>
+        <p class="lead">対応箇所：§5.1.6（Table 4）· §5.2（E2 スイープマトリクス）· §5.5, 4.7（選択値の下流利用）。</p>`
+    },
+    'R3-3': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong> and have addressed a subtle methodological risk the reviewer's question implies. Naively, presence-score Δ would shrink as material is removed simply because there is less ambiguous volume left — a tautology, not real convergence. We restrict Δ to the <strong>uncut sub-volume</strong> so what shrinks is the planner's belief, not its support set. We also <em>apply</em> a calibrated stopping rule on held-out episodes, going beyond merely measuring Δ retrospectively.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>§5.3 logs per-step presence-score Δ, ensemble voxel-wise variance/entropy, and UCB margin — all restricted to the uncut sub-volume.</li>
+          <li>Evaluation episodes are split 30/70 into dev/test. The stopping rule "presence-score Δ on uncut sub-volume &lt; ε for K consecutive steps" is calibrated on dev, then <em>applied</em> on test.</li>
+          <li>Table 5 reports the calibrated rule's success rate and average step count against the fixed <code>task_step = 8</code> horizon, plus a horizon ablation across {4, 6, 8, 12}.</li>
+          <li>§6.4 Limitation states explicitly: <em>"Convergence is established empirically; we make no theoretical guarantee."</em> No hedge clause ("if theory hard, declare empirical") appears anywhere.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The combination of tautology-free measurement and predictive deployment of the stopping rule is exactly what distinguishes a real convergence story from a cosmetic diagnostic. The reviewer asked whether iterative updates make the loop reliable; we report (a) how the belief stabilizes on the part of the volume that is still in question, and (b) whether a rule based on that stabilization improves task outcomes when actually deployed. Reporting "Δ decreases" on the whole image would not have answered the question.</div>
+        <p class="lead">Cross-reference: §5.3 (Figure 5, Table 5) · §6.4 (empirical-only framing).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>するとともに、レビュアーの問いが暗示する微妙な方法論的リスクに対処しました。素朴には素材切除に伴い曖昧体積が減るため presence-score Δ は機械的に減少 — それは恒真命題であり真の収束ではありません。Δ を<strong>未切断サブボリューム</strong>に限定することで、縮小するのは計画器の信念であり支持集合ではない、という性質を確保します。さらに校正済み停止規則を保留エピソードに<em>実適用</em>し、Δ を事後に測定するだけにとどまらない検証を行います。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>§5.3 にて per-step presence-score Δ、アンサンブルの voxel 単位分散/エントロピー、UCB margin をログ — 全て未切断サブボリュームに限定。</li>
+          <li>評価エピソードを 30/70 で dev/test に分割。停止規則「未切断サブボリューム上の presence-score Δ &lt; ε が K ステップ連続」を dev で校正し、test で<em>実適用</em>。</li>
+          <li>Table 5 にて校正済み規則の成功率・平均ステップ数を固定 <code>task_step = 8</code> ホライズンと比較、さらに {4, 6, 8, 12} のホライズン ablation を提示。</li>
+          <li>§6.4 Limitation に明示：<em>「収束性は経験的に確立、理論的保証は主張しない」</em>。「理論が難しければ経験的に退く」のような hedge 文は使用しない。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>恒真命題なき測定と停止規則の予測的展開の組合せは、真の収束物語と装飾的診断を区別する核心。レビュアーは反復更新がループを信頼できるものにするか問うた；我々は (a) まだ曖昧な体積部分で信念がどう安定するか、(b) その安定化に基づく規則が実適用時にタスク成果を改善するか、を報告する。全画像で「Δ が減少」を報告しても問いには答えられない。</div>
+        <p class="lead">対応箇所：§5.3（Figure 5, Table 5）· §6.4（経験的のみのフレーミング）。</p>`
+    },
+    'R3-4': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong> that voxel representations have an inherent floor at which fine internal structures break down, and the original submission did not characterize that floor. We now report boundary-fidelity metrics across resolutions to expose this trade-off explicitly.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>§5.6 "Voxel resolution sweep". Simple-object pipeline: grid side ∈ {16, 25, 36, 49, 64}. The low end is retained <em>deliberately</em> to expose where fine-structure representation fails — directly answering the reviewer's concern that the floor was hidden.</li>
+          <li>Real-object pipeline: <code>image_size</code> ∈ {128, 256, 344}. Upper bound set by practical training cost on RTX 3090-class hardware. Inference profiles at 512 (without full retrain) are reported in §5.8 for transparency.</li>
+          <li>Metrics: <strong>boundary IoU</strong> on the target-part surface and <strong>surface F-score @ τ voxels</strong>. We drop Chamfer distance because it is poorly defined on quantized voxel grids.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The sweep makes the accuracy-vs-compute trade-off legible: a reader can see where boundary IoU saturates and at what compute cost. The simple-pipeline floor (grid 16) intentionally fails — that is the contribution, not a weakness — because it shows the reviewer the regime they were asking about. The real-pipeline upper bound (344) is justified against the latency Pareto in §5.8.</div>
+        <p class="lead">Cross-reference: §5.6 (Figure 6, Table 7) · §5.8 (latency context for resolution choice) · §5.1.6 (selection criterion for voxel resolution).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>します。ボクセル表現には微細内部構造が破綻する固有の床があり、原稿はその床を特徴付けていませんでした。解像度横断で境界忠実度指標を報告し、この trade-off を明示的に露呈します。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>§5.6「Voxel resolution sweep」。シンプルオブジェクトパイプライン：grid side ∈ {16, 25, 36, 49, 64}。下端は微細構造表現の破綻点を露呈するため<em>意図的に</em>保持 — 床が隠蔽されているというレビュアーの懸念に直接応答。</li>
+          <li>実オブジェクトパイプライン：<code>image_size</code> ∈ {128, 256, 344}。上限は RTX 3090 級ハードウェアでの実用的訓練コストにより設定。512 における推論プロファイル（完全再訓練なし）は透明性のため §5.8 で報告。</li>
+          <li>指標：<strong>boundary IoU</strong>（対象パーツ表面上）および <strong>surface F-score @ τ voxels</strong>。Chamfer 距離は量子化ボクセルグリッド上で定義が曖昧なため廃止。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>スイープは精度 vs 計算量の trade-off を可読化する：読者は境界 IoU の飽和点と対応する計算コストを見ることができる。シンプルパイプラインの床（grid 16）は意図的に破綻する — これは弱みではなく貢献である — レビュアーが問うていた領域を示すから。実パイプラインの上限（344）は §5.8 のレイテンシパレートに対して正当化される。</div>
+        <p class="lead">対応箇所：§5.6（Figure 6, Table 7）· §5.8（解像度選択のレイテンシ文脈）· §5.1.6（ボクセル解像度の選択基準）。</p>`
+    },
+    'R3-5': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong>. The original submission used <code>ω = 0.2</code> without an explanation of why, and offered no characterization of how guidance strength interacts with observation completeness. The revised manuscript provides exactly this characterization.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>§5.2 "CFG guidance scale sweep" reports the planner across ω ∈ {0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0}. The pre-declared selection criterion (§5.1.6) is minimum Brier score on the dev set.</li>
+          <li><strong>Observation-regime slicing.</strong> The sweep is reported separately for early / middle / late planning steps, directly answering the reviewer's note about "different observation scenarios." Optimal ω varies with how much of the object has already been observed, and we report this interaction explicitly.</li>
+          <li>Sample diversity across M = 32 samples is reported alongside Brier score, so the reader sees how guidance strength trades calibration for diversity.</li>
+          <li>We dropped the originally planned reliability diagram in favor of Brier score, because voxel presence is binary and a reliability diagram requires careful definition that distracts from the core message.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The reviewer asked whether CFG behavior is characterized "across different observation scenarios" — our slicing by observation regime answers this exactly. The Brier-vs-ω curves expose where ω is too low (over-diverse, under-calibrated) and where it is too high (collapsed to mean, miscalibrated). The chosen value is now defensible as the criterion's optimum, not as a fortunate hyperparameter.</div>
+        <p class="lead">Cross-reference: §5.1.6 (criterion) · §5.2 (Figure 3, sliced curves) · §4.5 (CFG implementation in conditional_diffusion_cfg.py).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>します。原稿は <code>ω = 0.2</code> を理由を示さず使用し、ガイダンス強度が観測完全性とどう相互作用するかの特徴付けも提示しませんでした。改訂稿はまさにこの特徴付けを提供します。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>§5.2「CFG guidance scale sweep」にて計画器を ω ∈ {0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0} で評価。事前宣言選択基準（§5.1.6）は dev set 上の Brier score 最小。</li>
+          <li><strong>観測レジームスライス。</strong>スイープを早期 / 中期 / 後期計画ステップで別個に報告し、「異なる観測シナリオ」に関するレビュアーの指摘に直接応答。最適 ω はオブジェクトの観測程度により変化し、この相互作用を明示報告。</li>
+          <li>M = 32 サンプル間のサンプル多様性を Brier score と並べて報告。ガイダンス強度がカリブレーションと多様性をどうトレードオフするかが可視化される。</li>
+          <li>当初予定の reliability diagram は廃止し Brier score を採用。voxel presence は二値であり、reliability diagram は核心メッセージから注意を逸らす定義問題を伴うため。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>レビュアーは CFG 挙動が「異なる観測シナリオで」特徴付けられているかを問うた — 観測レジームスライスはこれに正確に答える。Brier-vs-ω 曲線は ω が低すぎる領域（過剰多様・低校正）と高すぎる領域（平均崩壊・誤校正）を可視化する。選択値は基準の最適点として擁護可能となり、運の良いハイパーパラメータではない。</div>
+        <p class="lead">対応箇所：§5.1.6（基準）· §5.2（Figure 3, スライス曲線）· §4.5（conditional_diffusion_cfg.py における CFG 実装）。</p>`
+    },
+    'R3-6': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>partially agree</strong>. The reviewer is correct that baseline configurations were not transparently aligned — capacity, training budget, and data exposure were not reported side-by-side. We disagree that the cure is three full matched-budget protocols × three baselines, which would require 9+ retraining runs and is infeasible in the revision window without producing decision-quality information. We address fairness in two steps that, combined, give the reviewer what they actually need.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>§5.1 Table 2 — <strong>baseline-budget audit</strong> reporting parameter count, FLOPs/step, training wall-clock, inference latency, and data exposure for every baseline (VAEAC, PCD-DM, CVAE) and the proposed method. Existing mismatches are made visible.</li>
+          <li>§5.7 Table 6 — <strong>matched-compute VAEAC rerun</strong>. VAEAC is the baseline Reviewer #3 explicitly named, so we re-trained it under wall-clock-aligned compute. Original VAEAC numbers are retained for reference; matched-compute numbers are reported side-by-side.</li>
+          <li>PCD-DM and CVAE remain at their previously reported configurations, with the audit table making the (small) capacity differences transparent.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The audit table answers the transparency concern in full: any remaining capacity/budget difference is now legible. The matched-compute VAEAC rerun targets the specific baseline the reviewer flagged. We chose this scope deliberately — three matched-budget protocols would dilute the signal without changing the conclusion, given the audit shows PCD-DM and CVAE are within a small constant factor of the proposed method's compute. The scoping rationale itself is included in §5.7.</div>
+        <p class="lead">Cross-reference: §5.1 (Table 2 audit) · §5.7 (Table 6 VAEAC matched-compute, with scope rationale).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>部分的に同意</strong>します。ベースライン構成が透明に整合していなかった — 容量・訓練予算・データ曝露が並列報告されていなかった — というレビュアーの指摘は正しい。一方で、3 つの matched-budget プロトコル × 3 ベースライン（9 回以上の再訓練）が処方箋であるとの示唆には同意しません；これは revision 期間内で実行不可能であり、意思決定品質の情報を生まないため。公平性を 2 段階で扱い、レビュアーが実際に必要としているものを提供します。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>§5.1 Table 2 — <strong>ベースライン・バジェット監査</strong>：全ベースライン（VAEAC, PCD-DM, CVAE）および提案手法のパラメータ数、FLOPs/step、訓練 wall-clock、推論レイテンシ、データ曝露を報告。既存の不整合を可視化。</li>
+          <li>§5.7 Table 6 — <strong>VAEAC matched-compute 再訓練</strong>。Reviewer #3 が明示的に挙げた VAEAC を wall-clock 整合計算量下で再訓練。元の VAEAC 数値は参照用に保持し、matched-compute 数値を併記。</li>
+          <li>PCD-DM, CVAE は監査表で（小さな）容量差を透明化した上で従前構成を保持。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>監査表は透明性の懸念に完全に答える：残余の容量・予算差は可読化される。Matched-compute VAEAC 再訓練はレビュアーが指名した特定ベースラインを標的とする。このスコープは意図的選択 — 監査が PCD-DM, CVAE が提案手法の計算量から小定数倍以内であることを示すため、3 プロトコル走破は信号を希釈するのみで結論を変えない。スコープ根拠自体を §5.7 に含める。</div>
+        <p class="lead">対応箇所：§5.1（Table 2 監査）· §5.7（Table 6 VAEAC matched-compute, スコープ根拠付き）。</p>`
+    },
+    'R3-7': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>partially agree</strong>. The reviewer is correct that synthetic-only training data limits generalization claims, and we have added an out-of-distribution evaluation. We disagree that the cure is unlabeled real-product data: PartNet / Thingi10K geometries do not ship with the multi-color part attributes our diffusion conditions on, and assigning those by hand would itself be a synthetic step. We bridge the gap with a deterministic, transparent assignment script and report results honestly as <strong>geometry-OOD</strong>, not full distribution shift.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>§5.9 "Geometry-OOD evaluation" using PartNet / Thingi10K subsets. A deterministic <code>semantic-part → fixed-color</code> assignment script inherits training-time color semantics (e.g., target-part class always maps to the target color hue).</li>
+          <li><strong>Table 8 caption is verbatim:</strong> "OOD = geometry-OOD: external mesh corpus with deterministic part-color assignment inherited from training-time color semantics."</li>
+          <li>One additional row probes <strong>color-permutation</strong> (random color-to-semantic mapping per mesh) to quantify the planner's current dependence on color identity — this empirically motivates the <code>feature_provider</code> abstraction (§4.5, R3-9).</li>
+          <li>§6.4 Limitation explicitly acknowledges that this evaluation isolates geometric generalization; full real-product distribution shift remains future work.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The reviewer's specific phrase was "exposure to real variations about unseen product configurations." We provide exactly that — external geometries previously unseen by the model — while being honest about what we did not change (color semantics). The color-permutation row converts what could have been a limitation into a motivated design observation: yes, the planner depends on color identity through <code>ColorRangeProvider</code>, and the <code>feature_provider</code> interface is the path to removing that dependence. This is more informative than silently overclaiming "full distribution shift."</div>
+        <p class="lead">Cross-reference: §5.9 (Table 8 with verbatim caption) · §4.5 (feature_provider motivation) · §6.4 (Limitation entry).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>部分的に同意</strong>します。合成のみの訓練データが汎化主張を制限するというレビュアーの指摘は正しく、OOD 評価を追加しました。一方、ラベルなしの実製品データが処方箋であるとの示唆には同意しません：PartNet / Thingi10K の形状には我々の拡散モデルが条件付ける多色パーツ属性が付属せず、手動割り当て自体が合成ステップになります。決定論的・透明な割り当てスクリプトでギャップを橋渡しし、結果を full distribution shift ではなく <strong>geometry-OOD</strong> として正直に報告します。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>§5.9「Geometry-OOD evaluation」：PartNet / Thingi10K サブセットを使用。決定論的 <code>semantic-part → 固定色</code> 割り当てスクリプトが訓練時色セマンティクスを継承（例：target-part クラスは常に target 色相にマップ）。</li>
+          <li><strong>Table 8 キャプションは逐語的：</strong>「OOD = geometry-OOD：訓練時色セマンティクスを継承した決定論的パーツ色割り当てを伴う外部メッシュコーパス」。</li>
+          <li>追加 1 行で <strong>色順列化</strong>（メッシュごとに色 ↔ セマンティクスをランダムマップ）を検証し、計画器の色アイデンティティ依存性を定量化 — <code>feature_provider</code> 抽象化（§4.5, R3-9）を経験的に動機付ける。</li>
+          <li>§6.4 Limitation でこの評価が幾何学的汎化を分離評価するものであり、完全な実製品分布シフトは future work と明示。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>レビュアーの具体的文言は「未見の製品構成に関する実バリエーションへの曝露」。モデルが未見の外部形状を正にこれとして提供すると同時に、変更しなかった点（色セマンティクス）について正直である。色順列化行は限界となりうるものを動機付けされた設計観察に変換する：計画器は <code>ColorRangeProvider</code> 経由で色アイデンティティに依存し、<code>feature_provider</code> 介面はそれを除去する経路である。「完全な分布シフト」を黙って過剰主張するより情報的価値が高い。</div>
+        <p class="lead">対応箇所：§5.9（逐語キャプション付き Table 8）· §4.5（feature_provider 動機）· §6.4（Limitation 記載）。</p>`
+    },
+    'R3-8': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong>. Sampling-cost characterization was a genuine omission. We now profile the planner across the full design space and report a speed-quality Pareto explicitly.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>§5.8 "DDIM scalability profile" reports latency, peak GPU memory, and energy across <code>resolution × sampling_steps × backbone</code>. Sampling steps ∈ {5, 10, 20, 50, 100, 250}; backbones ∈ {UNet, DiT, U-ViT}.</li>
+          <li>Energy is reported as <strong>wall-clock latency × measured GPU power</strong> (nvidia-smi sampling at 100 Hz), not as an estimate.</li>
+          <li>Both batch=1 (single-step inference) and batch=32 (evaluation batch) settings are reported, so a deployment-oriented reader and a sweep-oriented reader both find their relevant numbers.</li>
+          <li>The DiT 4.5× speedup over UNet at 344×344 (originally a supplementary claim) is now reproduced from the same profile (§5.8 Figure 7).</li>
+          <li>§6.2 closes with an explicit statement of the operating-envelope upper bound — the resolution beyond which inference latency exceeds practical limits on RTX 3090-class hardware.</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The Pareto frontier directly answers the "real-time applicability" concern by showing the speed-quality trade-off across all axes the reviewer named. The energy measurement (not estimate) is what makes the profile trustworthy. We do not claim industrial real-time deployment; instead, we report the bounds within which our planner runs and what an integrator would need to relax to push them further. This is the operating envelope, exposed.</div>
+        <p class="lead">Cross-reference: §5.1.6 (sampling_steps selection criterion) · §5.8 (Figure 7 Pareto, Table 8 latency × resolution × backbone) · §6.2 (envelope upper bound).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>します。サンプリングコストの特徴付けは真の欠落でした。計画器を設計空間全域でプロファイルし、速度-品質パレートを明示報告します。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>§5.8「DDIM scalability profile」：<code>解像度 × sampling_steps × バックボーン</code>横断でレイテンシ・GPU メモリピーク・エネルギーを報告。Sampling steps ∈ {5, 10, 20, 50, 100, 250}、バックボーン ∈ {UNet, DiT, U-ViT}。</li>
+          <li>エネルギーは推定ではなく <strong>wall-clock レイテンシ × 実測 GPU 電力</strong>（100 Hz の nvidia-smi サンプリング）として報告。</li>
+          <li>batch=1（単ステップ推論）と batch=32（評価バッチ）の両設定を報告 — デプロイ志向の読者とスイープ志向の読者の双方が必要な数値を見つけられる。</li>
+          <li>344×344 における DiT の UNet 比 4.5× 加速（元は補助資料の主張）を同プロファイルから再現（§5.8 Figure 7）。</li>
+          <li>§6.2 で operating-envelope の上限 — RTX 3090 級ハードウェアで推論レイテンシが実用限界を超える解像度 — を明示宣言。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>パレート境界はレビュアーが挙げた全軸での速度-品質 trade-off を可視化することで「リアルタイム適用性」の懸念に直接応答する。エネルギー測定（推定でない）がプロファイルを信頼に値するものにする。我々は産業用リアルタイムデプロイメントを主張しない；代わりに計画器が動作する境界と、インテグレータがそれを押し広げるために緩めるべき制約を報告する。これが露呈された operating envelope である。</div>
+        <p class="lead">対応箇所：§5.1.6（sampling_steps 選択基準）· §5.8（Figure 7 パレート, Table 8 レイテンシ × 解像度 × バックボーン）· §6.2（envelope 上限）。</p>`
+    },
+    'R3-9': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong> this is a structural concern, not just a robustness one. The original architecture leaked the color-attribute assumption into the planner. We address this by promoting the response to a <strong>main-paper software-abstraction contribution</strong> (not a perception study): a new <code>feature_provider</code> interface that factors perception out of the planner explicitly. The contribution is the <em>interface</em> and the demonstration that three substantively different providers slot into it without changing the planner — <strong>not</strong> a claim about real-RGB-D perception, which remains outside the planner contribution scope.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li>New §4.5 "Feature provider abstraction." The planner consumes a <code>FeatureProvider</code> instance; the original color-mask pipeline is one instantiation among several. Method §4.5 contains the interface definition figure.</li>
+          <li><strong>Three concrete providers</strong> consume the interface:
+            <ul>
+              <li><code>ColorRangeProvider</code> — the original color-mask path, retroactively labeled a baseline instantiation.</li>
+              <li><code>MaskCorruptionProvider</code> — instrumented synthetic mask-domain corruption (shared with §5.4 R3-1 robustness study).</li>
+              <li><code>KMeansRenderProvider</code> — a pretrained K-means classifier fit on a <strong>held-out PyVista render set</strong> (disjoint from planning-time renders), evaluated under multiple lighting conditions (neutral, harsh).</li>
+            </ul></li>
+          <li>Results in §5.4, §5.5, §5.9 are cross-cut by a "perception module" column, so the reader can see how each provider affects planner behavior.</li>
+          <li>§6.4 Limitation states scope: "Selecting a perception module for a given hardware target is composition work outside the planner contribution. Learned segmentation modules (e.g., Mask2Former, SAM2) compose into the same interface and are a natural extension."</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>The reviewer's concern was structural — that the color assumption was baked in. Promoting <code>feature_provider</code> to a main-paper contribution and shipping three instantiations is the structural fix, not a band-aid. The K-means provider in particular tests the planner against a perception module it was never trained against, fit on renders it never sees. The color-permutation row in §5.9 quantifies what the abstraction is buying. This is more than a "stress test" — it is a new way of factoring the contribution that the reviewer's critique helped surface.</div>
+        <p class="lead">Cross-reference: §4.5 (interface + figure) · §5.4 (MaskCorruptionProvider row) · §5.5 (cross-cut by provider) · §5.9 (color-permutation row) · §6.4 (scope statement).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>します。これは robustness のみならず構造的な懸念です。原アーキテクチャは色属性仮定を計画器内部に漏らしていました。回答を<strong>主論文のソフトウェア抽象化貢献</strong>（知覚研究ではない）に格上げし、新しい <code>feature_provider</code> 介面で知覚を計画器から明示的に分離します。貢献は<em>介面</em>と、実質的に異なる 3 つのプロバイダが計画器を変えずに接続できることの実証であり、<strong>実 RGB-D 知覚に関する主張ではない</strong>（実 RGB-D 知覚は計画器貢献のスコープ外）。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li>新規 §4.5「Feature provider abstraction」。計画器は <code>FeatureProvider</code> インスタンスを消費；元の色マスクパイプラインは複数あるインスタンス化の一つ。Method §4.5 に介面定義図を掲載。</li>
+          <li><strong>3 つの具体プロバイダ</strong>が介面を利用：
+            <ul>
+              <li><code>ColorRangeProvider</code> — 元の色マスクパス。事後的にベースラインインスタンスとしてラベリング。</li>
+              <li><code>MaskCorruptionProvider</code> — 計装化された合成マスクドメイン corruption（§5.4 R3-1 の robustness 研究と共有）。</li>
+              <li><code>KMeansRenderProvider</code> — <strong>保留 PyVista レンダーセット</strong>（計画時レンダーと素集合）にフィットされた事前訓練 K-means 分類器を、複数の照明条件（neutral, harsh）で評価。</li>
+            </ul></li>
+          <li>§5.4, §5.5, §5.9 の結果は「perception module」列でクロスカット表示。各プロバイダの計画器挙動への影響が可視化される。</li>
+          <li>§6.4 Limitation でスコープ明記：「特定ハードウェアターゲットの知覚モジュール選択は計画器貢献の範囲外の合成作業。学習済みセグメンテーション（Mask2Former, SAM2 など）は同介面に接続可能で自然な拡張」。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>レビュアーの懸念は構造的 — 色仮定の埋め込み。<code>feature_provider</code> を主論文貢献に格上げし 3 インスタンス化を提供することが構造的修正であり、絆創膏ではない。特に K-means プロバイダは、訓練対象になっていない知覚モジュール（未見のレンダーで fit）に対して計画器を試験する。§5.9 の色順列化行は介面が買っているものを定量化する。これは「ストレステスト」を超えた、レビュアー批判が浮上させた貢献の新しい因子分解である。</div>
+        <p class="lead">対応箇所：§4.5（介面 + 図）· §5.4（MaskCorruptionProvider 行）· §5.5（プロバイダ別クロスカット）· §5.9（色順列化行）· §6.4（スコープ宣言）。</p>`
+    },
+    'R3-10': {
+      en: `<div class="card q"><div class="card-label">OUR POSITION</div>We <strong>agree</strong>, and we accept the reviewer's distinction between average-case and worst-case. The original "Pareto on mean damage" was an efficiency analysis dressed as safety. The revised submission reports the tail metrics that "safety-critical" actually demands.</div>
+        <p><strong>What was added to the manuscript:</strong></p>
+        <ul>
+          <li><strong>Worst-case (minimum) cut-to-target distance</strong> across all episodes — not the mean. Reported per threshold setting in §5.5 Table 9.</li>
+          <li><strong>95th-percentile damage volume (CVaR)</strong> at the recommended operating point — the conditional expectation in the upper tail of the damage distribution.</li>
+          <li><strong>Failure-mode taxonomy bar chart</strong> (§5.5 Figure 8): wrong-axis / overshoot / premature-stop / target-misidentification, annotated by inspecting each failed episode. This converts "failure rate is X%" into "of the failures, Y% are overshoot, Z% are premature stop, ..." — actionable information.</li>
+          <li>Full <code>ucb_beta ∈ {0, 0.5, 1, 2, 3}</code> sweep (β was previously hardcoded to 1.0). Selection criterion (§5.1.6): variance-of-decisions stability threshold.</li>
+          <li>Full <code>ucb_lb ∈ {0.1, 0.3, 0.5, 0.7, 0.9, 0.99}</code> sweep. Selection criterion: Pareto knee on damage-vs-removal curve (dev split).</li>
+        </ul>
+        <div class="card a"><div class="card-label">WHY SUFFICIENT</div>"Safety-critical" review demands tail metrics, not means. We report worst-case distance and 95th-percentile CVaR, which are the standard quantities used in safety analysis for autonomous systems. The failure-mode taxonomy converts the safety-efficiency Pareto from a curve into a diagnostic instrument: a reader can ask "if I set the threshold here, what kind of failure am I exposed to?" and read the answer off the chart. The two threshold sweeps with pre-declared selection criteria close the parameter-justification loop opened in R3-2.</div>
+        <p class="lead">Cross-reference: §5.1.6 (ucb_lb, ucb_beta criteria) · §5.5 (Figure 8 taxonomy, Table 9 tail metrics) · §6.4 (residual safety risk acknowledged as composition work for hardware integrators).</p>`,
+      jp: `<div class="card q"><div class="card-label">本論文の立場</div><strong>同意</strong>します。レビュアーの平均ケース vs 最悪ケースの区別を受け入れます。原稿の「平均ダメージのパレート」は効率性分析を安全性に装ったものでした。改訂稿は「safety-critical」が実際に要求する裾指標を報告します。</div>
+        <p><strong>原稿に追加した内容：</strong></p>
+        <ul>
+          <li><strong>全エピソード横断の最悪ケース（最小）切断-対象距離</strong> — 平均ではない。閾値設定ごとに §5.5 Table 9 で報告。</li>
+          <li>推奨動作点における <strong>95 パーセンタイルダメージ体積（CVaR）</strong> — ダメージ分布上裾の条件期待値。</li>
+          <li><strong>Failure-mode 分類体系の棒グラフ</strong>（§5.5 Figure 8）：wrong-axis / overshoot / premature-stop / target-misidentification、失敗エピソードを調査して注釈。「失敗率 X %」を「失敗のうち overshoot が Y %, premature-stop が Z %, ...」に変換 — 行動指針となる情報。</li>
+          <li>完全な <code>ucb_beta ∈ {0, 0.5, 1, 2, 3}</code> スイープ（β は従前 1.0 にハードコード）。選択基準（§5.1.6）：決定分散の安定性閾値。</li>
+          <li>完全な <code>ucb_lb ∈ {0.1, 0.3, 0.5, 0.7, 0.9, 0.99}</code> スイープ。選択基準：damage-vs-removal 曲線の Pareto knee（dev split）。</li>
+        </ul>
+        <div class="card a"><div class="card-label">これで十分な理由</div>「Safety-critical」審査は平均ではなく裾指標を要求する。最悪ケース距離と 95 パーセンタイル CVaR は自律システム安全分析における標準量。Failure-mode 分類体系は safety-efficiency パレートを曲線から診断機器に変換する：読者は「閾値をここに設定したら、どの種類の失敗にさらされるか？」と問い、グラフから答えを読み取れる。事前宣言選択基準を伴う 2 つの閾値スイープは R3-2 で開いたパラメータ根拠ループを閉じる。</div>
+        <p class="lead">対応箇所：§5.1.6（ucb_lb, ucb_beta 基準）· §5.5（Figure 8 分類, Table 9 裾指標）· §6.4（残余安全リスクをハードウェアインテグレータの合成作業として認識）。</p>`
+    },
+  },
+
+  strategy: {
+    'AE': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div><strong>Mixed</strong>: 4 experiment batches (E1–E4), 5 writing changes (W1–W5), 1 new architectural abstraction (<code>feature_provider</code>). All claims constrained to simulation-based; real-robot acknowledged as natural extension not required for contributions.</div>
+        <p><strong>Top-level execution batches:</strong></p>
+        <ul>
+          <li><strong>E1 Robustness</strong> — mask-domain noise + translational Δ. 3 fixed objects. Drop angular θ (cutting-action class scope).</li>
+          <li><strong>E2 Sweep matrix</strong> — single matrix on fixed episode set; 6 params each with one pre-declared selection criterion.</li>
+          <li><strong>E3 Baseline audit</strong> — full audit table + matched-compute VAEAC rerun only (not full 3-way protocol).</li>
+          <li><strong>E4 Scalability + OOD</strong> — DDIM Pareto across resolution × steps × backbone; OOD via external mesh with color-permutation row.</li>
+          <li><strong>W1 Contribution rewrite</strong> — 6 bullets with simulation-scoped verbs; Abstract + Conclusion verb surgery (positions committed). Pre-registered fallback wordings for Bullets 3 / 5 / 6 in case results don't support strong claim.</li>
+          <li><strong>W2 Limitation reframe</strong> — sim-only as scope statement (not future-work hedge); cutting-action class scope; measured real-robot extension sentence.</li>
+          <li><strong>W3 Method parameter rationale</strong> — <strong>relocated to §5.1.6</strong> as a table-led short subsection (avoids forward-references; reduces Method bloat).</li>
+          <li><strong>W4 New Discussion subsection §6.2</strong> — "Scope of Evaluation: Why Simulation is the Appropriate Venue" (four-anchor scaffold). <strong>Replaces deleted original §6.2 "Real-World Deployment"</strong>.</li>
+          <li><strong>W5 Specification-surface table §6.3</strong> — for integrators: sensor class, segmentation backbone slot, cutting hardware class, expected dominant failure modes.</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ POST-AUDIT AMENDMENTS (§8 in strategy.md)</div>3 paper-coherence reviews identified <strong>3 critical structural fixes</strong> before any code is written:
+          <ul>
+            <li><strong>§8.1</strong> — delete original §6.2 "Real-World Deployment" entirely (incompatible with new W4). Reallocate its abrasive-waterjet content to §6.3, learned-segmentation paragraph to §4.5.</li>
+            <li><strong>§8.2</strong> — add <code>feature_provider</code> hook in §4.1 framework description + Figure 2 (otherwise §4.5 reads as retrofit).</li>
+            <li><strong>§8.3</strong> — resolve Anchor 3 Tao/Laili DSP citation placeholder via direct survey verification before §6.2 prose is drafted.</li>
+          </ul>
+          Plus 10 medium-priority fixes: 5-artifact envelope framing (not 4); §6.4 Limitation trimmed from 7→4 bullets; verb-leak watchlist (5 surfaces); R3-1/R3-6/R3-9 specific pushback mitigations.
+        </div>
+        <p><strong>Schedule (estimated):</strong> 5–7 weeks on 1–2× RTX 3090. §8 amendments are writing-phase only (+2–3 days absorbed into Week 5). <code>texture_overlay</code> lighting condition is the first drop candidate if Week 4 slips.</p>
+        <p class="lead">Detailed per-item strategies in slides R3-1 through R3-10. See <code>strategy.md §8</code> for the 13 post-audit amendments.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div><strong>混合</strong>：実験 4 バッチ（E1–E4）、文章修正 5 件（W1–W5）、1 つの新規アーキテクチャ抽象化（<code>feature_provider</code>）。全主張はシミュレーションベースに制約；実機は現貢献に必須でない自然な拡張として認識。</div>
+        <p><strong>トップレベル実行バッチ：</strong></p>
+        <ul>
+          <li><strong>E1 Robustness</strong> — マスクドメインノイズ + translational Δ。固定 3 オブジェクト。角度 θ は除外（切断行動クラス scope）。</li>
+          <li><strong>E2 Sweep マトリクス</strong> — 固定エピソードセット上の単一マトリクス；6 パラメータ各々に事前宣言選択基準 1 つ。</li>
+          <li><strong>E3 ベースライン監査</strong> — 完全監査表 + matched-compute VAEAC 再訓練のみ（3-way プロトコル全実行なし）。</li>
+          <li><strong>E4 スケーラビリティ + OOD</strong> — 解像度 × steps × バックボーンの DDIM パレート；外部メッシュ + 色順列化行による OOD。</li>
+          <li><strong>W1 貢献書き直し</strong> — シミュレーションスコープ動詞による 6 bullets；Abstract + Conclusion の動詞外科手術（位置確定）。Bullets 3 / 5 / 6 は結果が強主張を支えない場合の fallback wording を事前登録。</li>
+          <li><strong>W2 Limitation 再フレーミング</strong> — sim-only を future-work hedge でなく scope 宣言として；切断行動クラス scope；測定された実機拡張文。</li>
+          <li><strong>W3 Method パラメータ根拠</strong> — <strong>§5.1.6 に再配置</strong>、表主導の短い子節（前方参照を回避、Method 肥大化を削減）。</li>
+          <li><strong>W4 新規 Discussion 子節 §6.2</strong> — "Scope of Evaluation: Why Simulation is the Appropriate Venue"（4 アンカー scaffold）。<strong>削除した原 §6.2 "Real-World Deployment" を置換</strong>。</li>
+          <li><strong>W5 Specification-surface 表 §6.3</strong> — インテグレータ向け：センサクラス、セグメンテーションバックボーンスロット、切断ハードウェアクラス、想定支配的失敗モード。</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ 監査後の修正項目（strategy.md §8）</div>3 つの paper-coherence レビューがコード着手前の <strong>3 つの構造的修正</strong>を特定：
+          <ul>
+            <li><strong>§8.1</strong> — 原 §6.2「Real-World Deployment」を完全削除（新 W4 と矛盾）。Abrasive-waterjet 内容は §6.3 へ、learned-segmentation 段落は §4.5 へ再配分。</li>
+            <li><strong>§8.2</strong> — §4.1 フレームワーク記述および Figure 2 に <code>feature_provider</code> hook を追加（さもなくば §4.5 が retrofit に見える）。</li>
+            <li><strong>§8.3</strong> — Anchor 3 の Tao/Laili DSP citation placeholder を直接 survey 検証で解決してから §6.2 prose 執筆。</li>
+          </ul>
+          加えて中優先度 10 件：5-artifact envelope（4 ではなく）、§6.4 Limitation を 7→4 bullets に削減、verb-leak watchlist（5 箇所）、R3-1/R3-6/R3-9 個別の pushback 対策。
+        </div>
+        <p><strong>スケジュール（見積）：</strong>1–2 × RTX 3090 で 5–7 週間。§8 修正は執筆フェーズのみ（+2–3 日、第 5 週に吸収）。<code>texture_overlay</code> 照明条件が第 4 週遅延時の最優先削減候補。</p>
+        <p class="lead">R3-1〜R3-10 の各スライドに詳細戦略を記載。Post-audit 13 項目は <code>strategy.md §8</code> 参照。</p>`
+    },
+    'R3-1': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New experiment + new Method subsection + Limitation paragraph. <strong>Adds experiments, no new comparison.</strong> Folded into existing experiments chapter.</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Implement <code>MaskCorruptionProvider</code> as a <code>feature_provider</code> instance (shares interface with R3-9). Operations: binary flip, morphological dilate/erode, FP blob injection. Parameterized via Hydra.</li>
+          <li>Extend <code>voxel_cut_handler</code> to accept an optional <code>Δ</code> offset along the cut normal. Default 0 preserves current behavior.</li>
+          <li>Add <code>config/env/noisy.yaml</code> with the noise grid; <code>episode_runner</code> logic unchanged.</li>
+          <li>Run noise grid × 3 objects (Boxy_0/1/2 already in eval set) × 5 seeds.</li>
+          <li>Aggregate into Table 3 (success vs noise level) and Figure 4 (success curve).</li>
+        </ol>
+        <p><strong>Files (new):</strong></p>
+        <div class="deliv"><span>config/env/noisy.yaml</span><span>perception/mask_corruption_provider.py</span></div>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>env/voxel_cut_sim_v1.py</span><span>policy/cutting_surface_planner_v9.py</span><span>eval/episode_runner.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.4 "Robustness ablation" subsection (~1.5 pages) with Table 3 + Figure 4.</li>
+          <li>§6.4 Limitation paragraph (3–4 sentences): "Non-axis-aligned cuts are outside the cutting-action class modeled in this paper. The simulator is axis-aligned by construction; oblique cutting would require a multi-week refactor of the voxel cut handler and is independent of the algorithmic contribution."</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ §8.12 PUSHBACK MITIGATION</div>Audit C predicts reviewer pushback: "the corruption model is self-graded — no literature grounding." <strong>Add one sentence in §5.4</strong> citing literature-justified noise parameters (e.g., RealSense / RGB-D segmentation noise rate from a 2022+ benchmark) so the flip / dilation / blob rates are not author-chosen. Without this grounding the corruption model remains a synthetic proxy.</div>
+        <p><strong>Effort / dependencies:</strong> ~3 days code + 2 days sweep runs + 1 day writing + 0.5 day literature search for noise grounding. Independent of R3-2 to R3-10 except shares <code>feature_provider</code> infra with R3-9 (build feature_provider interface first, then both).</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規実験 + 新規 Method 子節 + Limitation 段落。<strong>実験追加、比較追加なし。</strong>既存実験章に折り込み。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li><code>MaskCorruptionProvider</code> を <code>feature_provider</code> インスタンスとして実装（R3-9 と介面共有）。操作：binary flip、形態学的 dilate/erode、FP blob 注入。Hydra でパラメータ化。</li>
+          <li><code>voxel_cut_handler</code> を拡張して切断面 normal 方向の任意 <code>Δ</code> オフセットを受理。デフォルト 0 で現挙動保持。</li>
+          <li><code>config/env/noisy.yaml</code> にノイズグリッドを追加；<code>episode_runner</code> ロジック不変。</li>
+          <li>ノイズグリッド × 3 オブジェクト（Boxy_0/1/2、評価セット既存）× 5 シードで実行。</li>
+          <li>Table 3（成功率 vs ノイズレベル）と Figure 4（成功率曲線）に集約。</li>
+        </ol>
+        <p><strong>新規ファイル：</strong></p>
+        <div class="deliv"><span>config/env/noisy.yaml</span><span>perception/mask_corruption_provider.py</span></div>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>env/voxel_cut_sim_v1.py</span><span>policy/cutting_surface_planner_v9.py</span><span>eval/episode_runner.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.4「Robustness ablation」子節（約 1.5 ページ）、Table 3 + Figure 4 付き。</li>
+          <li>§6.4 Limitation 段落（3–4 文）：「非軸対称切断は本論文がモデル化する切断行動クラスの範囲外。シミュレータは構造上軸対称であり、斜め切断には voxel cut handler の数週間規模のリファクタリングを要し、アルゴリズム貢献とは独立」。</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ §8.12 PUSHBACK 対策</div>Audit C はレビュアーの反論を予測：「corruption モデルは自己採点 — 文献根拠なし」。<strong>§5.4 に 1 文追加</strong>して文献根拠を持つノイズパラメータ（例：2022 年以降のベンチマークの RealSense / RGB-D セグメンテーションノイズ率）を引用し、flip / dilation / blob の率が著者選択でないことを示す。この根拠なしでは corruption モデルは合成 proxy のまま。</div>
+        <p><strong>工数 / 依存関係：</strong>コード約 3 日 + スイープ実行 2 日 + 執筆 1 日 + ノイズ根拠の文献調査 0.5 日。R3-9 と <code>feature_provider</code> インフラを共有する点を除き R3-2〜R3-10 から独立。</p>`
+    },
+    'R3-2': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New Method subsection + sweep infrastructure + Table 4. <strong>Adds experiments + new Method content.</strong> Most structurally important change: every other parameter sweep in the paper plugs into this framework.</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Write the pre-declared selection-criterion table (Table 4) in §5.1.6 <em>first</em>, before any sweep is run. This is the discipline — author commits to the criterion in writing, then runs the sweep.</li>
+          <li>Build <code>scripts/eval/sweeps/</code> harness: one shell script per parameter, all using the same <code>config/eval/sweep_episode_set.yaml</code> (a fixed 100-episode set) so cross-parameter results are comparable.</li>
+          <li>Run six sweeps: ω, <code>ucb_lb</code>, <code>ucb_beta</code>, <code>sampling_timesteps</code>, voxel resolution (within R3-4 budget), <code>task_step</code>.</li>
+          <li>For each sweep, compute the criterion value at every grid point; the criterion picks the published value automatically.</li>
+          <li>Write §5.1.6 in consolidated form (~1.5 pages total, not six fragmented paragraphs) per page-budget discipline.</li>
+        </ol>
+        <p><strong>Files (new):</strong></p>
+        <div class="deliv"><span>scripts/eval/sweeps/</span><span>config/eval/sweep_episode_set.yaml</span></div>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>config/inferencer/conditional_diffusion.yaml</span><span>config/eval/policy/default.yaml</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.1.6 "Parameter selection rationale" subsection (~1.5 pages).</li>
+          <li>Table 4: Pre-declared selection-criterion table (6 rows).</li>
+          <li>One unified sweep results table per criterion (consolidated, not six separate tables).</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~2 days infrastructure + 4–5 days GPU sweep time (parallelizable across 2 GPUs) + 2 days writing. Blocks: R3-4, R3-5, R3-8, R3-10 plug into this matrix.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規 Method 子節 + スイープインフラ + Table 4。<strong>実験追加 + 新規 Method 内容追加。</strong>論文中で構造的に最も重要な変更：他のパラメータスイープがこのフレームワークに接続される。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li>§5.1.6 の事前宣言選択基準表（Table 4）をスイープ実行<em>前</em>に執筆。これが規律 — 著者が文書で基準にコミットし、その後スイープを実行。</li>
+          <li><code>scripts/eval/sweeps/</code> harness を構築：パラメータごとに 1 シェルスクリプト、全て同一の <code>config/eval/sweep_episode_set.yaml</code>（固定 100 エピソードセット）を使用しパラメータ横断の結果を比較可能に。</li>
+          <li>6 スイープを実行：ω, <code>ucb_lb</code>, <code>ucb_beta</code>, <code>sampling_timesteps</code>, voxel 解像度（R3-4 予算内）, <code>task_step</code>。</li>
+          <li>各スイープで全グリッド点の基準値を計算；基準が自動的に公開値を選択。</li>
+          <li>§5.1.6 を統合形式（合計約 1.5 ページ、6 段の断片ではなく）で執筆 — ページバジェット規律。</li>
+        </ol>
+        <p><strong>新規ファイル：</strong></p>
+        <div class="deliv"><span>scripts/eval/sweeps/</span><span>config/eval/sweep_episode_set.yaml</span></div>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>config/inferencer/conditional_diffusion.yaml</span><span>config/eval/policy/default.yaml</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.1.6「Parameter selection rationale」子節（約 1.5 ページ）。</li>
+          <li>Table 4：事前宣言選択基準表（6 行）。</li>
+          <li>基準ごとの統合スイープ結果表（6 別個表ではなく統合）。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>インフラ約 2 日 + GPU スイープ 4–5 日（2 GPU 並列可）+ 執筆 2 日。ブロック：R3-4, R3-5, R3-8, R3-10 がこのマトリクスに接続。</p>`
+    },
+    'R3-3': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New experiment + new Method subsection + Limitation entry. <strong>Adds experiments + new analysis logic; no new comparison.</strong> Key methodological subtlety: tautology-protected Δ measurement + predictive deployment of stopping rule.</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Modify <code>episode_runner.py</code> to log per-step (a) presence-score Δ <em>on uncut sub-volume only</em>, (b) ensemble variance/entropy on uncut sub-volume, (c) UCB margin variation. Uncut sub-volume = the set of voxels not yet removed by previous cuts.</li>
+          <li>Extend <code>episode_artifact_manager.py</code> JSON schema to persist these metrics.</li>
+          <li>Split evaluation episodes 30/70 dev/test. Calibrate ε on dev for the rule "Δ on uncut sub-volume &lt; ε for K consecutive steps."</li>
+          <li>Apply the calibrated rule on the test split. Compare success rate and average step count against fixed <code>task_step ∈ {4, 6, 8, 12}</code>.</li>
+          <li>If the rule wins or matches at fewer steps: report as positive. If it loses: report as honest negative with explanation.</li>
+        </ol>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>eval/episode_runner.py</span><span>eval/episode_artifact_manager.py</span><span>policy/cutting_surface_planner_v9.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.3 "Empirical convergence and stopping-rule deployment" subsection (~1 page).</li>
+          <li>Figure 5: convergence curves on uncut sub-volume (Δ, entropy, UCB margin).</li>
+          <li>Table 5: stopping rule vs fixed horizon (success, mean steps, std).</li>
+          <li>§6.4 Limitation sentence: "Convergence is established empirically; no theoretical guarantee is claimed."</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~1 day logging code + 2 days experiments (cheap, no retraining) + 1 day writing. Independent.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規実験 + 新規 Method 子節 + Limitation 記載。<strong>実験追加 + 新規分析ロジック；比較追加なし。</strong>方法論的核心：恒真命題保護された Δ 測定 + 停止規則の予測的展開。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li><code>episode_runner.py</code> を変更し per-step で (a) <em>未切断サブボリュームのみ</em>の presence-score Δ、(b) 未切断サブボリューム上のアンサンブル分散/エントロピー、(c) UCB margin 変化をログ。未切断サブボリューム = 既往切断で除去されていないボクセル集合。</li>
+          <li><code>episode_artifact_manager.py</code> の JSON スキーマを拡張してこれら指標を永続化。</li>
+          <li>評価エピソードを 30/70 で dev/test 分割。「未切断サブボリューム上の Δ &lt; ε が K ステップ連続」規則の ε を dev で校正。</li>
+          <li>校正済み規則を test split に適用。固定 <code>task_step ∈ {4, 6, 8, 12}</code> と成功率・平均ステップ数を比較。</li>
+          <li>規則が勝つか少ステップで同等：positive 報告。負ける：説明付きで honest negative 報告。</li>
+        </ol>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>eval/episode_runner.py</span><span>eval/episode_artifact_manager.py</span><span>policy/cutting_surface_planner_v9.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.3「Empirical convergence and stopping-rule deployment」子節（約 1 ページ）。</li>
+          <li>Figure 5：未切断サブボリューム上の収束曲線（Δ, エントロピー, UCB margin）。</li>
+          <li>Table 5：停止規則 vs 固定ホライズン（success, 平均 steps, std）。</li>
+          <li>§6.4 Limitation 文：「収束性は経験的に確立；理論的保証は主張しない」。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>ロギングコード約 1 日 + 実験 2 日（廉価、再訓練なし）+ 執筆 1 日。独立。</p>`
+    },
+    'R3-4': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New experiment (sweep) + new Method analysis. <strong>Adds experiments and a new comparison axis (resolution).</strong> Heaviest GPU cost in the revision (full retrains at multiple resolutions).</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Simple-object pipeline: train at grid side ∈ {16, 25, 36, 49, 64}. The low end (16) is cheap; budget it deliberately to expose the failure floor.</li>
+          <li>Real-object pipeline: train at <code>image_size</code> ∈ {128, 256, 344}. 512 deliberately excluded as full retrain (multi-day cost); 512 inference-only profile is reported in §5.8 instead.</li>
+          <li>Compute boundary IoU on target-part surface and surface F-score @ τ voxels (τ from {1, 2, 3}) for each model.</li>
+          <li>Cross-reference §5.1.6 selection criterion: boundary-IoU ≥ τ at minimum FLOPs.</li>
+        </ol>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>config/inferencer/conditional_diffusion.yaml</span><span>scripts/train/run_train.py</span><span>scripts/eval/eval_image_diffusion_v7.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.6 "Voxel resolution sweep" subsection (~1.5 pages).</li>
+          <li>Figure 6: boundary IoU vs resolution (simple + real pipelines, side by side).</li>
+          <li>Table 7: resolution × success rate × IoU × inference latency.</li>
+          <li>One paragraph in §5.1.6 referencing the resolution selection criterion.</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~8 days GPU for full retrains (5 simple + 3 real, parallelizable across 2 GPUs to ~4 days wall-clock) + 1 day eval/metrics + 1 day writing. Highest-risk schedule item; if Week 4 slips, real-pipeline 128 is the first drop candidate. Independent of R3-1–R3-3, R3-5–R3-10 except provides input to §5.1.6 (R3-2).</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規実験（スイープ）+ 新規 Method 分析。<strong>実験追加 + 新規比較軸（解像度）追加。</strong>Revision 中最重 GPU コスト（複数解像度での完全再訓練）。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li>シンプルオブジェクトパイプライン：grid side ∈ {16, 25, 36, 49, 64} で訓練。下端（16）は廉価；失敗床を露呈するため意図的に予算化。</li>
+          <li>実オブジェクトパイプライン：<code>image_size</code> ∈ {128, 256, 344} で訓練。512 は完全再訓練として意図的に除外（複数日コスト）；512 は §5.8 で推論のみのプロファイルとして報告。</li>
+          <li>各モデルについて対象パーツ表面上の boundary IoU と surface F-score @ τ voxels（τ ∈ {1, 2, 3}）を計算。</li>
+          <li>§5.1.6 選択基準を相互参照：最小 FLOPs における boundary-IoU ≥ τ。</li>
+        </ol>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>config/inferencer/conditional_diffusion.yaml</span><span>scripts/train/run_train.py</span><span>scripts/eval/eval_image_diffusion_v7.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.6「Voxel resolution sweep」子節（約 1.5 ページ）。</li>
+          <li>Figure 6：boundary IoU vs 解像度（simple + real パイプライン併記）。</li>
+          <li>Table 7：解像度 × 成功率 × IoU × 推論レイテンシ。</li>
+          <li>§5.1.6 の解像度選択基準を参照する 1 段落。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>完全再訓練 GPU 約 8 日（simple 5 + real 3、2 GPU 並列で wall-clock 約 4 日）+ 評価/指標 1 日 + 執筆 1 日。スケジュール最高リスク項目；第 4 週遅延時は real-pipeline 128 が最優先削減候補。R3-1–R3-3, R3-5–R3-10 と独立、ただし §5.1.6（R3-2）への入力提供。</p>`
+    },
+    'R3-5': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New experiment + new Method analysis + revision to §5.1.6. <strong>Adds experiments; rewrites guidance-scale rationale.</strong> Cheap (inference-only).</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Verify ω hookup in <code>conditional_diffusion_cfg.py:300, 325</code> accepts a sweep value (currently <code>omega = 0.2</code> default).</li>
+          <li>Implement observation-regime slicing in <code>episode_runner.py</code>: tag each prediction step as early (steps 1–2), middle (3–5), late (6–8) of the planning horizon.</li>
+          <li>Sweep ω ∈ {0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0} on the dev split. Compute Brier score per regime per ω.</li>
+          <li>Sweep sample diversity: standard deviation across M=32 samples per voxel; report alongside Brier.</li>
+          <li>Selection: criterion (§5.1.6) is minimum Brier on dev set, sliced by regime. Pick the ω that minimizes max-regime Brier (most conservative).</li>
+        </ol>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>models/proposed/conditional_diffusion_cfg.py</span><span>eval/episode_runner.py</span><span>config/eval/policy/default.yaml</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.2 "CFG guidance scale characterization" subsection (~1 page).</li>
+          <li>Figure 3: Brier vs ω curves sliced by observation regime.</li>
+          <li>One paragraph in §5.1.6 referencing the ω selection criterion.</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~0.5 day code + 1 day sweep + 0.5 day writing. Depends on §5.1.6 framework (R3-2). Independent of other R3 items.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規実験 + 新規 Method 分析 + §5.1.6 修正。<strong>実験追加；ガイダンス強度根拠書き直し。</strong>廉価（推論のみ）。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li><code>conditional_diffusion_cfg.py:300, 325</code> の ω 接続がスイープ値を受理することを確認（現状 <code>omega = 0.2</code> デフォルト）。</li>
+          <li><code>episode_runner.py</code> に観測レジームスライスを実装：各予測ステップを計画ホライズンの early（1–2）, middle（3–5）, late（6–8）にタグ付け。</li>
+          <li>Dev split 上で ω ∈ {0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0} をスイープ。ω × レジームごとの Brier score を計算。</li>
+          <li>サンプル多様性スイープ：ボクセルごとの M=32 サンプル間標準偏差；Brier と併記。</li>
+          <li>選択：基準（§5.1.6）= dev set 上のレジーム別 Brier 最小。max-レジーム Brier を最小化する ω（最も保守的）を採用。</li>
+        </ol>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>models/proposed/conditional_diffusion_cfg.py</span><span>eval/episode_runner.py</span><span>config/eval/policy/default.yaml</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.2「CFG guidance scale characterization」子節（約 1 ページ）。</li>
+          <li>Figure 3：観測レジームでスライスした Brier vs ω 曲線。</li>
+          <li>§5.1.6 の ω 選択基準を参照する 1 段落。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>コード約 0.5 日 + スイープ 1 日 + 執筆 0.5 日。§5.1.6 フレームワーク（R3-2）に依存。他 R3 項目と独立。</p>`
+    },
+    'R3-6': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>Audit script + one matched-compute baseline rerun + new tables. <strong>Adds one new comparison (matched-compute VAEAC); adds transparency artifact for existing comparisons.</strong></div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Write <code>scripts/eval/baseline_audit.py</code>: instantiate each baseline model class, print param count (via <code>sum(p.numel())</code>), one-step FLOPs (via <code>fvcore</code> or <code>thop</code>), and pull training metadata from existing logs (wall-clock, batch_size × steps × seq_len = data exposure).</li>
+          <li>Run the audit on all four methods (VAEAC, PCD-DM, CVAE, proposed). Output as Table 2 (Markdown source committed to repo).</li>
+          <li>Identify the matched-compute target: the proposed method's wall-clock training budget (~800k steps × 96 batch × per-step time on H100).</li>
+          <li>Re-train VAEAC at matched wall-clock (scale up VAEAC's <code>train_step</code> or capacity to hit the same wall-clock as proposed). Use existing <code>trainer/vaeac_trainer.py</code>; only config changes.</li>
+          <li>Re-evaluate matched-compute VAEAC on the same eval set; report alongside original VAEAC in Table 6.</li>
+        </ol>
+        <p><strong>Files (new):</strong></p>
+        <div class="deliv"><span>scripts/eval/baseline_audit.py</span></div>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>config/inferencer/vaeac.yaml</span><span>trainer/vaeac_trainer.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.1 Table 2: baseline budget audit.</li>
+          <li>§5.5 Table 6: VAEAC original vs matched-compute, side by side.</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ §8.12 PUSHBACK MITIGATION</div>Audit C predicts reviewer pushback: "audit shows compute gap exists across all baselines; matched-compute should apply to PCD-DM and CVAE too." The §5.7 caption must contain the scope defense <strong>verbatim</strong>: <em>"The audit (§5.1 Table 2) shows PCD-DM and CVAE are within 1.2× compute of the proposed method; matched-compute is applied to VAEAC as the baseline named explicitly by Reviewer #3. The within-1.2× margin is documented in Table 2."</em> This defense is load-bearing — if a reviewer challenges it, the scope decision falls.</div>
+        <p><strong>Effort / dependencies:</strong> ~1 day audit script + 3 days GPU for VAEAC rerun + 1 day eval/writing. Independent.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>監査スクリプト + 1 つの matched-compute ベースライン再訓練 + 新規表。<strong>新規比較 1 つ追加（matched-compute VAEAC）；既存比較に透明性 artifact 追加。</strong></div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li><code>scripts/eval/baseline_audit.py</code> を作成：各ベースラインモデルクラスをインスタンス化、param count（<code>sum(p.numel())</code> 経由）、1 ステップ FLOPs（<code>fvcore</code> または <code>thop</code> 経由）を出力、既存ログから訓練メタデータを引き出し（wall-clock, batch_size × steps × seq_len = データ曝露）。</li>
+          <li>4 手法全て（VAEAC, PCD-DM, CVAE, 提案）に対し監査を実行。Table 2 として出力（Markdown ソースを repo にコミット）。</li>
+          <li>Matched-compute ターゲット特定：提案手法の wall-clock 訓練予算（H100 で約 800k steps × 96 batch × ステップ時間）。</li>
+          <li>Matched wall-clock で VAEAC を再訓練（VAEAC の <code>train_step</code> または容量を提案と同 wall-clock になるよう拡張）。既存 <code>trainer/vaeac_trainer.py</code> 使用；config 変更のみ。</li>
+          <li>Matched-compute VAEAC を同一評価セットで再評価；Table 6 に元 VAEAC と併記。</li>
+        </ol>
+        <p><strong>新規ファイル：</strong></p>
+        <div class="deliv"><span>scripts/eval/baseline_audit.py</span></div>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>config/inferencer/vaeac.yaml</span><span>trainer/vaeac_trainer.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.1 Table 2：ベースライン・バジェット監査。</li>
+          <li>§5.5 Table 6：VAEAC 元 vs matched-compute 併記。</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ §8.12 PUSHBACK 対策</div>Audit C はレビュアーの反論を予測：「監査は全ベースラインに計算量ギャップを示している；matched-compute は PCD-DM と CVAE にも適用すべき」。§5.7 キャプションには scope 防御を<strong>逐語的に</strong>記載：<em>「監査（§5.1 Table 2）は PCD-DM と CVAE が提案手法の 1.2× 以内の計算量であることを示す；matched-compute は Reviewer #3 が明示的に挙げた VAEAC に適用する。1.2× 以内のマージンは Table 2 に文書化されている」</em>。この防御は load-bearing — レビュアーに挑戦された場合 scope 判断が崩れる。</div>
+        <p><strong>工数 / 依存関係：</strong>監査スクリプト約 1 日 + VAEAC 再訓練 GPU 3 日 + 評価/執筆 1 日。独立。</p>`
+    },
+    'R3-7': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New OOD experiment + new dataset generator + Limitation entry. <strong>Adds experiments + new comparison axis (in-dist vs geometry-OOD vs color-permuted).</strong> Bridges R3-7 with R3-9's <code>feature_provider</code> abstraction.</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Source PartNet (CC BY-NC license, academic use OK) and Thingi10K subsets — pick ~30 meshes spanning 2 categories not in training set (e.g., furniture + electronics).</li>
+          <li>Write <code>scripts/data_generation/ood_external_mesh.py</code>: loads mesh, voxelizes at 344, applies deterministic semantic-part → color script. Color script: target-class → target-color hue, other classes → fixed non-target hues.</li>
+          <li>Run inference on the OOD set with the trained proposed model (no retraining).</li>
+          <li>Color-permutation row: same OOD meshes, but per-mesh random permutation of the color → semantic mapping. Compare to inherit-colors row.</li>
+          <li>Add §5.9 with Table 8 (verbatim "geometry-OOD" caption) and Figure 9 (qualitative failure panel).</li>
+        </ol>
+        <p><strong>Files (new):</strong></p>
+        <div class="deliv"><span>scripts/data_generation/ood_external_mesh.py</span><span>config/dataset/ood.yaml</span></div>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>scripts/eval/eval_image_diffusion_v7.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.9 "Out-of-distribution evaluation" subsection (~1 page).</li>
+          <li>Table 8 with verbatim caption: "OOD = geometry-OOD: external mesh corpus with deterministic part-color assignment inherited from training-time color semantics."</li>
+          <li>Figure 9: qualitative failures on OOD meshes (3–4 examples).</li>
+          <li>§6.4 Limitation entry: "Our OOD evaluation isolates geometric generalization; the part-color assignment inherits training-time semantics. Full real-product distribution shift (geometry + color + texture jointly) is future work."</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~2 days data prep + 1 day OOD inference + 0.5 day writing. Depends on <code>feature_provider</code> (R3-9) only for the color-permutation row interpretation.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規 OOD 実験 + 新規データセットジェネレータ + Limitation 記載。<strong>実験追加 + 新規比較軸追加（in-dist vs geometry-OOD vs 色順列化）。</strong>R3-7 と R3-9 の <code>feature_provider</code> 抽象化を橋渡し。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li>PartNet（CC BY-NC ライセンス、学術利用可）と Thingi10K のサブセットを取得 — 訓練セットにない 2 カテゴリ（例：家具 + 電子機器）から約 30 メッシュを選択。</li>
+          <li><code>scripts/data_generation/ood_external_mesh.py</code> を作成：メッシュをロード、344 でボクセル化、決定論的セマンティックパーツ → 色スクリプトを適用。色スクリプト：target-class → target 色相、他クラス → 固定 non-target 色相。</li>
+          <li>訓練済み提案モデルで OOD セット上推論（再訓練なし）。</li>
+          <li>色順列化行：同 OOD メッシュだが、メッシュごとに色 → セマンティクスマッピングをランダム順列化。inherit-colors 行と比較。</li>
+          <li>§5.9 を Table 8（逐語「geometry-OOD」キャプション）と Figure 9（定性的失敗パネル）付きで追加。</li>
+        </ol>
+        <p><strong>新規ファイル：</strong></p>
+        <div class="deliv"><span>scripts/data_generation/ood_external_mesh.py</span><span>config/dataset/ood.yaml</span></div>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>scripts/eval/eval_image_diffusion_v7.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.9「Out-of-distribution evaluation」子節（約 1 ページ）。</li>
+          <li>Table 8 逐語キャプション：「OOD = geometry-OOD：訓練時色セマンティクスを継承した決定論的パーツ色割り当てを伴う外部メッシュコーパス」。</li>
+          <li>Figure 9：OOD メッシュ上の定性的失敗（3–4 例）。</li>
+          <li>§6.4 Limitation 記載：「OOD 評価は幾何学的汎化を分離評価；パーツ色割り当ては訓練時セマンティクスを継承する。完全な実製品分布シフト（形状 + 色 + テクスチャ同時）は future work」。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>データ準備約 2 日 + OOD 推論 1 日 + 執筆 0.5 日。色順列化行解釈について <code>feature_provider</code>（R3-9）に依存するのみ。</p>`
+    },
+    'R3-8': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>New profiling experiment + new Discussion paragraph. <strong>Adds experiments + new comparison axis (backbone: UNet / DiT / U-ViT).</strong> Cheap (inference-only, no retraining beyond what R3-4 already does).</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Write <code>scripts/eval/profile_sampling.py</code>: loops over <code>resolution × sampling_steps × backbone</code> grid; for each cell, measures wall-clock latency (median of 50 runs, batch=1 and batch=32), peak GPU memory (<code>torch.cuda.max_memory_allocated()</code>), and energy (latency × concurrent <code>nvidia-smi</code> power sampling at 100 Hz).</li>
+          <li>Run grid: resolutions ∈ {64, 128, 256, 344} (simple + real), sampling_steps ∈ {5, 10, 20, 50, 100, 250}, backbones ∈ {UNet, DiT, U-ViT} from <code>models/experimental/</code>.</li>
+          <li>Plot Pareto frontier (latency vs Brier; lower-left is better).</li>
+          <li>Verify the DiT 4.5× speedup claim at 344×344 from the same profile.</li>
+        </ol>
+        <p><strong>Files (new):</strong></p>
+        <div class="deliv"><span>scripts/eval/profile_sampling.py</span></div>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>(none — uses existing model files)</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.8 "DDIM scalability profile" subsection (~1.5 pages).</li>
+          <li>Figure 7: Pareto frontier (latency vs Brier, sliced by backbone).</li>
+          <li>Table 8 (existing reference R3-7 → renumber if needed): resolution × backbone × latency × memory.</li>
+          <li>One sentence in §6.2 Discussion noting the resolution beyond which inference latency exceeds practical limits.</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~1 day code + 1 day grid runs + 0.5 day writing. Independent except depends on R3-4 trained models existing at each resolution.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>新規プロファイリング実験 + 新規 Discussion 段落。<strong>実験追加 + 新規比較軸（バックボーン：UNet / DiT / U-ViT）追加。</strong>廉価（R3-4 が既に行う範囲を超える再訓練なし、推論のみ）。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li><code>scripts/eval/profile_sampling.py</code> を作成：<code>解像度 × sampling_steps × バックボーン</code>グリッドをループ；各セルで wall-clock レイテンシ（50 回中央値、batch=1 と batch=32）、GPU メモリピーク（<code>torch.cuda.max_memory_allocated()</code>）、エネルギー（レイテンシ × 100 Hz 同時 <code>nvidia-smi</code> 電力サンプリング）を測定。</li>
+          <li>グリッド実行：解像度 ∈ {64, 128, 256, 344}（simple + real）, sampling_steps ∈ {5, 10, 20, 50, 100, 250}, バックボーン ∈ <code>models/experimental/</code> の {UNet, DiT, U-ViT}。</li>
+          <li>パレート境界プロット（レイテンシ vs Brier；左下が良い）。</li>
+          <li>同プロファイルから 344×344 における DiT 4.5× 加速主張を検証。</li>
+        </ol>
+        <p><strong>新規ファイル：</strong></p>
+        <div class="deliv"><span>scripts/eval/profile_sampling.py</span></div>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>（なし — 既存モデルファイル使用）</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.8「DDIM scalability profile」子節（約 1.5 ページ）。</li>
+          <li>Figure 7：パレート境界（レイテンシ vs Brier、バックボーン別スライス）。</li>
+          <li>Table 8（既存 R3-7 参照 → 必要に応じ番号付け直し）：解像度 × バックボーン × レイテンシ × メモリ。</li>
+          <li>§6.2 Discussion に推論レイテンシが実用限界を超える解像度を 1 文記載。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>コード約 1 日 + グリッド実行 1 日 + 執筆 0.5 日。R3-4 の各解像度訓練済みモデル存在に依存する以外は独立。</p>`
+    },
+    'R3-9': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div><strong>Largest structural change.</strong> New main-paper Method section + new interface code + 3 provider implementations + cross-cutting results presentation. This is a <em>design contribution promotion</em>, not just an experiment.</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>Define <code>FeatureProvider</code> base class with one method: <code>get_part_mask(image, target_color) → mask</code>. Place in new <code>denoising_diffusion_pytorch/perception/</code> module.</li>
+          <li>Refactor existing color-mask code into <code>ColorRangeProvider</code> (subclass). Maintain bit-exact behavior; planner code calls the interface only.</li>
+          <li>Implement <code>MaskCorruptionProvider</code> (shared with R3-1): wraps another provider and applies corruption.</li>
+          <li>Implement <code>KMeansRenderProvider</code>:
+            <ul>
+              <li>Generate held-out render set: <code>renders_fit/</code> (50 renders, used to fit K-means) and <code>renders_eval/</code> (used at planning time, disjoint from fit).</li>
+              <li>PyVista config: <code>lighting_neutral</code>, <code>lighting_harsh</code> (single hard directional). <code>texture_overlay</code> = drop-first.</li>
+              <li>Fit K-means (k=4–6 clusters) on RGB pixels from <code>renders_fit/</code>; map clusters to part labels via majority-vote labeling on the fit set's ground truth.</li>
+              <li>At planning time: render slice, classify pixels via K-means, return part mask.</li>
+            </ul></li>
+          <li>Cross-cut all results tables (§5.4, §5.5, §5.9) by adding a "perception module" column with values {Color, MaskCorrupt, KMeansRender}.</li>
+        </ol>
+        <p><strong>Files (new):</strong></p>
+        <div class="deliv"><span>perception/__init__.py</span><span>perception/feature_provider.py</span><span>perception/color_range_provider.py</span><span>perception/mask_corruption_provider.py</span><span>perception/kmeans_render_provider.py</span><span>scripts/data_generation/render_for_perception_test.py</span></div>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>cost/color_mask_cost_estimator.py</span><span>policy/cutting_surface_planner_v9.py</span><span>policy/ensemble_image_builder.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li><strong>NEW §4.5 "Feature provider abstraction"</strong> (~1 page) — interface definition figure, three instantiations described, cross-reference to §5.4 / §5.5 / §5.7 for empirical results. <strong>§8.2 hook</strong>: §4.1 framework paragraph and Figure 2 must mention <code>feature_provider</code> first; otherwise §4.5 reads as retrofit.</li>
+          <li>Add "perception module" column to results tables in §5.4 (robustness), §5.5 (safety), §5.7 (OOD).</li>
+          <li>§6.4 Limitation entry: scope statement (selecting a perception module for a given hardware target is composition work outside the planner contribution; learned modules e.g. Mask2Former compose into the same interface).</li>
+          <li>§6.2 Discussion references <code>feature_provider</code> as the structural separation that makes simulation-only evaluation honest.</li>
+          <li>Inherits one paragraph from <strong>deleted</strong> original §6.2 about SAM/Mask-R-CNN composing into the interface (per §8.1).</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ §8.4 FRAMING DISCIPLINE</div>§4.5 opening paragraph must state <strong>verbatim</strong>: <em>"This section contributes a software abstraction that factors perception out of the planner; it is not a perception study. The contribution is the interface and the demonstration that three substantively different providers slot into it without changing the planner."</em> This prevents Audit C's predicted pushback ("3 providers all consume synthetic inputs; not a perception study"). Cross-reference §6.4 scope statement.</div>
+        <p><strong>Effort / dependencies:</strong> ~3 days refactor + 2 days render generation + 1 day K-means fitting + 2 days cross-cut evals + 2 days writing. Foundational dependency for R3-1, R3-7 color-permutation row. Highest-novelty addition in the revision.</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div><strong>最大の構造変更。</strong>主論文への新規 Method 節 + 新規インターフェースコード + 3 プロバイダ実装 + 横断的結果提示。これは<em>設計貢献の格上げ</em>であり、単なる実験ではない。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li><code>FeatureProvider</code> 基底クラスを 1 メソッド <code>get_part_mask(image, target_color) → mask</code> で定義。新規 <code>denoising_diffusion_pytorch/perception/</code> モジュールに配置。</li>
+          <li>既存色マスクコードを <code>ColorRangeProvider</code>（サブクラス）にリファクタ。ビット一致挙動を維持；計画器コードは介面のみを呼ぶ。</li>
+          <li><code>MaskCorruptionProvider</code> 実装（R3-1 と共有）：別プロバイダをラップして corruption 適用。</li>
+          <li><code>KMeansRenderProvider</code> 実装：
+            <ul>
+              <li>保留レンダーセット生成：<code>renders_fit/</code>（50 レンダー、K-means フィット用）と <code>renders_eval/</code>（計画時使用、fit と素集合）。</li>
+              <li>PyVista config：<code>lighting_neutral</code>, <code>lighting_harsh</code>（単一強指向性）。<code>texture_overlay</code> = 最優先削減。</li>
+              <li><code>renders_fit/</code> の RGB ピクセル上で K-means（k=4–6 クラスタ）フィット；fit セットの GT 上の majority-vote ラベリングでクラスタをパーツラベルにマップ。</li>
+              <li>計画時：スライスをレンダー、K-means でピクセル分類、パーツマスク返却。</li>
+            </ul></li>
+          <li>全結果表（§5.4, §5.5, §5.9）に「perception module」列を追加し値 {Color, MaskCorrupt, KMeansRender} でクロスカット。</li>
+        </ol>
+        <p><strong>新規ファイル：</strong></p>
+        <div class="deliv"><span>perception/__init__.py</span><span>perception/feature_provider.py</span><span>perception/color_range_provider.py</span><span>perception/mask_corruption_provider.py</span><span>perception/kmeans_render_provider.py</span><span>scripts/data_generation/render_for_perception_test.py</span></div>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>cost/color_mask_cost_estimator.py</span><span>policy/cutting_surface_planner_v9.py</span><span>policy/ensemble_image_builder.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li><strong>新規 §4.5「Feature provider abstraction」</strong>（約 1 ページ）— 介面定義図、3 インスタンス化記述、§5.4 / §5.5 / §5.7 の経験的結果への相互参照。<strong>§8.2 hook</strong>：§4.1 フレームワーク段落と Figure 2 で <code>feature_provider</code> に先行言及すること；さもなくば §4.5 は retrofit に見える。</li>
+          <li>§5.4（robustness）、§5.5（safety）、§5.7（OOD）の結果表に「perception module」列を追加。</li>
+          <li>§6.4 Limitation 記載：scope 宣言（特定ハードウェアターゲットの知覚モジュール選択は計画器貢献の範囲外の合成作業；Mask2Former 等の学習モジュールは同介面に接続可能）。</li>
+          <li>§6.2 Discussion で <code>feature_provider</code> をシミュレーションのみ評価を正直にする構造的分離として参照。</li>
+          <li><strong>削除した</strong>原 §6.2 から SAM/Mask-R-CNN 介面接続に関する 1 段落を継承（§8.1 による）。</li>
+        </ul>
+        <div class="card q"><div class="card-label">⚠ §8.4 フレーミング規律</div>§4.5 開頭段落は<strong>逐語的に</strong>記載：<em>「本節は知覚を計画器から分離するソフトウェア抽象化を貢献する；知覚研究ではない。貢献は介面と、実質的に異なる 3 プロバイダが計画器を変えずに接続できることの実証である」</em>。これは Audit C の予測する pushback（「3 プロバイダ全て合成入力 — 知覚研究ではない」）を予防する。§6.4 scope 宣言を相互参照。</div>
+        <p><strong>工数 / 依存関係：</strong>リファクタ約 3 日 + レンダー生成 2 日 + K-means フィット 1 日 + クロスカット評価 2 日 + 執筆 2 日。R3-1, R3-7 色順列化行の基盤依存関係。Revision 中最高新規性追加。</p>`
+    },
+    'R3-10': {
+      en: `<div class="card s"><div class="card-label">TYPE OF REVISION</div>Re-analysis of existing data + new metrics + extended sweep. <strong>Adds analysis (not new experiments per se); extends parameter sweeps.</strong> Cheap — same eval episodes, additional aggregations.</div>
+        <p><strong>Implementation steps:</strong></p>
+        <ol>
+          <li>From existing eval episode artifacts, compute worst-case (min) cut-to-target distance per episode, then min across episodes per threshold setting.</li>
+          <li>Compute 95th-percentile damage volume (CVaR) at the recommended operating point.</li>
+          <li>Manually annotate failed episodes (those with damage &gt; threshold or success=False) with one of: wrong-axis / overshoot / premature-stop / target-misidentification. Use the existing visualization scripts to inspect each failure case.</li>
+          <li>Sweep <code>ucb_lb ∈ {0.1, 0.3, 0.5, 0.7, 0.9, 0.99}</code> on dev split (inference-only, cheap).</li>
+          <li>Sweep <code>ucb_beta ∈ {0, 0.5, 1, 2, 3}</code> on dev split. β was hardcoded at <code>decision_rules.py:16</code>; modify to accept a config parameter.</li>
+          <li>Selection criteria (§5.1.6): ucb_lb by Pareto knee on damage-vs-removal; ucb_beta by variance-of-decisions stability.</li>
+        </ol>
+        <p><strong>Files (modify):</strong></p>
+        <div class="deliv"><span>policy/decision/decision_rules.py</span><span>policy/decision/decision_aggregator.py</span><span>config/eval/policy/default.yaml</span><span>scripts/eval/post_process_data_v3.py</span></div>
+        <p><strong>Paper additions:</strong></p>
+        <ul>
+          <li>§5.5 "Safety analysis: tail metrics and failure taxonomy" subsection (~1.5 pages).</li>
+          <li>Figure 8: failure-mode taxonomy bar chart, broken down by threshold.</li>
+          <li>Table 9: tail metrics (worst-case distance, 95th-percentile CVaR) per threshold setting.</li>
+          <li>One paragraph in §5.1.6 referencing ucb_lb and ucb_beta selection criteria.</li>
+          <li>§6.4 Limitation entry: residual safety risk under operational variations is acknowledged as composition work for hardware integrators (cross-reference W5 specification surface).</li>
+        </ul>
+        <p><strong>Effort / dependencies:</strong> ~0.5 day analysis code + 0.5 day β sweep + 2 days manual failure-mode annotation (the dominant cost) + 1 day writing. Depends on §5.1.6 framework (R3-2).</p>`,
+      jp: `<div class="card s"><div class="card-label">改訂タイプ</div>既存データの再分析 + 新規指標 + 拡張スイープ。<strong>分析追加（新規実験そのものではない）；パラメータスイープ拡張。</strong>廉価 — 同一評価エピソード、追加集約のみ。</div>
+        <p><strong>実装ステップ：</strong></p>
+        <ol>
+          <li>既存評価エピソード artifact から、エピソードごとの最悪ケース（最小）切断-対象距離を計算、次に閾値設定ごとにエピソード横断で min を取る。</li>
+          <li>推奨動作点で 95 パーセンタイルダメージ体積（CVaR）を計算。</li>
+          <li>失敗エピソード（damage &gt; 閾値 または success=False）を wrong-axis / overshoot / premature-stop / target-misidentification のいずれかで手動注釈。既存可視化スクリプトで各失敗ケースを調査。</li>
+          <li>Dev split 上で <code>ucb_lb ∈ {0.1, 0.3, 0.5, 0.7, 0.9, 0.99}</code> をスイープ（推論のみ、廉価）。</li>
+          <li>Dev split 上で <code>ucb_beta ∈ {0, 0.5, 1, 2, 3}</code> をスイープ。β は <code>decision_rules.py:16</code> でハードコード；config パラメータ受理に変更。</li>
+          <li>選択基準（§5.1.6）：ucb_lb は damage-vs-removal の Pareto knee；ucb_beta は決定分散の安定性。</li>
+        </ol>
+        <p><strong>変更ファイル：</strong></p>
+        <div class="deliv"><span>policy/decision/decision_rules.py</span><span>policy/decision/decision_aggregator.py</span><span>config/eval/policy/default.yaml</span><span>scripts/eval/post_process_data_v3.py</span></div>
+        <p><strong>論文追加箇所：</strong></p>
+        <ul>
+          <li>§5.5「Safety analysis: tail metrics and failure taxonomy」子節（約 1.5 ページ）。</li>
+          <li>Figure 8：閾値別の failure-mode 分類体系棒グラフ。</li>
+          <li>Table 9：閾値設定ごとの裾指標（最悪ケース距離、95 パーセンタイル CVaR）。</li>
+          <li>§5.1.6 の ucb_lb と ucb_beta 選択基準を参照する 1 段落。</li>
+          <li>§6.4 Limitation 記載：運用バリエーション下の残余安全リスクをハードウェアインテグレータの合成作業として認識（W5 specification surface 相互参照）。</li>
+        </ul>
+        <p><strong>工数 / 依存関係：</strong>分析コード約 0.5 日 + β スイープ 0.5 日 + 失敗モード手動注釈 2 日（支配的コスト）+ 執筆 1 日。§5.1.6 フレームワーク（R3-2）に依存。</p>`
+    },
+  },
+};
+
+let state = { lang: 'en', idx: 0 };
+const elItemId = document.getElementById('itemId');
+const elItemLabel = document.getElementById('itemLabel');
+const progressLabel = document.getElementById('progressLabel');
+const progressBar = document.getElementById('progressBar');
+const indexChips = document.getElementById('indexChips');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const bodyComments = document.getElementById('bodyComments');
+const bodyResponse = document.getElementById('bodyResponse');
+const bodyStrategy = document.getElementById('bodyStrategy');
+const hdrComments = document.getElementById('hdrComments');
+const hdrResponse = document.getElementById('hdrResponse');
+const hdrStrategy = document.getElementById('hdrStrategy');
+
+function buildIndexChips() {
+  indexChips.innerHTML = '';
+  ITEMS.forEach((it, i) => {
+    const b = document.createElement('button');
+    b.textContent = it.id === 'AE' ? 'AE' : it.id.replace('R3-', '');
+    b.title = it.label[state.lang];
+    b.onclick = () => { state.idx = i; render(); };
+    indexChips.appendChild(b);
+  });
+}
+
+function render() {
+  const item = ITEMS[state.idx];
+  elItemId.textContent = item.id;
+  elItemLabel.textContent = item.label[state.lang];
+  bodyComments.innerHTML = CONTENT.comments[item.id][state.lang];
+  bodyResponse.innerHTML = CONTENT.response[item.id][state.lang];
+  bodyStrategy.innerHTML = CONTENT.strategy[item.id][state.lang];
+  bodyComments.scrollTop = 0;
+  bodyResponse.scrollTop = 0;
+  bodyStrategy.scrollTop = 0;
+
+  const total = ITEMS.length;
+  progressLabel.textContent = `${state.idx + 1} / ${total}`;
+  progressBar.style.width = `${((state.idx + 1) / total) * 100}%`;
+
+  hdrComments.textContent = SUBTITLES[state.lang].c;
+  hdrResponse.textContent = SUBTITLES[state.lang].r;
+  hdrStrategy.textContent = SUBTITLES[state.lang].s;
+
+  Array.from(indexChips.children).forEach((c, i) => {
+    c.classList.toggle('active', i === state.idx);
+    c.title = ITEMS[i].label[state.lang];
+  });
+  prevBtn.disabled = state.idx === 0;
+  nextBtn.disabled = state.idx === total - 1;
+
+  document.querySelectorAll('#langNav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === state.lang);
+  });
+}
+
+document.getElementById('langNav').addEventListener('click', e => {
+  if (e.target.dataset.lang) { state.lang = e.target.dataset.lang; render(); }
+});
+prevBtn.onclick = () => { if (state.idx > 0) { state.idx--; render(); } };
+nextBtn.onclick = () => { if (state.idx < ITEMS.length - 1) { state.idx++; render(); } };
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft' && state.idx > 0) { state.idx--; render(); }
+  else if (e.key === 'ArrowRight' && state.idx < ITEMS.length - 1) { state.idx++; render(); }
+  else if (e.key === 'l' || e.key === 'L') { state.lang = state.lang === 'en' ? 'jp' : 'en'; render(); }
+});
+
+buildIndexChips();
+render();
+</script>
+</body>
+</html>
