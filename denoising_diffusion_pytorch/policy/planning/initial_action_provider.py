@@ -23,9 +23,10 @@ class InitialActionProvider:
 
         print(f"InitialActionProvider: Providing initial action candidates with global indices: {global_indices}")
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         candidates = ActionCandidates.from_global_indices(
             global_indices = global_indices,
             side_length    = self.voxel_grid_side_length,
         )
         return candidates
+

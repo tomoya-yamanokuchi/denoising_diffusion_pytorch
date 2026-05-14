@@ -1,0 +1,2 @@
+task_step       : 8
+num_episodes    : 6            # Objectごとの評価回数

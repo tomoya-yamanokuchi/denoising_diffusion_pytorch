@@ -78,7 +78,7 @@ class EvalBuilder:
         from app.wiring.factories.episode_context_factory import EpisodeContextFactory
         self.episode_context_factory = EpisodeContextFactory(
             grid_config          = self.cfg.env.grid,
-            task_step            = self.cfg.eval.task_step,
+            task_step            = self.cfg.eval.task.task_step,
             ctrl_mode            = self.cfg.eval.policy.control.mode,
             artifact_static_root = self.artifact_static_root,
         )

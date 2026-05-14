@@ -295,7 +295,6 @@ class GaussianDiffusion(nn.Module):
 
 
 
-
             self.omega = omega #default 0.2
             if time_next < 0:
                 # img = x_start

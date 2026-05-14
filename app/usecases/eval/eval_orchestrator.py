@@ -33,7 +33,7 @@ class EvalOrchestrator:
             action_planner  = self.action_planner_factory.create(policy=policy)
             # ----------
             per_case: List[Any] = []
-            for k in tqdm(range(self.cfg.eval.num_episodes)):
+            for k in tqdm(range(self.cfg.eval.task.num_episodes)):
                 policy.reset()
                 ep_ctx = self.episode_context_factory.create(
                     case           = case_ctx,
