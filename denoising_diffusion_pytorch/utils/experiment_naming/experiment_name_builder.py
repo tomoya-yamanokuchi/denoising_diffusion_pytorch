@@ -28,13 +28,18 @@ class ExperimentNameBuilder:
     def build(self, watch: Iterable[WatchEntry], cfg: Any) -> str:
         parts: List[str] = []
 
+        # import ipdb; ipdb.set_trace()
+
         for entry in watch:
             value = self.resolver.resolve(entry, cfg)
 
             if value is None:
                 continue
 
-            value_str = self.formatter.format(value)
+            value_str = self.formatter.format(
+                value=value,
+                value_format=entry.value_format,
+            )
             part = f"{entry.label}{value_str}"
 
             if not part:

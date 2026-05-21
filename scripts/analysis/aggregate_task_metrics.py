@@ -8,6 +8,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import yaml
 
 
 PAPER_METRIC_COLUMNS = [
@@ -25,6 +26,93 @@ def load_pickle(path: Path) -> dict[str, Any]:
         raise TypeError(f"Expected dict in {path}, but got {type(data)}")
 
     return data
+
+
+def load_condition_metadata(root: Path) -> dict[str, Any] | None:
+    metadata_path = root / "condition_metadata.yaml"
+
+    if not metadata_path.exists():
+        return None
+
+    with metadata_path.open("r", encoding="utf-8") as f:
+        metadata = yaml.safe_load(f)
+
+    if metadata is None:
+        return {}
+
+    if not isinstance(metadata, dict):
+        raise TypeError(
+            f"Expected dict in condition_metadata.yaml, but got {type(metadata)}: "
+            f"{metadata_path}"
+        )
+
+    return metadata
+
+
+def resolve_condition_info(
+    root: Path,
+    eta: float | None = None,
+    delta: int | None = None,
+    condition: str | None = None,
+) -> dict[str, Any]:
+    """
+    Resolve eta/delta/condition for one rollout root.
+
+    Priority:
+      1. <root>/condition_metadata.yaml
+      2. explicit arguments / manifest columns
+      3. fallback condition name from root directory
+    """
+    metadata = load_condition_metadata(root)
+
+    if metadata is not None:
+        resolved_eta = float(metadata["eta"])
+        resolved_delta = int(metadata["delta"])
+        resolved_condition = str(
+            metadata.get(
+                "condition",
+                build_condition_name(resolved_eta, resolved_delta),
+            )
+        )
+
+        return {
+            "condition": resolved_condition,
+            "eta": resolved_eta,
+            "delta": resolved_delta,
+            "metadata_path": str(root / "condition_metadata.yaml"),
+            "metadata": metadata,
+        }
+
+    if eta is None or delta is None:
+        raise ValueError(
+            "No condition_metadata.yaml was found and eta/delta were not provided.\n"
+            f"root: {root}\n"
+            "Either save condition_metadata.yaml under the rollout root, "
+            "or provide eta and delta through CLI/manifest."
+        )
+
+    resolved_eta = float(eta)
+    resolved_delta = int(delta)
+    resolved_condition = condition or build_condition_name(resolved_eta, resolved_delta)
+
+    return {
+        "condition": resolved_condition,
+        "eta": resolved_eta,
+        "delta": resolved_delta,
+        "metadata_path": None,
+        "metadata": None,
+    }
+
+
+def build_condition_name(eta: float, delta: int) -> str:
+    return f"eta_{format_eta_label(eta)}_delta_{delta}"
+
+
+def format_eta_label(eta: float) -> str:
+    text = f"{eta:.3f}".rstrip("0").rstrip(".")
+    if "." not in text:
+        text = f"{text}.0"
+    return text.replace(".", "p").replace("-", "m")
 
 
 def get_array(
@@ -47,14 +135,14 @@ def get_array(
 def extract_case_and_episode(rollout_path: Path) -> tuple[str, int]:
     """
     Expected path pattern:
-        .../<case_name>/episode_<idx>/rollout_data.pickle
+        <rollout_root>/<case_name>/episode_<idx>/rollout_data.pickle
     """
     episode_dir = rollout_path.parent
     case_dir = episode_dir.parent
 
     case_name = case_dir.name
-
     episode_name = episode_dir.name
+
     if episode_name.startswith("episode_"):
         episode_idx = int(episode_name.replace("episode_", ""))
     else:
@@ -65,7 +153,7 @@ def extract_case_and_episode(rollout_path: Path) -> tuple[str, int]:
 
 def summarize_execution_error_infos(
     execution_error_infos: list[dict[str, Any]] | None,
-) -> dict[str, float]:
+) -> dict[str, float | int]:
     if not execution_error_infos:
         return {
             "num_steps_with_shift": 0,
@@ -93,9 +181,7 @@ def summarize_execution_error_infos(
 
 def summarize_rollout(
     rollout_path: Path,
-    eta: float | None,
-    delta: int | None,
-    condition: str | None,
+    condition_info: dict[str, Any],
 ) -> dict[str, Any]:
     data = load_pickle(rollout_path)
 
@@ -122,9 +208,11 @@ def summarize_rollout(
     )
 
     row = {
-        "condition": condition,
-        "eta": eta,
-        "delta": delta,
+        "condition": condition_info["condition"],
+        "eta": condition_info["eta"],
+        "delta": condition_info["delta"],
+        "metadata_path": condition_info["metadata_path"],
+
         "case": case_name,
         "episode": episode_idx,
         "rollout_path": str(rollout_path),
@@ -134,12 +222,30 @@ def summarize_rollout(
         "part_remaining_rate": float(part_remaining_rates[-1]),
         "part_occupancy_rate": float(part_occupancy_rates[-1]),
 
-        # Optional diagnostics
+        # Diagnostics
         "num_steps": int(len(cutting_error_volumes)),
         "step_cutting_error_volumes": cutting_error_volumes.tolist(),
         "step_part_remaining_rates": part_remaining_rates.tolist(),
         "step_part_occupancy_rates": part_occupancy_rates.tolist(),
     }
+
+    metadata = condition_info.get("metadata")
+    if metadata is not None:
+        row.update(
+            {
+                "execution_error_enabled": metadata.get("execution_error", {}).get(
+                    "enabled"
+                ),
+                "execution_error_mode": metadata.get("execution_error", {}).get("mode"),
+                "execution_error_seed": metadata.get("execution_error", {}).get("seed"),
+                "cases_name": metadata.get("eval", {}).get("cases_name"),
+                "num_episodes_config": metadata.get("eval", {}).get("num_episodes"),
+                "task_step_config": metadata.get("eval", {}).get("task_step"),
+                "epoch": metadata.get("eval", {}).get("epoch"),
+                "infer_model": metadata.get("eval", {}).get("infer_model"),
+                "control_mode": metadata.get("policy", {}).get("control_mode"),
+            }
+        )
 
     row.update(execution_error_summary)
     return row
@@ -147,49 +253,55 @@ def summarize_rollout(
 
 def find_rollout_files(root: Path) -> list[Path]:
     rollout_files = sorted(root.rglob("rollout_data.pickle"))
+
     if len(rollout_files) == 0:
         raise FileNotFoundError(f"No rollout_data.pickle found under: {root}")
+
     return rollout_files
 
 
 def aggregate_single_root(
     root: Path,
-    eta: float | None,
-    delta: int | None,
-    condition: str | None,
+    eta: float | None = None,
+    delta: int | None = None,
+    condition: str | None = None,
 ) -> pd.DataFrame:
+    condition_info = resolve_condition_info(
+        root=root,
+        eta=eta,
+        delta=delta,
+        condition=condition,
+    )
+
     rows = []
     for rollout_path in find_rollout_files(root):
         rows.append(
             summarize_rollout(
                 rollout_path=rollout_path,
-                eta=eta,
-                delta=delta,
-                condition=condition,
+                condition_info=condition_info,
             )
         )
+
     return pd.DataFrame(rows)
 
 
 def aggregate_from_manifest(manifest_path: Path) -> pd.DataFrame:
     manifest = pd.read_csv(manifest_path)
 
-    required = {"rollout_root", "eta", "delta"}
-    missing = required - set(manifest.columns)
-    if missing:
-        raise ValueError(f"Manifest is missing required columns: {missing}")
+    if "rollout_root" not in manifest.columns:
+        raise ValueError(
+            "Manifest must contain a 'rollout_root' column. "
+            f"Available columns: {list(manifest.columns)}"
+        )
 
-    all_rows = []
+    all_frames = []
 
     for _, spec in manifest.iterrows():
         root = Path(spec["rollout_root"])
-        eta = float(spec["eta"])
-        delta = int(spec["delta"])
 
-        if "condition" in manifest.columns and not pd.isna(spec["condition"]):
-            condition = str(spec["condition"])
-        else:
-            condition = f"eta_{eta:g}_delta_{delta}"
+        eta = read_optional_float(spec, "eta")
+        delta = read_optional_int(spec, "delta")
+        condition = read_optional_str(spec, "condition")
 
         df = aggregate_single_root(
             root=root,
@@ -197,16 +309,34 @@ def aggregate_from_manifest(manifest_path: Path) -> pd.DataFrame:
             delta=delta,
             condition=condition,
         )
-        all_rows.append(df)
+        all_frames.append(df)
 
-    return pd.concat(all_rows, ignore_index=True)
+    if len(all_frames) == 0:
+        raise RuntimeError(f"No rows were aggregated from manifest: {manifest_path}")
+
+    return pd.concat(all_frames, ignore_index=True)
+
+
+def read_optional_float(row: pd.Series, key: str) -> float | None:
+    if key not in row or pd.isna(row[key]):
+        return None
+    return float(row[key])
+
+
+def read_optional_int(row: pd.Series, key: str) -> int | None:
+    if key not in row or pd.isna(row[key]):
+        return None
+    return int(row[key])
+
+
+def read_optional_str(row: pd.Series, key: str) -> str | None:
+    if key not in row or pd.isna(row[key]):
+        return None
+    return str(row[key])
 
 
 def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
-    group_cols = ["eta", "delta"]
-
-    if "condition" in per_episode_df.columns:
-        group_cols = ["condition", "eta", "delta"]
+    group_cols = ["condition", "eta", "delta"]
 
     summary_rows = []
 
@@ -216,20 +346,37 @@ def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
 
         row = dict(zip(group_cols, keys))
         row["num_episodes"] = int(len(group))
+        row["num_cases"] = int(group["case"].nunique())
 
         for metric in PAPER_METRIC_COLUMNS:
             values = group[metric].to_numpy(dtype=float)
             row[f"{metric}_mean"] = float(np.mean(values))
-            row[f"{metric}_std"] = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
+            row[f"{metric}_std"] = (
+                float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
+            )
             row[f"{metric}_sem"] = (
                 float(np.std(values, ddof=1) / np.sqrt(len(values)))
                 if len(values) > 1
                 else 0.0
             )
 
+            import ipdb; ipdb.set_trace()
+
+        # Diagnostics
+        for diagnostic in [
+            "num_steps_with_shift",
+            "mean_abs_sampled_shift",
+            "mean_abs_applied_shift",
+            "max_abs_sampled_shift",
+            "max_abs_applied_shift",
+        ]:
+            if diagnostic in group.columns:
+                values = group[diagnostic].to_numpy(dtype=float)
+                row[f"{diagnostic}_mean"] = float(np.mean(values))
+
         summary_rows.append(row)
 
-    return pd.DataFrame(summary_rows).sort_values(["eta", "delta"])
+    return pd.DataFrame(summary_rows).sort_values(["eta", "delta", "condition"])
 
 
 def main() -> None:
@@ -239,14 +386,22 @@ def main() -> None:
         "--root",
         type=Path,
         default=None,
-        help="Root directory that contains rollout_data.pickle files.",
+        help=(
+            "One rollout root containing condition_metadata.yaml and "
+            "case/episode rollout_data.pickle files."
+        ),
     )
     parser.add_argument(
         "--manifest",
         type=Path,
         default=None,
-        help="CSV manifest with columns: rollout_root, eta, delta, optional condition.",
+        help=(
+            "CSV manifest. Minimal format: one column 'rollout_root'. "
+            "Optional old-style columns: eta, delta, condition."
+        ),
     )
+
+    # Fallback arguments for old results without condition_metadata.yaml.
     parser.add_argument("--eta", type=float, default=None)
     parser.add_argument("--delta", type=int, default=None)
     parser.add_argument("--condition", type=str, default=None)
@@ -262,8 +417,11 @@ def main() -> None:
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
-    if args.manifest is None and args.root is None:
+    if args.root is None and args.manifest is None:
         raise ValueError("Specify either --root or --manifest.")
+
+    if args.root is not None and args.manifest is not None:
+        raise ValueError("Specify only one of --root or --manifest.")
 
     if args.manifest is not None:
         per_episode_df = aggregate_from_manifest(args.manifest)

@@ -15,6 +15,7 @@ class WatchEntry:
     fmt     : str           = "%Y%m%d"
     timezone: str           = "Asia/Tokyo"
     value   : Any           = None
+    value_format: str       = "default"
 
     @property
     def dedupe_key(self) -> Optional[str]:

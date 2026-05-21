@@ -49,6 +49,7 @@ def normalize_watch_entry(
             kind = str(item.get("kind", item.get("type", "config"))).lower()
             label = item.get("label", "")
             as_dir = bool(item.get("as_dir", False))
+            value_format = str(item.get("value_format", item.get("format_value", "default")))
 
             if kind in {"date", "today"}:
                 out.append(WatchEntry(
@@ -56,6 +57,7 @@ def normalize_watch_entry(
                     key=None,
                     label="" if label is None else str(label),
                     as_dir=as_dir,
+                    value_format=value_format,
                     fmt=str(item.get("format", item.get("fmt", "%Y%m%d"))),
                     timezone=str(item.get("timezone", item.get("tz", "Asia/Tokyo"))),
                 ))
@@ -68,6 +70,7 @@ def normalize_watch_entry(
                     label="" if label is None else str(label),
                     as_dir=as_dir,
                     value=item.get("value"),
+                    value_format=value_format,
                 ))
                 continue
 
@@ -83,6 +86,7 @@ def normalize_watch_entry(
                     key=str(path),
                     label="" if label is None else str(label),
                     as_dir=as_dir,
+                    value_format=value_format,
                 ))
                 continue
 
@@ -94,6 +98,7 @@ def normalize_watch_entry(
                 key=str(path),
                 label="" if label is None else str(label),
                 as_dir=as_dir,
+                value_format=value_format,
             ))
             continue
 
