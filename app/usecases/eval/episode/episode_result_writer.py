@@ -20,9 +20,12 @@ class EpisodeResultWriter:
         rollout_data = {
             "observations"       : np.asarray(episode_result.observations),
             "actions"            : np.asarray(episode_result.actions),
+            "planned_actions"    : np.asarray(episode_result.planned_actions),
+            "executed_actions"   : np.asarray(episode_result.executed_actions),
             "rewards"            : np.asarray(episode_result.rewards),
             "infos"              : np.asarray(episode_result.infos),
             "removal_performance": np.asarray(episode_result.removal_performance),
+            "execution_error_infos": episode_result.execution_error_infos,
         }
         pickle_utils().save(
             dataset=rollout_data,
@@ -33,6 +36,12 @@ class EpisodeResultWriter:
             "observations"        : np.asarray(episode_result.observations),
             "actions"             : np.asarray(episode_result.actions),
             "intermediate_actions": episode_result.intermediate_actions,
+
+            "planned_actions"     : np.asarray(episode_result.planned_actions),
+            "executed_actions"    : np.asarray(episode_result.executed_actions),
+            "planned_intermediate_actions" : episode_result.planned_intermediate_actions,
+            "executed_intermediate_actions": episode_result.executed_intermediate_actions,
+            "execution_error_infos": episode_result.execution_error_infos,
         }
         pickle_utils().save(
             dataset   = visualization_data,

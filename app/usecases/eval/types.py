@@ -57,6 +57,13 @@ class EpisodeResult:
     intermediate_actions: List[Any]
     last_info           : Optional[Dict[str, Any]] = None
 
+    # ---- execution error logging ----
+    planned_actions              : Any = None
+    executed_actions             : Any = None
+    planned_intermediate_actions : Any = None
+    executed_intermediate_actions: Any = None
+    execution_error_infos        : Any = None
+
 
 
 @dataclass(frozen=True)

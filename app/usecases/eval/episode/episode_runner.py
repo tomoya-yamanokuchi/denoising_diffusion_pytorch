@@ -77,4 +77,10 @@ class EpisodeRunner:
             removal_performance  = collector.removal_performance,
             intermediate_actions = collector.intermediate_actions,
             last_info            = collector.last_info,
+
+            planned_actions               = collector.planned_actions,
+            executed_actions              = collector.executed_actions,
+            planned_intermediate_actions  = collector.planned_intermediate_actions,
+            executed_intermediate_actions = collector.executed_intermediate_actions,
+            execution_error_infos         = collector.execution_error_infos,
         )
