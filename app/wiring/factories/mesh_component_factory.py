@@ -11,6 +11,8 @@ class MeshComponentFactory:
     def create(self, case_spec: DictConfig):
         layout = str(getattr(case_spec, "dataset_format"))
 
+        # import ipdb; ipdb.set_trace()
+
         if layout == "boxy_generated_yaml":
             repo = BoxyGeneratedMeshRepository()
             return repo.load_from_dataset_dir(Path(case_spec.dataset_dir))

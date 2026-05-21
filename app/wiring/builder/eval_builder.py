@@ -91,7 +91,15 @@ class EvalBuilder:
 
     def build_action_executer(self):
         from denoising_diffusion_pytorch.policy.planning.action_executor import ActionExecutor
-        self.action_executer = ActionExecutor()
+        from denoising_diffusion_pytorch.policy.planning.execution_error import (
+            build_action_execution_error_model,
+        )
+        execution_error_cfg   = getattr(self.cfg.eval, "execution_error", None)
+        execution_error_model = build_action_execution_error_model(execution_error_cfg)
+
+        self.action_executer = ActionExecutor(
+            execution_error_model=execution_error_model,
+        )
 
     def build_step_observer(self):
         from app.usecases.eval.episode.episode_step_observer import EpisodeStepObserver

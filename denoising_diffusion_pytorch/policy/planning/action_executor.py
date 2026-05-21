@@ -7,28 +7,52 @@ from ...env.voxel_cut_sim_v1 import dismantling_env
 from ..types import ActionCandidates
 from app.usecases.eval.types import StepOutcome
 
+from .execution_error import (
+    ActionExecutionErrorModel,
+    NoActionExecutionErrorModel,
+)
+
 
 @dataclass
 class ActionExecutor:
-    def execute(self,
-            env              : dismantling_env,
-            action_candidates: ActionCandidates,
-        ) -> StepOutcome:
+    execution_error_model: ActionExecutionErrorModel | None = None
 
-        cut_cost  = 0.0
+    def __post_init__(self):
+        if self.execution_error_model is None:
+            self.execution_error_model = NoActionExecutionErrorModel()
 
-        for action_index in action_candidates:
+    def execute(
+        self,
+        env: dismantling_env,
+        action_candidates: ActionCandidates,
+    ) -> StepOutcome:
+
+        planned_candidates = action_candidates
+
+        executed_candidates, execution_error_info = self.execution_error_model.apply(
+            planned_candidates
+        )
+
+        cut_cost = 0.0
+        step_result = None
+
+        for action_index in executed_candidates:
             step_result = env.step(
-                action_idx = action_index.global_index
+                action_idx=action_index.global_index
             )
             cut_cost += step_result.reward
 
+        if step_result is None:
+            raise RuntimeError("No action was executed.")
+
         return StepOutcome(
-            executed_action_candidates = action_candidates,
-            env_result = DismantlingStepResult(
-                observation = step_result.observation,
-                reward      = cut_cost,
-                done        = step_result.done,
-                info        = step_result.info,
-            )
+            planned_action_candidates=planned_candidates,
+            executed_action_candidates=executed_candidates,
+            execution_error_info=execution_error_info,
+            env_result=DismantlingStepResult(
+                observation=step_result.observation,
+                reward=cut_cost,
+                done=step_result.done,
+                info=step_result.info,
+            ),
         )

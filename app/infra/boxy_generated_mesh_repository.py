@@ -22,6 +22,8 @@ class DatasetLayout:
 class BoxyGeneratedMeshRepository:
     def load_from_dataset_dir(self, dataset_dir: str | Path) -> MeshComponentSet:
         layout      = DatasetLayout(Path(dataset_dir))
+
+        # import ipdb; ipdb.set_trace()
         mesh_config = load_yaml(str(layout.config_path))
         inner_box   = mesh_config.get("inner_box", {})
 

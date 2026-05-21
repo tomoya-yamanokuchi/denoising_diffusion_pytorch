@@ -67,9 +67,7 @@ class EpisodeRolloutSnapshot:
 from denoising_diffusion_pytorch.env.types import DismantlingStepResult
 @dataclass(frozen=True)
 class StepOutcome:
-    planned_action_candidates : ActionCandidates
     executed_action_candidates: ActionCandidates
-    execution_error_info      : Any
     env_result                : DismantlingStepResult
 
     @property
