@@ -10,18 +10,25 @@ from app.wiring.builder.eval_builder import EvalBuilder
 @dataclass
 class EvalOrchestrator:
     def __init__(self, dependency: EvalBuilder):
-        self.cfg                     = dependency.cfg
-        self.case_context_factory    = dependency.case_context_factory
-        self.episode_context_factory = dependency.episode_context_factory
-        self.episode_result_writer   = dependency.episode_result_writer
-        self.episode_runner          = dependency.episode_runner
-        self.policy_assets           = dependency.policy_assets
-        self.mesh_factory            = dependency.mesh_factory
-        self.policy_factory          = dependency.policy_factory
-        self.action_planner_factory  = dependency.action_planner_factory
+        self.cfg                            = dependency.cfg
+        self.case_context_factory           = dependency.case_context_factory
+        self.episode_context_factory        = dependency.episode_context_factory
+        self.episode_result_writer          = dependency.episode_result_writer
+        self.episode_runner                 = dependency.episode_runner
+        self.policy_assets                  = dependency.policy_assets
+        self.mesh_factory                   = dependency.mesh_factory
+        self.policy_factory                 = dependency.policy_factory
+        self.action_planner_factory         = dependency.action_planner_factory
+        self.eval_condition_metadata_writer = dependency.eval_condition_metadata_writer
 
 
     def run(self) -> Dict[str, Any]:
+        # --- save eval condition metadata ---
+        self.eval_condition_metadata_writer.save(
+            cfg=self.cfg,
+            artifact_static_root=self.episode_context_factory.artifact_static_root,
+        )
+        # --- for each case ---
         cases_list = self.cfg.eval.cases.cases
         results: Dict[str, Any] = {}
         for case_spec in cases_list:

@@ -89,6 +89,11 @@ class EvalBuilder:
         self.episode_result_writer = EpisodeResultWriter()
 
 
+    def build_eval_condition_metadata_writer(self):
+        from app.usecases.eval.eval_condition_metadata_writer import EvalConditionMetadataWriter
+        self.eval_condition_metadata_writer = EvalConditionMetadataWriter()
+
+
     def build_action_executer(self):
         from denoising_diffusion_pytorch.policy.planning.action_executor import ActionExecutor
         from denoising_diffusion_pytorch.policy.planning.execution_error import (
@@ -202,6 +207,7 @@ class EvalBuilder:
         # --- episode ---
         self.build_episode_context_factory()
         self.build_episode_result_writer()
+        self.build_eval_condition_metadata_writer()
         self.build_episode_runner()
 
         self.build_orchestrator()

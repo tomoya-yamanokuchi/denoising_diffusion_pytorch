@@ -1,9 +1,9 @@
 watch_base:
  - { key: log.prefix,                         label: "",  as_dir: true }
  - { kind: basename, key: eval.train_run_dir, label: "", as_dir: true }
- - { key: eval.cases.name,                         label: "" }
- - { key: eval.task_step,                          label: "T" }
- - { key: eval.num_episodes,                       label: "N" }
- - { key: eval.epoch,                              label: "E" }
- - { key: log.tag,                                 label: "" }
+ - { key: eval.cases.name,                    label: "" }
+ - { key: eval.task.task_step,                label: "T" }
+ - { key: eval.task.num_episodes,             label: "N" }
+ - { key: eval.epoch,                         label: "E" }
+ - { key: log.tag,                            label: "" }
 #  - { kind: date, format: "%Y%m%d_%H%M%S", timezone: "Asia/Tokyo"}
