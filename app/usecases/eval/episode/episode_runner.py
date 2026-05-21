@@ -70,14 +70,14 @@ class EpisodeRunner:
 
 
         return EpisodeResult(
-            actions              = collector.actions,
-            observations         = collector.observations,
-            cutting_error_volumes= collector.cutting_error_volumes,
-            infos                = collector.infos,
-            removal_performance  = collector.removal_performance,
-            intermediate_actions = collector.intermediate_actions,
-            last_info            = collector.last_info,
-
+            actions                       = collector.actions,
+            observations                  = collector.observations,
+            cutting_error_volumes         = collector.cutting_error_volumes,
+            infos                         = collector.infos,
+            intermediate_actions          = collector.intermediate_actions,
+            last_info                     = collector.last_info,
+            part_occupancy_rates          = collector.part_occupancy_rates,
+            part_remaining_rates          = collector.part_remaining_rates,
             planned_actions               = collector.planned_actions,
             executed_actions              = collector.executed_actions,
             planned_intermediate_actions  = collector.planned_intermediate_actions,

@@ -108,6 +108,9 @@ def main() -> None:
     executed_actions = data.get("executed_actions")
     execution_error_infos = data.get("execution_error_infos")
 
+
+
+
     if planned_actions is not None:
         print(f"\nplanned_actions: {planned_actions}")
 
@@ -121,6 +124,27 @@ def main() -> None:
         print("\nexecution_error_infos:")
         for i, info in enumerate(execution_error_infos):
             print(f"  step {i}: {info}")
+
+
+
+    cutting_error_volumes = data.get("cutting_error_volumes")
+    part_remaining_rates = data.get("part_remaining_rates")
+    part_occupancy_rates = data.get("part_occupancy_rates")
+
+    if part_occupancy_rates is None:
+        part_occupancy_rates = data.get("removal_performance")
+
+    print("\nPaper metrics:")
+    if cutting_error_volumes is not None:
+        print(f"  Cutting Error Volume: {np.asarray(cutting_error_volumes).sum()}")
+
+    if part_remaining_rates is not None:
+        print(f"  Part Remaining Rate: {np.asarray(part_remaining_rates)[-1]}")
+
+    if part_occupancy_rates is not None:
+        print(f"  Part Occupancy Rate: {np.asarray(part_occupancy_rates)[-1]}")
+
+
 
 
 if __name__ == "__main__":

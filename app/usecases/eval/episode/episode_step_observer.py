@@ -59,8 +59,8 @@ class EpisodeStepObserver:
             f"Ep.: {episode_ctx.episode_idx} | "
             f"step: {step_idx} | "
             f"cutting_error_volume: {step_outcome.cutting_error_volume} | "
-            f"target_removal_rate: {step_outcome.target_removal_rate} | "
-            f"removal_performance: {step_outcome.removal_performance:.3f}"
+            f"part_remaining_rate: {step_outcome.part_remaining_rate:.3f} | "
+            f"part_occupancy_rate: {step_outcome.part_occupancy_rate:.3f}"
         )
         print(f"executed_action_candidates: {step_outcome.executed_action_candidates.to_list()}")
         print("#" * 120)

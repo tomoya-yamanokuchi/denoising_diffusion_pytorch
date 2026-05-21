@@ -520,10 +520,11 @@ class dismantling_env():
             "target_mask_lb": target_mask-0.0,
             "target_mask_ub": target_mask+0.0,
         }
-        mask_image                   = color_range_mask(self.seq_obs_model.get_2d_image(axis="z"),image_mask_config)
-        remaining_vol                = mask_image.mean(2).sum()+1e-6
-        target_remaining_vol         = self.oracle_target_shape_vol-current_target_removal_vol
-        target_to_remaining_vol_rate = (target_remaining_vol/remaining_vol)*100
+        mask_image           = color_range_mask(self.seq_obs_model.get_2d_image(axis="z"),image_mask_config)
+        remaining_vol        = mask_image.mean(2).sum()+1e-6
+        target_remaining_vol = self.oracle_target_shape_vol-current_target_removal_vol
+        part_occupancy_rate  = (target_remaining_vol / remaining_vol) * 100
+        part_remaining_rate  = (target_remaining_vol / self.oracle_target_shape_vol) * 100.0
 
         return DismantlingInfo(
             oracle_axis_images = AxisImages(
@@ -534,7 +535,8 @@ class dismantling_env():
             observation_history  = self.observation_history,
             action_table         = self.action_table,
             target_removal_rate  = target_removal_rate,
-            removal_performance  = target_to_remaining_vol_rate,
+            part_remaining_rate  = part_remaining_rate,
+            part_occupancy_rate  = part_occupancy_rate,
             remaining_vol        = remaining_vol,
             target_remaining_vol = target_remaining_vol,
         )

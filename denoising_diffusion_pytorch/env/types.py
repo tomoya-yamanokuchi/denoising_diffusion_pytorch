@@ -33,7 +33,8 @@ class DismantlingInfo:
     observation_history : dict[int, dict]
     action_table        : dict[int, dict[str, Any]]
     target_removal_rate : float
-    removal_performance : float
+    part_remaining_rate : float
+    part_occupancy_rate : float
     remaining_vol       : float
     target_remaining_vol: float
 

@@ -53,7 +53,8 @@ class EpisodeResult:
     observations         : List[Any]
     cutting_error_volumes: List[float]
     infos                : List[Any]
-    removal_performance  : List[float]
+    part_remaining_rates : List[float]
+    part_occupancy_rates : List[float]
     intermediate_actions : List[Any]
     last_info            : Optional[Dict[str, Any]] = None
 
@@ -84,6 +85,10 @@ class StepOutcome:
         return self.env_result.cutting_error_volume
 
     @property
+    def part_occupancy_rate(self) -> float:
+        return self.env_result.info.part_occupancy_rate
+
+    @property
     def observation(self):
         return self.env_result.observation
 
@@ -108,9 +113,9 @@ class StepOutcome:
         return self.env_result.info.target_removal_rate
 
     @property
-    def removal_performance(self) -> float:
-        return self.env_result.info.removal_performance
-
-    @property
     def last_executed_global_index(self) -> int:
         return self.executed_action_candidates.last.global_index
+
+    @property
+    def part_remaining_rate(self) -> float:
+        return self.env_result.info.part_remaining_rate

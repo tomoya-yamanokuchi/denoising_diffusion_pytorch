@@ -16,8 +16,9 @@ class EpisodeCollector:
     _observations        : list[np.ndarray]      = field(default_factory=list)
     _actions             : list[int]             = field(default_factory=list)
     _cutting_error_volumes: list[float]          = field(default_factory=list)
+    _part_occupancy_rates: list[float]           = field(default_factory=list)
+    _part_remaining_rates: list[float]           = field(default_factory=list)
     _infos               : list[float]           = field(default_factory=list)
-    _removal_performance : list[float]           = field(default_factory=list)
     _intermediate_actions: list[list[int]]       = field(default_factory=list)
     _last_info           : dict[str, Any] | None = None
 
@@ -44,7 +45,8 @@ class EpisodeCollector:
 
         self._cutting_error_volumes.append(float(step_outcome.cutting_error_volume))
         self._infos.append(float(step_outcome.target_removal_rate))
-        self._removal_performance.append(float(step_outcome.removal_performance))
+        self._part_occupancy_rates.append(float(step_outcome.part_occupancy_rate))
+        self._part_remaining_rates.append(float(step_outcome.part_remaining_rate))
 
         # Backward-compatible field:
         # keep "intermediate_actions" as executed action range.
@@ -83,6 +85,10 @@ class EpisodeCollector:
 
 
     @property
+    def part_remaining_rates(self) -> np.ndarray:
+        return np.asarray(self._part_remaining_rates)
+
+    @property
     def observations(self) -> np.ndarray:
         return np.asarray(self._observations)
 
@@ -99,8 +105,8 @@ class EpisodeCollector:
         return np.asarray(self._infos)
 
     @property
-    def removal_performance(self) -> np.ndarray:
-        return np.asarray(self._removal_performance)
+    def part_occupancy_rates(self) -> np.ndarray:
+        return np.asarray(self._part_occupancy_rates)
 
     @property
     def intermediate_actions(self) -> list[list[int]]:
@@ -129,6 +135,7 @@ class EpisodeCollector:
     @property
     def execution_error_infos(self) -> list[dict[str, Any]]:
         return list(self._execution_error_infos)
+
 
 
     def to_rollout_data(self) -> dict[str, Any]:
