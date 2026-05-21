@@ -1,0 +1,20 @@
+name : simple
+
+cases:
+  - name: Object_1
+    dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/dataset_4_12900k/geom_test_3/Boxy_0
+    initial_global_action_range:
+      start: 47
+      stop : 41
+
+  - name: Object_2
+    dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/dataset_4_12900k/geom_test_3/Boxy_1
+    initial_global_action_range:
+      start: 47
+      stop : 41
+
+  - name: Object_3
+    dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/dataset_4_12900k/geom_test_3/Boxy_2
+    initial_global_action_range:
+      start: 47
+      stop : 41
