@@ -33,14 +33,16 @@ class ActionExecutor:
             planned_candidates
         )
 
-        cut_cost = 0.0
         step_result = None
+
+        macro_cutting_error_volume = 0.0
 
         for action_index in executed_candidates:
             step_result = env.step(
                 action_idx=action_index.global_index
             )
-            cut_cost += step_result.reward
+            macro_cutting_error_volume += step_result.cutting_error_volume
+
 
         if step_result is None:
             raise RuntimeError("No action was executed.")
@@ -49,10 +51,10 @@ class ActionExecutor:
             planned_action_candidates=planned_candidates,
             executed_action_candidates=executed_candidates,
             execution_error_info=execution_error_info,
-            env_result=DismantlingStepResult(
-                observation=step_result.observation,
-                reward=cut_cost,
-                done=step_result.done,
-                info=step_result.info,
-            ),
+            env_result = DismantlingStepResult(
+                observation          = step_result.observation,
+                cutting_error_volume = macro_cutting_error_volume,
+                done                 = step_result.done,
+                info                 = step_result.info,
+            )
         )

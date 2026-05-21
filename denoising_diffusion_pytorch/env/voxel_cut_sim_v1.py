@@ -265,7 +265,7 @@ class dismantling_env():
 
 
         oracle_slice_image_z            = self.oracle_obs_model.init_imgs_z
-        self.oracle_target_shape_vol    = self.get_reward(oracle_slice_image_z)
+        self.oracle_target_shape_vol    = self.calculate_cutting_error_volume(oracle_slice_image_z)
 
         self.image_dim                  =  oracle_slice_image_z.shape
         self.mini_batch_image_dim       =  (self.grid_config["side_length"],self.grid_config["side_length"],self.image_dim[2])
@@ -317,8 +317,7 @@ class dismantling_env():
         return action_table
 
 
-    def get_reward(self,mini_batch_image):
-
+    def calculate_cutting_error_volume(self,mini_batch_image):
         """Calculates the cutting cost (reward) based on color matching.
 
         Args:
@@ -328,51 +327,21 @@ class dismantling_env():
             float: The sum of matching pixels for the target color (used as the reward).
         """
 
-        # until vae_20250507.py
-        target_mask_y = np.asarray([0.8,0.8,0.2])
-        image_mask_config_y = {"target_mask":target_mask_y,
-                            "target_mask_lb":target_mask_y-np.asarray([0.1,0.1,0.1]),
-                            "target_mask_ub":target_mask_y+np.asarray([0.2,0.2,0.6])}
+        target_mask_b = np.asarray([0.2, 0.8, 0.8])
+        image_mask_config_b = {
+            "target_mask"   : target_mask_b,
+            "target_mask_lb": target_mask_b - np.asarray([0.1, 0.1, 0.1]),
+            "target_mask_ub": target_mask_b + np.asarray([0.7, 0.2, 0.2]),
+        }
 
-        target_mask_b = np.asarray([0.2,0.8,0.8])
-        image_mask_config_b = {"target_mask":target_mask_b,
-                            "target_mask_lb":target_mask_b-np.asarray([0.1,0.1,0.1]),
-                            "target_mask_ub":target_mask_b+np.asarray([0.7,0.2,0.2])}
+        target_mask_image = color_range_mask(
+            mini_batch_image,
+            image_mask_config_b,
+        )
 
+        cutting_error_volume = target_mask_image.mean(2).sum()
 
-        target_mask_r = np.asarray([0.8,0.2,0.2])
-        image_mask_config_r = {"target_mask":target_mask_r,
-                            "target_mask_lb":target_mask_r-np.asarray([0.1,0.1,0.1]),
-                            "target_mask_ub":target_mask_r+np.asarray([0.2,0.5,0.5])}
-
-
-        # target_mask_y = np.asarray([0.0,1.0,0.0])
-        # image_mask_config_y = {"target_mask":target_mask_y,
-        #                     "target_mask_lb":target_mask_y-np.asarray([0.1,0.1,0.1]),
-        #                     "target_mask_ub":target_mask_y+np.asarray([0.1,0.0,0.1])}
-
-        # target_mask_b = np.asarray([0.0,0.0,1.0])
-        # image_mask_config_b = {"target_mask":target_mask_b,
-        #                     "target_mask_lb":target_mask_b-np.asarray([0.1,0.1,0.1]),
-        #                     "target_mask_ub":target_mask_b+np.asarray([0.1,0.1,0.0])}
-
-
-        # target_mask_r = np.asarray([1.0,0.0,0.0])
-        # image_mask_config_r = {"target_mask":target_mask_r,
-        #                     "target_mask_lb":target_mask_r-np.asarray([0.1,0.1,0.1]),
-        #                     "target_mask_ub":target_mask_r+np.asarray([0.0,0.1,0.1])}
-
-
-        mask_image_blue  = color_range_mask(mini_batch_image,image_mask_config_b)
-        mask_image_red   = color_range_mask(mini_batch_image,image_mask_config_r)
-        mask_image_yellow = color_range_mask(mini_batch_image,image_mask_config_y)
-
-
-        # current task setting, we only consider target mask blue
-        mask_image = mask_image_blue
-        target_mask_cutting_cost    = mask_image.mean(2).sum()
-
-        return target_mask_cutting_cost
+        return cutting_error_volume
 
 
     def step(self,action_idx,partial_obs={}) -> DismantlingStepResult:
@@ -511,10 +480,10 @@ class dismantling_env():
         self.observation_history.update({action_idx:action})
 
         return DismantlingStepResult(
-            observation = self.get_obs(),
-            reward      = self.get_reward(mini_batch_image=mini_batch_image),
-            done        = False,
-            info        = self.get_info(),
+            observation          = self.get_obs(),
+            cutting_error_volume = self.calculate_cutting_error_volume(mini_batch_image=mini_batch_image),
+            done                 = False,
+            info                 = self.get_info(),
         )
 
 
@@ -539,7 +508,7 @@ class dismantling_env():
         oc_slice_image_y = self.oracle_obs_model.init_imgs_y
         oc_slice_image_z = self.oracle_obs_model.init_imgs_z
 
-        current_target_removal_vol = self.get_reward(self.seq_obs_model.get_2d_image(axis="z"))
+        current_target_removal_vol = self.calculate_cutting_error_volume(self.seq_obs_model.get_2d_image(axis="z"))
         target_removal_rate        = (current_target_removal_vol/self.oracle_target_shape_vol)*100.0
 
         ################################################
@@ -573,8 +542,8 @@ class dismantling_env():
 
     def reset(self):
         return DismantlingStepResult(
-            observation = self.get_obs(),
-            reward      = 0.0,
-            done        = False,
-            info        = self.get_info(),
+            observation          = self.get_obs(),
+            cutting_error_volume = 0.0,
+            done                 = False,
+            info                 = self.get_info(),
         )

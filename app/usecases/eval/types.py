@@ -49,13 +49,13 @@ class EpisodeContext:
 
 @dataclass(frozen=True)
 class EpisodeResult:
-    actions             : List[Any]
-    observations        : List[Any]
-    rewards             : List[float]
-    infos               : List[Any]
-    removal_performance : List[float]
-    intermediate_actions: List[Any]
-    last_info           : Optional[Dict[str, Any]] = None
+    actions              : List[Any]
+    observations         : List[Any]
+    cutting_error_volumes: List[float]
+    infos                : List[Any]
+    removal_performance  : List[float]
+    intermediate_actions : List[Any]
+    last_info            : Optional[Dict[str, Any]] = None
 
     # ---- execution error logging ----
     planned_actions              : Any = None
@@ -80,8 +80,8 @@ class StepOutcome:
     env_result                : DismantlingStepResult
 
     @property
-    def reward(self) -> float:
-        return self.env_result.reward
+    def cutting_error_volume(self) -> float:
+        return self.env_result.cutting_error_volume
 
     @property
     def observation(self):

@@ -40,9 +40,8 @@ class DismantlingInfo:
 
 @dataclass(frozen=True)
 class DismantlingStepResult:
-    observation: DismantlingObservation
-    reward     : float
-    done       : bool
-    info       : DismantlingInfo
-
+    observation          : DismantlingObservation
+    cutting_error_volume : float
+    done                 : bool
+    info                 : DismantlingInfo
 

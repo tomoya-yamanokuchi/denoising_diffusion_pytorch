@@ -15,7 +15,7 @@ from denoising_diffusion_pytorch.policy.planning.action_definition.action_candid
 class EpisodeCollector:
     _observations        : list[np.ndarray]      = field(default_factory=list)
     _actions             : list[int]             = field(default_factory=list)
-    _rewards             : list[float]           = field(default_factory=list)
+    _cutting_error_volumes: list[float]          = field(default_factory=list)
     _infos               : list[float]           = field(default_factory=list)
     _removal_performance : list[float]           = field(default_factory=list)
     _intermediate_actions: list[list[int]]       = field(default_factory=list)
@@ -42,7 +42,7 @@ class EpisodeCollector:
         # keep "actions" as executed boundary action.
         self._actions.append(int(step_outcome.last_executed_global_index))
 
-        self._rewards.append(float(step_outcome.reward))
+        self._cutting_error_volumes.append(float(step_outcome.cutting_error_volume))
         self._infos.append(float(step_outcome.target_removal_rate))
         self._removal_performance.append(float(step_outcome.removal_performance))
 
@@ -91,8 +91,8 @@ class EpisodeCollector:
         return np.asarray(self._actions)
 
     @property
-    def rewards(self) -> np.ndarray:
-        return np.asarray(self._rewards)
+    def cutting_error_volumes(self) -> np.ndarray:
+        return np.asarray(self._cutting_error_volumes)
 
     @property
     def infos(self) -> np.ndarray:

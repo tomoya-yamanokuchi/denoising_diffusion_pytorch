@@ -18,13 +18,13 @@ class EpisodeResultWriter:
         save_root = str(episode_ctx.path.artifact_episodic_root)
 
         rollout_data = {
-            "observations"       : np.asarray(episode_result.observations),
-            "actions"            : np.asarray(episode_result.actions),
-            "planned_actions"    : np.asarray(episode_result.planned_actions),
-            "executed_actions"   : np.asarray(episode_result.executed_actions),
-            "rewards"            : np.asarray(episode_result.rewards),
-            "infos"              : np.asarray(episode_result.infos),
-            "removal_performance": np.asarray(episode_result.removal_performance),
+            "observations"         : np.asarray(episode_result.observations),
+            "actions"              : np.asarray(episode_result.actions),
+            "planned_actions"      : np.asarray(episode_result.planned_actions),
+            "executed_actions"     : np.asarray(episode_result.executed_actions),
+            "cutting_error_volumes": np.asarray(episode_result.cutting_error_volumes),
+            "infos"                : np.asarray(episode_result.infos),
+            "removal_performance"  : np.asarray(episode_result.removal_performance),
             "execution_error_infos": episode_result.execution_error_infos,
         }
         pickle_utils().save(

@@ -72,7 +72,7 @@ class EpisodeRunner:
         return EpisodeResult(
             actions              = collector.actions,
             observations         = collector.observations,
-            rewards              = collector.rewards,
+            cutting_error_volumes= collector.cutting_error_volumes,
             infos                = collector.infos,
             removal_performance  = collector.removal_performance,
             intermediate_actions = collector.intermediate_actions,

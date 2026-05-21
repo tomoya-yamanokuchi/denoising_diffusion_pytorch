@@ -58,7 +58,7 @@ class EpisodeStepObserver:
             f"{episode_ctx.case.name} | "
             f"Ep.: {episode_ctx.episode_idx} | "
             f"step: {step_idx} | "
-            f"cut_cost: {step_outcome.reward} | "
+            f"cutting_error_volume: {step_outcome.cutting_error_volume} | "
             f"target_removal_rate: {step_outcome.target_removal_rate} | "
             f"removal_performance: {step_outcome.removal_performance:.3f}"
         )
