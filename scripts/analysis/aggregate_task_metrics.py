@@ -13,7 +13,7 @@ import yaml
 
 PAPER_METRIC_COLUMNS = [
     "cutting_error_volume",
-    "normalized_cutting_error_rate",
+    "episode_cumulative_normalized_cutting_error_rate",
     "part_remaining_rate",
     "part_occupancy_rate",
 ]
@@ -201,6 +201,8 @@ def summarize_rollout(
         primary_key="part_occupancy_rates",
         fallback_key="removal_performance",
     )
+    episode_cumulative_normalized_cutting_error_rate = \
+        float(data["episode_cumulative_normalized_cutting_error_rate"])
 
     case_name, episode_idx = extract_case_and_episode(rollout_path)
 
@@ -220,6 +222,9 @@ def summarize_rollout(
 
         # Paper metrics
         "cutting_error_volume": float(np.sum(cutting_error_volumes)),
+        "episode_cumulative_normalized_cutting_error_rate": (
+            episode_cumulative_normalized_cutting_error_rate
+        ),
         "part_remaining_rate": float(part_remaining_rates[-1]),
         "part_occupancy_rate": float(part_occupancy_rates[-1]),
 

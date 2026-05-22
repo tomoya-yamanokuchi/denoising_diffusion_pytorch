@@ -136,7 +136,7 @@ def main() -> None:
 
     print("\nPaper metrics:")
     if cutting_error_volumes is not None:
-        print(f"  Cutting Error Volume: {np.asarray(cutting_error_volumes).sum()}")
+        print(f" Cutting Error Volume: {np.asarray(cutting_error_volumes).sum()}")
 
     if part_remaining_rates is not None:
         print(f"  Part Remaining Rate: {np.asarray(part_remaining_rates)[-1]}")
@@ -144,22 +144,26 @@ def main() -> None:
     if part_occupancy_rates is not None:
         print(f"  Part Occupancy Rate: {np.asarray(part_occupancy_rates)[-1]}")
 
-
-    normalized_cutting_error_rates = data.get("normalized_cutting_error_rates")
-    episode_normalized_cutting_error_rate = data.get(
-        "episode_normalized_cutting_error_rate"
+    # ---------
+    step_normalized_cutting_error_rates = data.get(
+        "step_normalized_cutting_error_rates"
     )
+    if step_normalized_cutting_error_rates is not None:
+        print(
+            f"  Step Normalized Cutting Error Rates: "
+            f"{np.asarray(step_normalized_cutting_error_rates)}"
+        )
 
-    if episode_normalized_cutting_error_rate is not None:
+    # ---------
+    episode_cumulative_normalized_cutting_error_rate = data.get(
+        "episode_cumulative_normalized_cutting_error_rate"
+    )
+    if episode_cumulative_normalized_cutting_error_rate is not None:
         print(
-            f"  Normalized Cutting Error Rate: "
-            f"{episode_normalized_cutting_error_rate}"
+            f"  Episode Cumulative Normalized Cutting Error Rate: "
+            f"{episode_cumulative_normalized_cutting_error_rate}"
         )
-    elif normalized_cutting_error_rates is not None:
-        print(
-            f"  Normalized Cutting Error Rate: "
-            f"{np.asarray(normalized_cutting_error_rates).sum()}"
-        )
+
 
 
 

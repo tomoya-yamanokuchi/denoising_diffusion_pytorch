@@ -10,19 +10,24 @@ import pandas as pd
 
 METRIC_SPECS = [
     {
-        "name": "cutting_error_volume",
-        "label": "Cutting Error Volume [voxels]",
+        "name"     : "cutting_error_volume",
+        "label"    : "Cutting Error Volume [voxels]",
         "direction": "lower is better",
     },
     {
-        "name": "part_remaining_rate",
-        "label": "Part Remaining Rate [%]",
+        "name"     : "part_remaining_rate",
+        "label"    : "Part Remaining Rate [%]",
         "direction": "higher is better",
     },
     {
-        "name": "part_occupancy_rate",
-        "label": "Part Occupancy Rate [%]",
+        "name"     : "part_occupancy_rate",
+        "label"    : "Part Occupancy Rate [%]",
         "direction": "higher is better",
+    },
+    {
+        "name"     : "episode_cumulative_normalized_cutting_error_rate",
+        "label"    : "Normalized Cutting Error Rate [%]",
+        "direction": "lower is better",
     },
 ]
 
