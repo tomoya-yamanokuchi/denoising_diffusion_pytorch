@@ -5,7 +5,9 @@ import numpy as np
 
 from denoising_diffusion_pytorch.env.voxel.index_map import IndexMap
 from denoising_diffusion_pytorch.env.voxel.voxel_cut_handler import VoxelCutHandler
-from denoising_diffusion_pytorch.env.metrics.cutting_metric_calculator import CuttingMetricCalculator
+from denoising_diffusion_pytorch.utils.pil_utils import color_range_mask
+from denoising_diffusion_pytorch.env.metrics.target_color_segmenter import TargetColorSegmenter
+
 
 from .types import AxisImages, DismantlingObservation, DismantlingInfo, DismantlingStepResult
 
@@ -56,15 +58,13 @@ class dismantling_env():
         self.action_table           = self.get_action_table(grid_config=self.grid_config)
         self.observation_history    = {}
 
-        self.metric_calculator      = CuttingMetricCalculator.create_default()
-
         oracle_slice_image_z            = self.oracle_obs_model.init_imgs_z
         self.oracle_target_shape_vol    = self.calculate_cutting_error_volume(oracle_slice_image_z)
 
         self.image_dim                  =  oracle_slice_image_z.shape
         self.mini_batch_image_dim       =  (self.grid_config["side_length"],self.grid_config["side_length"],self.image_dim[2])
 
-
+        self.target_color_segmenter = TargetColorSegmenter.create_default_blue_segmenter()
 
 
 
@@ -114,8 +114,8 @@ class dismantling_env():
         return action_table
 
 
-    def calculate_cutting_error_volume(self, mini_batch_image):
-        return self.metric_calculator.calculate_cutting_error_volume(mini_batch_image)
+    def calculate_cutting_error_volume(self,mini_batch_image):
+        return self.target_color_segmenter.count_target_pixels(mini_batch_image)
 
 
     def step(self, action_idx, partial_obs=None) -> DismantlingStepResult:
@@ -276,20 +276,48 @@ class dismantling_env():
         )
 
 
-    def get_info(self) -> DismantlingInfo:
-        oracle_axis_images = AxisImages(
-            x=self.oracle_obs_model.init_imgs_x,
-            y=self.oracle_obs_model.init_imgs_y,
-            z=self.oracle_obs_model.init_imgs_z,
-        )
-        sequential_observation_z = self.seq_obs_model.get_2d_image(axis="z")
+    def get_info(self):
+        """Generates additional information about the current state.
 
-        return self.metric_calculator.build_dismantling_info(
-            oracle_axis_images       = oracle_axis_images,
-            sequential_observation_z = sequential_observation_z,
-            oracle_target_shape_vol  = self.oracle_target_shape_vol,
-            observation_history      = self.observation_history,
-            action_table             = self.action_table,
+        Returns:
+            dict: Contains information such as the target removal rate, remaining volume, and the target shape volume.
+        """
+        oc_slice_image_x = self.oracle_obs_model.init_imgs_x
+        oc_slice_image_y = self.oracle_obs_model.init_imgs_y
+        oc_slice_image_z = self.oracle_obs_model.init_imgs_z
+
+        current_target_removal_vol = self.calculate_cutting_error_volume(self.seq_obs_model.get_2d_image(axis="z"))
+        target_removal_rate        = (current_target_removal_vol/self.oracle_target_shape_vol)*100.0
+
+        ################################################
+        ## get sum(unobserved pixels) values
+        #################################################
+        target_mask        =  np.asarray([0.0,0.0,0.0])
+        image_mask_config  = {
+            "target_mask"   : target_mask,
+            "target_mask_lb": target_mask-0.0,
+            "target_mask_ub": target_mask+0.0,
+        }
+        mask_image           = color_range_mask(self.seq_obs_model.get_2d_image(axis="z"),image_mask_config)
+        remaining_vol        = mask_image.mean(2).sum()+1e-6
+        target_remaining_vol = self.oracle_target_shape_vol-current_target_removal_vol
+        part_occupancy_rate  = (target_remaining_vol / remaining_vol) * 100
+        part_remaining_rate  = (target_remaining_vol / self.oracle_target_shape_vol) * 100.0
+
+        return DismantlingInfo(
+            oracle_axis_images = AxisImages(
+                x = oc_slice_image_x,
+                y = oc_slice_image_y,
+                z = oc_slice_image_z,
+            ),
+            observation_history     = self.observation_history,
+            action_table            = self.action_table,
+            target_removal_rate     = target_removal_rate,
+            part_remaining_rate     = part_remaining_rate,
+            part_occupancy_rate     = part_occupancy_rate,
+            remaining_vol           = remaining_vol,
+            target_remaining_vol    = target_remaining_vol,
+            oracle_target_shape_vol = float(self.oracle_target_shape_vol),
         )
 
 
