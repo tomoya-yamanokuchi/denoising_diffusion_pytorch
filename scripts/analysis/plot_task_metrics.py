@@ -24,11 +24,11 @@ METRIC_SPECS = [
         "label"    : "Part Occupancy Rate [%]",
         "direction": "higher is better",
     },
-    {
-        "name"     : "episode_cumulative_normalized_cutting_error_rate",
-        "label"    : "Normalized Cutting Error Rate [%]",
-        "direction": "lower is better",
-    },
+    # {
+    #     "name"     : "episode_cumulative_normalized_cutting_error_rate",
+    #     "label"    : "Normalized Cutting Error Rate [%]",
+    #     "direction": "lower is better",
+    # },
 ]
 
 
@@ -45,7 +45,7 @@ def plot_metric(
     if mean_col not in summary_df.columns:
         raise KeyError(f"Missing column: {mean_col}")
 
-    fig, ax = plt.subplots(figsize=(6.0, 4.0))
+    fig, ax = plt.subplots(figsize=(5.0, 4.0))
 
     for eta, group in summary_df.groupby("eta"):
         group = group.sort_values("delta")
@@ -67,11 +67,21 @@ def plot_metric(
             label=f"η = {eta:g}",
         )
 
-    ax.set_xlabel("Maximum execution error Δ [voxels]")
-    ax.set_ylabel(ylabel)
-    ax.set_title(title_suffix)
+
+    ax.set_xlabel("Maximum execution error Δ [voxels]", fontsize=14)
+    ax.set_ylabel(ylabel, fontsize=14)
+    # ax.set_title(title_suffix)
+
+    # x軸は 0, 1, 2 だけ表示
+    ax.set_xticks([0, 1, 2])
+
+    # x軸・y軸の目盛り文字サイズ
+    ax.tick_params(axis="x", labelsize=12)
+    ax.tick_params(axis="y", labelsize=12)
+
+
     ax.grid(True, alpha=0.3)
-    ax.legend()
+    ax.legend(fontsize=12)
     fig.tight_layout()
 
     fig.savefig(out_path, dpi=300)
