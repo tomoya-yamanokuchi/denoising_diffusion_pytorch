@@ -28,6 +28,16 @@ class EpisodeResultWriter:
             # backward-compatible / diagnostic
             "infos"                 : np.asarray(episode_result.infos),
 
+            "step_normalized_cutting_error_rates": np.asarray(
+                episode_result.step_normalized_cutting_error_rates
+            ),
+            "episode_cumulative_normalized_cutting_error_rate": float(
+                np.sum(episode_result.step_normalized_cutting_error_rates)
+            ),
+            "oracle_target_shape_vol": float(
+                np.asarray(episode_result.oracle_target_shape_vols)[-1]
+            ),
+
             # paper metric
             "part_remaining_rates"  : np.asarray(episode_result.part_remaining_rates),
             "part_occupancy_rates"  : np.asarray(episode_result.part_occupancy_rates),

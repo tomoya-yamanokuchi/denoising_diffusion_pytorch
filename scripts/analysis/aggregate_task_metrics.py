@@ -13,6 +13,7 @@ import yaml
 
 PAPER_METRIC_COLUMNS = [
     "cutting_error_volume",
+    "normalized_cutting_error_rate",
     "part_remaining_rate",
     "part_occupancy_rate",
 ]
@@ -360,7 +361,7 @@ def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
                 else 0.0
             )
 
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
 
         # Diagnostics
         for diagnostic in [

@@ -145,6 +145,22 @@ def main() -> None:
         print(f"  Part Occupancy Rate: {np.asarray(part_occupancy_rates)[-1]}")
 
 
+    normalized_cutting_error_rates = data.get("normalized_cutting_error_rates")
+    episode_normalized_cutting_error_rate = data.get(
+        "episode_normalized_cutting_error_rate"
+    )
+
+    if episode_normalized_cutting_error_rate is not None:
+        print(
+            f"  Normalized Cutting Error Rate: "
+            f"{episode_normalized_cutting_error_rate}"
+        )
+    elif normalized_cutting_error_rates is not None:
+        print(
+            f"  Normalized Cutting Error Rate: "
+            f"{np.asarray(normalized_cutting_error_rates).sum()}"
+        )
+
 
 
 if __name__ == "__main__":

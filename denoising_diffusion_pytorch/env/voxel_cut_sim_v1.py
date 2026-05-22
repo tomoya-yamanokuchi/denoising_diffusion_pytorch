@@ -532,13 +532,14 @@ class dismantling_env():
                 y = oc_slice_image_y,
                 z = oc_slice_image_z,
             ),
-            observation_history  = self.observation_history,
-            action_table         = self.action_table,
-            target_removal_rate  = target_removal_rate,
-            part_remaining_rate  = part_remaining_rate,
-            part_occupancy_rate  = part_occupancy_rate,
-            remaining_vol        = remaining_vol,
-            target_remaining_vol = target_remaining_vol,
+            observation_history     = self.observation_history,
+            action_table            = self.action_table,
+            target_removal_rate     = target_removal_rate,
+            part_remaining_rate     = part_remaining_rate,
+            part_occupancy_rate     = part_occupancy_rate,
+            remaining_vol           = remaining_vol,
+            target_remaining_vol    = target_remaining_vol,
+            oracle_target_shape_vol = float(self.oracle_target_shape_vol),
         )
 
 

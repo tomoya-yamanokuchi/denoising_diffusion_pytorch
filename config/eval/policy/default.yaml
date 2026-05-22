@@ -11,11 +11,9 @@ inference:
 decision:
   mode : clip_ucb_raw
   param:
-    # ucb_lb: 0.00
-    # ucb_lb: 0.25
-    # ucb_lb: 0.50
-    ucb_lb: 0.75
-    # ucb_lb: 1.00
+    # ucb_lb: 0.0
+    ucb_lb: 0.5
+    # ucb_lb: 1.0
 
 segmentation:
   blue:

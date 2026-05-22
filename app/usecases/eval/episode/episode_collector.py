@@ -13,14 +13,16 @@ from denoising_diffusion_pytorch.policy.planning.action_definition.action_candid
 
 @dataclass
 class EpisodeCollector:
-    _observations        : list[np.ndarray]      = field(default_factory=list)
-    _actions             : list[int]             = field(default_factory=list)
-    _cutting_error_volumes: list[float]          = field(default_factory=list)
-    _part_occupancy_rates: list[float]           = field(default_factory=list)
-    _part_remaining_rates: list[float]           = field(default_factory=list)
-    _infos               : list[float]           = field(default_factory=list)
-    _intermediate_actions: list[list[int]]       = field(default_factory=list)
-    _last_info           : dict[str, Any] | None = None
+    _observations        : list[np.ndarray]           = field(default_factory=list)
+    _actions             : list[int]                  = field(default_factory=list)
+    _cutting_error_volumes: list[float]               = field(default_factory=list)
+    _part_occupancy_rates: list[float]                = field(default_factory=list)
+    _part_remaining_rates: list[float]                = field(default_factory=list)
+    _infos               : list[float]                = field(default_factory=list)
+    _intermediate_actions: list[list[int]]            = field(default_factory=list)
+    _last_info           : dict[str, Any] | None      = None
+    _step_normalized_cutting_error_rates: list[float] = field(default_factory=list)
+    _oracle_target_shape_vols: list[float]            = field(default_factory=list)
 
     # ---- execution error logging ----
     _planned_actions              : list[int]       = field(default_factory=list)
@@ -51,6 +53,14 @@ class EpisodeCollector:
         # Backward-compatible field:
         # keep "intermediate_actions" as executed action range.
         self._intermediate_actions.append(executed_candidates.to_list())
+
+        self._step_normalized_cutting_error_rates.append(
+            float(step_outcome.step_normalized_cutting_error_rate)
+        )
+
+        self._oracle_target_shape_vols.append(
+            float(step_outcome.env_result.info.oracle_target_shape_vol)
+        )
 
         # New explicit logs.
         self._planned_actions.append(int(planned_candidates.last.global_index))
@@ -136,6 +146,13 @@ class EpisodeCollector:
     def execution_error_infos(self) -> list[dict[str, Any]]:
         return list(self._execution_error_infos)
 
+    @property
+    def step_normalized_cutting_error_rates(self) -> np.ndarray:
+        return np.asarray(self._step_normalized_cutting_error_rates)
+
+    @property
+    def oracle_target_shape_vols(self) -> np.ndarray:
+        return np.asarray(self._oracle_target_shape_vols)
 
 
     def to_rollout_data(self) -> dict[str, Any]:

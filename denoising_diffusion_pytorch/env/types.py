@@ -29,15 +29,15 @@ class DismantlingObservation:
 
 @dataclass(frozen=True)
 class DismantlingInfo:
-    oracle_axis_images  : AxisImages
-    observation_history : dict[int, dict]
-    action_table        : dict[int, dict[str, Any]]
-    target_removal_rate : float
-    part_remaining_rate : float
-    part_occupancy_rate : float
-    remaining_vol       : float
-    target_remaining_vol: float
-
+    oracle_axis_images     : AxisImages
+    observation_history    : dict[int, dict]
+    action_table           : dict[int, dict[str, Any]]
+    target_removal_rate    : float
+    part_remaining_rate    : float
+    part_occupancy_rate    : float
+    remaining_vol          : float
+    target_remaining_vol   : float
+    oracle_target_shape_vol: float
 
 @dataclass(frozen=True)
 class DismantlingStepResult:

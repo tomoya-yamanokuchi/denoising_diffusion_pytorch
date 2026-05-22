@@ -49,16 +49,19 @@ class EpisodeContext:
 
 @dataclass(frozen=True)
 class EpisodeResult:
-    actions              : List[Any]
-    observations         : List[Any]
-    cutting_error_volumes: List[float]
-    infos                : List[Any]
-    part_remaining_rates : List[float]
-    part_occupancy_rates : List[float]
-    intermediate_actions : List[Any]
-    last_info            : Optional[Dict[str, Any]] = None
+    actions                            : List[Any]
+    observations                       : List[Any]
+    cutting_error_volumes              : List[float]
+    infos                              : List[Any]
+    part_remaining_rates               : List[float]
+    part_occupancy_rates               : List[float]
+    intermediate_actions               : List[Any]
+    step_normalized_cutting_error_rates: List[float]
+    oracle_target_shape_vols           : List[float]
 
-    # ---- execution error logging ----
+    # ---- optional / backward-compatible fields ----
+    last_info                    : Optional[Dict[str, Any]] = None
+    # ---
     planned_actions              : Any = None
     executed_actions             : Any = None
     planned_intermediate_actions : Any = None
@@ -79,6 +82,16 @@ class StepOutcome:
     executed_action_candidates: ActionCandidates
     execution_error_info      : Any
     env_result                : DismantlingStepResult
+
+
+    @property
+    def step_normalized_cutting_error_rate(self) -> float:
+        oracle_target_shape_vol = float(self.env_result.info.oracle_target_shape_vol)
+
+        if oracle_target_shape_vol <= 0:
+            return 0.0
+
+        return float(self.cutting_error_volume) / oracle_target_shape_vol * 100.0
 
     @property
     def cutting_error_volume(self) -> float:
