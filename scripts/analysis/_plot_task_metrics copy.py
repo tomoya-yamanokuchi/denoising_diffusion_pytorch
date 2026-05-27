@@ -49,36 +49,25 @@ def plot_metric(
     x_axis: str,
     group_by: str | None,
 ) -> None:
+
     mean_col = f"{metric_name}_mean"
     sem_col = f"{metric_name}_sem"
 
     if mean_col not in summary_df.columns:
         raise KeyError(f"Missing column: {mean_col}")
 
-    if x_axis not in summary_df.columns:
-        raise KeyError(f"Missing x_axis column: {x_axis}")
-
-    if group_by is not None and group_by not in summary_df.columns:
-        raise KeyError(f"Missing group_by column: {group_by}")
-
     fig, ax = plt.subplots(figsize=(5.0, 4.0))
 
-    if group_by is None:
-        plot_groups = [(None, summary_df)]
-    else:
-        plot_groups = list(summary_df.groupby(group_by, dropna=False))
+    for eta, group in summary_df.groupby("eta"):
+        group = group.sort_values("delta")
 
-    for group_value, group in plot_groups:
-        group = group.sort_values(x_axis)
-
-        x = group[x_axis].to_numpy()
+        x = group["delta"].to_numpy()
         y = group[mean_col].to_numpy()
 
-        yerr = group[sem_col].to_numpy() if sem_col in group.columns else None
-
-        label = None
-        if group_by is not None:
-            label = f"{AXIS_LABELS.get(group_by, group_by)} = {group_value:g}"
+        if sem_col in group.columns:
+            yerr = group[sem_col].to_numpy()
+        else:
+            yerr = None
 
         ax.errorbar(
             x,
@@ -86,27 +75,26 @@ def plot_metric(
             yerr=yerr,
             marker="o",
             capsize=4,
-            label=label,
+            label=f"η = {eta:g}",
         )
 
-    ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=14)
+
+    ax.set_xlabel("Maximum execution error Δ [voxels]", fontsize=14)
     ax.set_ylabel(ylabel, fontsize=14)
+    # ax.set_title(title_suffix)
 
-    x_tick_values = sorted(summary_df[x_axis].dropna().unique())
-    ax.set_xticks(x_tick_values)
+    # x軸は 0, 1, 2 だけ表示
+    ax.set_xticks([0, 1, 2])
 
-    if x_axis in ["delta", "sample_image_num", "sampling_timesteps"]:
-        ax.set_xlim(min(x_tick_values) - 0.1, max(x_tick_values) + 0.1)
-
+    # x軸・y軸の目盛り文字サイズ
     ax.tick_params(axis="x", labelsize=12)
     ax.tick_params(axis="y", labelsize=12)
 
+
     ax.grid(True, alpha=0.3)
-
-    if group_by is not None:
-        ax.legend(fontsize=12)
-
+    ax.legend(fontsize=12)
     fig.tight_layout()
+
     fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
@@ -131,25 +119,6 @@ def main() -> None:
         default="png",
         choices=["png", "pdf", "svg"],
     )
-    parser.add_argument(
-        "--x_axis",
-        type=str,
-        default="delta",
-        help=(
-            "Column to use as x-axis. "
-            "Examples: delta, guidance_scale, sample_image_num, sampling_timesteps."
-        ),
-    )
-    parser.add_argument(
-        "--group_by",
-        type=str,
-        default=None,
-        help=(
-            "Optional column for grouping lines. "
-            "Use eta for eta-delta sweep. Omit for one-parameter sensitivity."
-        ),
-    )
-
 
     args = parser.parse_args()
 
@@ -157,20 +126,14 @@ def main() -> None:
 
     summary_df = pd.read_csv(args.summary_csv)
 
-
-    required_cols = {args.x_axis}
-    if args.group_by is not None:
-        required_cols.add(args.group_by)
-
+    required_cols = {"eta", "delta"}
     missing = required_cols - set(summary_df.columns)
     if missing:
         raise ValueError(f"summary_csv is missing columns: {missing}")
 
-
     for spec in METRIC_SPECS:
         metric_name = spec["name"]
-        # out_path = args.out_dir / f"{metric_name}_vs_execution_error.{args.format}"
-        out_path = args.out_dir / f"{metric_name}_vs_{args.x_axis}.{args.format}"
+        out_path = args.out_dir / f"{metric_name}_vs_execution_error.{args.format}"
 
         plot_metric(
             summary_df=summary_df,
@@ -178,8 +141,6 @@ def main() -> None:
             ylabel=spec["label"],
             title_suffix=f"{spec['label']} ({spec['direction']})",
             out_path=out_path,
-            x_axis=args.x_axis,
-            group_by=args.group_by,
         )
 
         print(f"[OK] Saved figure: {out_path}")

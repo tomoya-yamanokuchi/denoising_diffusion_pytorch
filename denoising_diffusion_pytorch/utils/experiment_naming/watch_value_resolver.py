@@ -65,13 +65,6 @@ class WatchValueResolver:
         if entry.key is None:
             return None
 
-        # eval時の log.tag は tag_template から生成する既存仕様を維持
-        if entry.key == "log.tag" and select_value(cfg, "name") == "eval":
-            return self.render_template(
-                template=select_value(cfg, "log.tag_template"),
-                cfg=cfg,
-            )
-
         return select_value(cfg, entry.key)
 
     def render_template(self, template: str, cfg: Any) -> str:

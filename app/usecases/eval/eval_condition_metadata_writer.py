@@ -54,15 +54,26 @@ class EvalConditionMetadataWriter:
     ) -> dict[str, Any]:
         eta = self._get_cutting_risk_threshold(cfg)
         delta = self._get_execution_error_delta(cfg)
+        inference = self._get_policy_inference_metadata(cfg)
 
         return {
-            "condition": self._build_condition_name(eta=eta, delta=delta),
+            "condition": self._build_condition_name(
+                eta=eta,
+                delta=delta,
+                guidance_scale=inference["guidance_scale"],
+                sample_image_num=inference["sample_image_num"],
+                sampling_timesteps=inference["sampling_timesteps"],
+            ),
             "artifact_static_root": str(artifact_static_root),
 
             # Paper / experiment condition
             "eta": eta,
             "delta": delta,
             "cutting_risk_threshold": eta,
+
+            "guidance_scale": inference["guidance_scale"],
+            "sample_image_num": inference["sample_image_num"],
+            "sampling_timesteps": inference["sampling_timesteps"],
 
             "execution_error": {
                 "enabled": bool(self._cfg_get(cfg.eval.execution_error, "enabled", False)),
@@ -89,8 +100,9 @@ class EvalConditionMetadataWriter:
                 "decision_param": self._to_plain_container(
                     self._cfg_get(cfg.eval.policy.decision, "param", {})
                 ),
+                "inference": inference,
             },
-
+            "experiment_tag": self._cfg_get(cfg.log, "tag", None),
             # Full resolved config snapshot.
             # This makes the result self-contained for later analysis.
             "resolved_config": self._to_plain_container(cfg),
@@ -107,12 +119,43 @@ class EvalConditionMetadataWriter:
 
         return int(self._cfg_get(execution_error_cfg, "max_abs_shift", 0))
 
-    def _build_condition_name(self, eta: float, delta: int) -> str:
-        eta_label = self._format_eta_label(eta)
-        return f"eta_{eta_label}_delta_{delta}"
+    def _get_policy_inference_metadata(self, cfg: DictConfig) -> dict[str, Any]:
+        inference_cfg = self._cfg_get(cfg.eval.policy, "inference", None)
 
-    def _format_eta_label(self, eta: float) -> str:
-        text = f"{eta:.3f}".rstrip("0").rstrip(".")
+        return {
+            "guidance_scale": float(
+                self._cfg_get(inference_cfg, "guidance_scale", 0.2)
+            ),
+            "sample_image_num": int(
+                self._cfg_get(inference_cfg, "sample_image_num", 32)
+            ),
+            "sampling_timesteps": int(
+                self._cfg_get(inference_cfg, "sampling_timesteps", -1)
+            ),
+        }
+
+
+    def _build_condition_name(
+        self,
+        eta: float,
+        delta: int,
+        guidance_scale: float,
+        sample_image_num: int,
+        sampling_timesteps: int,
+    ) -> str:
+        eta_label = self._format_float_label(eta)
+        w_label = self._format_float_label(guidance_scale)
+
+        return (
+            f"eta_{eta_label}"
+            f"_delta_{delta}"
+            f"_w_{w_label}"
+            f"_M_{sample_image_num}"
+            f"_S_{sampling_timesteps}"
+        )
+
+    def _format_float_label(self, value: float) -> str:
+        text = f"{value:.3f}".rstrip("0").rstrip(".")
         if "." not in text:
             text = f"{text}.0"
         return text.replace(".", "p").replace("-", "m")

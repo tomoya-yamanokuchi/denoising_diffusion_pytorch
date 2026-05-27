@@ -7,7 +7,7 @@ inference:
   model             : conditional_diffusion
   guidance_scale    : 0.2
   sample_image_num  : 32
-  sampling_timesteps: 10 # DDIM step for inference
+  sampling_timesteps: 20 # DDIM step for inference
 
 decision:
   mode : clip_ucb_raw

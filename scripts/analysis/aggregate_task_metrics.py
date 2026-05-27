@@ -13,10 +13,32 @@ import yaml
 
 PAPER_METRIC_COLUMNS = [
     "cutting_error_volume",
-    "episode_cumulative_normalized_cutting_error_rate",
     "part_remaining_rate",
     "part_occupancy_rate",
 ]
+
+CONDITION_COLUMNS = [
+    "eta",
+    "delta",
+    "guidance_scale",
+    "sample_image_num",
+    "sampling_timesteps",
+]
+
+
+def get_nested(
+    data: dict[str, Any] | None,
+    keys: list[str],
+    default: Any = None,
+) -> Any:
+    cur = data
+    for key in keys:
+        if cur is None:
+            return default
+        if not isinstance(cur, dict):
+            return default
+        cur = cur.get(key)
+    return cur if cur is not None else default
 
 
 def load_pickle(path: Path) -> dict[str, Any]:
@@ -100,8 +122,26 @@ def resolve_condition_info(
         "condition": resolved_condition,
         "eta": resolved_eta,
         "delta": resolved_delta,
-        "metadata_path": None,
-        "metadata": None,
+        "guidance_scale": float(
+            metadata.get(
+                "guidance_scale",
+                get_nested(metadata, ["policy", "inference", "guidance_scale"], np.nan),
+            )
+        ),
+        "sample_image_num": int(
+            metadata.get(
+                "sample_image_num",
+                get_nested(metadata, ["policy", "inference", "sample_image_num"], -1),
+            )
+        ),
+        "sampling_timesteps": int(
+            metadata.get(
+                "sampling_timesteps",
+                get_nested(metadata, ["policy", "inference", "sampling_timesteps"], -1),
+            )
+        ),
+        "metadata_path": str(root / "condition_metadata.yaml"),
+        "metadata": metadata,
     }
 
 
@@ -211,13 +251,16 @@ def summarize_rollout(
     )
 
     row = {
-        "condition": condition_info["condition"],
-        "eta": condition_info["eta"],
-        "delta": condition_info["delta"],
-        "metadata_path": condition_info["metadata_path"],
+        "condition"         : condition_info["condition"],
+        "eta"               : condition_info["eta"],
+        "delta"             : condition_info["delta"],
+        "guidance_scale"    : condition_info["guidance_scale"],
+        "sample_image_num"  : condition_info["sample_image_num"],
+        "sampling_timesteps": condition_info["sampling_timesteps"],
+        "metadata_path"     : condition_info["metadata_path"],
 
-        "case": case_name,
-        "episode": episode_idx,
+        "case"        : case_name,
+        "episode"     : episode_idx,
         "rollout_path": str(rollout_path),
 
         # Paper metrics
@@ -250,6 +293,15 @@ def summarize_rollout(
                 "epoch": metadata.get("eval", {}).get("epoch"),
                 "infer_model": metadata.get("eval", {}).get("infer_model"),
                 "control_mode": metadata.get("policy", {}).get("control_mode"),
+                "guidance_scale_config": get_nested(
+                    metadata, ["policy", "inference", "guidance_scale"]
+                ),
+                "sample_image_num_config": get_nested(
+                    metadata, ["policy", "inference", "sample_image_num"]
+                ),
+                "sampling_timesteps_config": get_nested(
+                    metadata, ["policy", "inference", "sampling_timesteps"]
+                ),
             }
         )
 
@@ -342,7 +394,10 @@ def read_optional_str(row: pd.Series, key: str) -> str | None:
 
 
 def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
-    group_cols = ["condition", "eta", "delta"]
+    group_cols = ["condition"] + [
+        col for col in CONDITION_COLUMNS
+        if col in per_episode_df.columns
+    ]
 
     summary_rows = []
 
@@ -382,7 +437,22 @@ def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
 
         summary_rows.append(row)
 
-    return pd.DataFrame(summary_rows).sort_values(["eta", "delta", "condition"])
+
+    summary_df = pd.DataFrame(summary_rows)
+
+    sort_cols = [
+        col for col in [
+            "eta",
+            "delta",
+            "guidance_scale",
+            "sample_image_num",
+            "sampling_timesteps",
+            "condition",
+        ]
+        if col in summary_df.columns
+    ]
+
+    return summary_df.sort_values(sort_cols)
 
 
 def main() -> None:
