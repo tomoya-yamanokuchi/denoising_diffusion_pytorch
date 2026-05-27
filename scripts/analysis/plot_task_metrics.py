@@ -24,19 +24,14 @@ METRIC_SPECS = [
         "label"    : "Part Occupancy Rate [%]",
         "direction": "higher is better",
     },
-    # {
-    #     "name"     : "episode_cumulative_normalized_cutting_error_rate",
-    #     "label"    : "Normalized Cutting Error Rate [%]",
-    #     "direction": "lower is better",
-    # },
 ]
 
 AXIS_LABELS = {
     "delta"             : "Maximum execution error Δ [voxels]",
-    "eta"               : "Cutting-risk threshold η",
-    "guidance_scale"    : "CFG guidance scale w",
-    "sample_image_num"  : "Number of generated samples M",
-    "sampling_timesteps": "DDIM sampling steps S",
+    "eta"               : "Cutting-risk threshold (η)",
+    "guidance_scale"    : "CFG guidance scale (w)",
+    "sample_image_num"  : "Number of generated samples (M)",
+    "sampling_timesteps": "DDIM sampling steps",
 }
 
 

@@ -13,19 +13,41 @@ from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 i
 class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
     def __init__(
         self,
-        inferencer      : GaussianDiffusion,
+        inferencer: GaussianDiffusion,
         sample_image_num: int,
-        control_mode    : str,
-        guidance_scale  : float,
+        control_mode: str,
+        guidance_scale: float,
         sampling_timesteps: int | None = None,
     ):
-        self.inferencer         = inferencer
-        self.sample_image_num   = int(sample_image_num)
-        self.control_mode       = control_mode
-        self.guidance_scale     = float(guidance_scale)
-        self.sampling_timesteps = sampling_timesteps
-        # import ipdb; ipdb.set_trace()
-        assert self.sampling_timesteps is not None
+        self.inferencer       = inferencer
+        self.sample_image_num = int(sample_image_num)
+        self.control_mode     = control_mode
+        self.guidance_scale   = float(guidance_scale)
+
+        if sampling_timesteps is None:
+            raise ValueError("sampling_timesteps must not be None.")
+
+        self.sampling_timesteps = int(sampling_timesteps)
+        self._apply_sampling_timesteps()
+
+
+    def _apply_sampling_timesteps(self) -> None:
+        model = self.inferencer.ema_model
+
+        if self.sampling_timesteps <= 0:
+            raise ValueError(
+                f"sampling_timesteps must be positive, got {self.sampling_timesteps}"
+            )
+
+        if self.sampling_timesteps > model.num_timesteps:
+            raise ValueError(
+                "sampling_timesteps must be <= model.num_timesteps. "
+                f"got sampling_timesteps={self.sampling_timesteps}, "
+                f"num_timesteps={model.num_timesteps}"
+            )
+
+        model.sampling_timesteps = self.sampling_timesteps
+        print("model.sampling_timesteps = ", model.sampling_timesteps)
 
 
     def predict(self, planning_input: PlanningPolicyInput) -> np.ndarray:
@@ -40,7 +62,6 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
             cond       = normalized_cond,
             model_size = model_size,
         )
-
 
         if self.control_mode == "no_cond":
             cond = None

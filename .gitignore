@@ -7,3 +7,5 @@ results/
 .codex/
 .claude/
 .serena/
+*.pdf
+*.csv

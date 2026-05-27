@@ -98,10 +98,40 @@ def resolve_condition_info(
             )
         )
 
+        guidance_scale = metadata.get(
+            "guidance_scale",
+            get_nested(
+                metadata,
+                ["policy", "inference", "guidance_scale"],
+                np.nan,
+            ),
+        )
+        sample_image_num = metadata.get(
+            "sample_image_num",
+            get_nested(
+                metadata,
+                ["policy", "inference", "sample_image_num"],
+                -1,
+            ),
+        )
+        sampling_timesteps = metadata.get(
+            "sampling_timesteps",
+            get_nested(
+                metadata,
+                ["policy", "inference", "sampling_timesteps"],
+                -1,
+            ),
+        )
+        experiment_tag = metadata.get("experiment_tag", None)
+
         return {
             "condition": resolved_condition,
             "eta": resolved_eta,
             "delta": resolved_delta,
+            "guidance_scale": float(guidance_scale),
+            "sample_image_num": int(sample_image_num),
+            "sampling_timesteps": int(sampling_timesteps),
+            "experiment_tag": experiment_tag,
             "metadata_path": str(root / "condition_metadata.yaml"),
             "metadata": metadata,
         }
@@ -122,27 +152,14 @@ def resolve_condition_info(
         "condition": resolved_condition,
         "eta": resolved_eta,
         "delta": resolved_delta,
-        "guidance_scale": float(
-            metadata.get(
-                "guidance_scale",
-                get_nested(metadata, ["policy", "inference", "guidance_scale"], np.nan),
-            )
-        ),
-        "sample_image_num": int(
-            metadata.get(
-                "sample_image_num",
-                get_nested(metadata, ["policy", "inference", "sample_image_num"], -1),
-            )
-        ),
-        "sampling_timesteps": int(
-            metadata.get(
-                "sampling_timesteps",
-                get_nested(metadata, ["policy", "inference", "sampling_timesteps"], -1),
-            )
-        ),
-        "metadata_path": str(root / "condition_metadata.yaml"),
-        "metadata": metadata,
+        "guidance_scale": np.nan,
+        "sample_image_num": -1,
+        "sampling_timesteps": -1,
+        "experiment_tag": None,
+        "metadata_path": None,
+        "metadata": None,
     }
+
 
 
 def build_condition_name(eta: float, delta: int) -> str:
@@ -241,14 +258,13 @@ def summarize_rollout(
         primary_key="part_occupancy_rates",
         fallback_key="removal_performance",
     )
-    episode_cumulative_normalized_cutting_error_rate = \
-        float(data["episode_cumulative_normalized_cutting_error_rate"])
-
     case_name, episode_idx = extract_case_and_episode(rollout_path)
 
     execution_error_summary = summarize_execution_error_infos(
         data.get("execution_error_infos")
     )
+
+
 
     row = {
         "condition"         : condition_info["condition"],
@@ -257,6 +273,7 @@ def summarize_rollout(
         "guidance_scale"    : condition_info["guidance_scale"],
         "sample_image_num"  : condition_info["sample_image_num"],
         "sampling_timesteps": condition_info["sampling_timesteps"],
+        "experiment_tag"    : condition_info.get("experiment_tag"),
         "metadata_path"     : condition_info["metadata_path"],
 
         "case"        : case_name,
@@ -265,9 +282,6 @@ def summarize_rollout(
 
         # Paper metrics
         "cutting_error_volume": float(np.sum(cutting_error_volumes)),
-        "episode_cumulative_normalized_cutting_error_rate": (
-            episode_cumulative_normalized_cutting_error_rate
-        ),
         "part_remaining_rate": float(part_remaining_rates[-1]),
         "part_occupancy_rate": float(part_occupancy_rates[-1]),
 

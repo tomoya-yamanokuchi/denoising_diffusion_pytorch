@@ -1,7 +1,7 @@
 logbase : logs
 prefix  : eval
 layout  : dataset
-tag     : "sensitivity_guidance_scale_w"
+tag     : "sensitivity_sampling_timesteps"
 suffix  : null
 exp_name: null
 
