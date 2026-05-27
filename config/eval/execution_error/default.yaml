@@ -1,5 +1,5 @@
 # config/eval/execution_error/default.yaml
 enabled      : true
 mode         : boundary_uniform
-max_abs_shift: 2
+max_abs_shift: 0
 seed         : 0

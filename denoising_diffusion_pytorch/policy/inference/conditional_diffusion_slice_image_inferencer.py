@@ -17,11 +17,15 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         sample_image_num: int,
         control_mode    : str,
         guidance_scale  : float,
+        sampling_timesteps: int | None = None,
     ):
-        self.inferencer       = inferencer
-        self.sample_image_num = int(sample_image_num)
-        self.control_mode     = control_mode
-        self.guidance_scale   = float(guidance_scale)
+        self.inferencer         = inferencer
+        self.sample_image_num   = int(sample_image_num)
+        self.control_mode       = control_mode
+        self.guidance_scale     = float(guidance_scale)
+        self.sampling_timesteps = sampling_timesteps
+        # import ipdb; ipdb.set_trace()
+        assert self.sampling_timesteps is None
 
 
     def predict(self, planning_input: PlanningPolicyInput) -> np.ndarray:

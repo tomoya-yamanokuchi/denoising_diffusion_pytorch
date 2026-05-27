@@ -27,10 +27,11 @@ class SliceImageInferencerFactory:
 
         if model_name == "conditional_diffusion":
             return ConditionalDiffusionSliceImageInferencer(
-                inferencer       = inferencer,
-                sample_image_num = policy_config.inference.sample_image_num,
-                control_mode     = policy_config.control.mode,
-                guidance_scale   = policy_config.inference.guidance_scale,
+                inferencer         = inferencer,
+                sample_image_num   = policy_config.inference.sample_image_num,
+                control_mode       = policy_config.control.mode,
+                guidance_scale     = policy_config.inference.guidance_scale,
+                sampling_timesteps = policy_config.inference.sampling_timesteps,
             )
 
         raise ValueError(f"Unsupported inference model: {model_name}")

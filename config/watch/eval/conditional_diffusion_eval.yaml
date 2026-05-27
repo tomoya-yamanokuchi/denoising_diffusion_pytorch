@@ -24,6 +24,16 @@ watch_base:
   - key: eval.execution_error.max_abs_shift
     label: D
 
+  - key: eval.policy.inference.guidance_scale
+    label: w
+    value_format: safe_float
+
+  - key: eval.policy.inference.sample_image_num
+    label: M
+
+  - key: eval.policy.inference.sampling_timesteps
+    label: S
+
   - key: eval.epoch
     label: E
 

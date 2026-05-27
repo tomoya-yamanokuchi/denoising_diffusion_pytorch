@@ -116,9 +116,10 @@ class ControlConfig:
 
 @dataclass
 class InferenceConfig:
-    model           : str
-    guidance_scale  : float
-    sample_image_num: int
+    model             : str
+    guidance_scale    : float
+    sample_image_num  : int
+    sampling_timesteps: int
 
 @dataclass
 class ColorMaskConfig:

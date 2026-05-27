@@ -30,9 +30,10 @@ def build_policy_config(
             mode = str(cfg_policy.control.mode),
         ),
         inference=InferenceConfig(
-            model            = str(cfg_policy.inference.model),
-            guidance_scale   = float(cfg_policy.inference.guidance_scale),
-            sample_image_num = int(cfg_policy.inference.sample_image_num),
+            model              = str(cfg_policy.inference.model),
+            guidance_scale     = float(cfg_policy.inference.guidance_scale),
+            sample_image_num   = int(cfg_policy.inference.sample_image_num),
+            sampling_timesteps = int(cfg_policy.inference.sampling_timesteps),
         ),
         segmentation=SegmentationConfig(
             blue   = _build_color_mask_config(cfg_policy.segmentation.blue),

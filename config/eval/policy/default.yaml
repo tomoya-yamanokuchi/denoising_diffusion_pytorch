@@ -4,16 +4,17 @@ control:
   mode: epsilon_greedy_00
 
 inference:
-  model           : conditional_diffusion
-  guidance_scale  : 0.2
-  sample_image_num: 32
+  model             : conditional_diffusion
+  guidance_scale    : 0.2
+  sample_image_num  : 32
+  sampling_timesteps: 10 # DDIM step for inference
 
 decision:
   mode : clip_ucb_raw
   param:
     # ucb_lb: 0.0
-    # ucb_lb: 0.5
-    ucb_lb: 1.0
+    ucb_lb: 0.5
+    # ucb_lb: 1.0
 
 segmentation:
   blue:
