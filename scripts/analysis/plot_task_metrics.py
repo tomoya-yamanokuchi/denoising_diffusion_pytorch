@@ -63,7 +63,9 @@ def plot_metric(
     else:
         plot_groups = list(summary_df.groupby(group_by, dropna=False))
 
+    print(f"\nPlotting metric '{metric_name}' vs '{x_axis}'")
     for group_value, group in plot_groups:
+
         group = group.sort_values(x_axis)
 
         x = group[x_axis].to_numpy()
@@ -83,6 +85,9 @@ def plot_metric(
             capsize=4,
             label=label,
         )
+
+        print(f"group_value = {group_value} | x = {x} | y = {y} | yerr = {yerr}")
+        # import ipdb; ipdb.set_trace()
 
     ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=14)
     ax.set_ylabel(ylabel, fontsize=14)
@@ -104,6 +109,7 @@ def plot_metric(
     fig.tight_layout()
     fig.savefig(out_path, dpi=300)
     plt.close(fig)
+
 
 
 def main() -> None:
