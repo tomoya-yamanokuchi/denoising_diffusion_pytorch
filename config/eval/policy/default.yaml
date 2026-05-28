@@ -1,20 +1,14 @@
 infer_model: conditional_diffusion
 
 control:
-  mode: epsilon_greedy_00
+  # mode: epsilon_greedy_00
+  mode: oracle_obs
 
 inference:
   model             : conditional_diffusion
   guidance_scale    : 0.2
   sample_image_num  : 32
-
-  # ------
-  sampling_timesteps: 1
-  # sampling_timesteps: 2
-  # sampling_timesteps: 5
-  # sampling_timesteps: 10
-  # sampling_timesteps: 20
-  # sampling_timesteps: 50
+  sampling_timesteps: 20
 
 decision:
   mode : clip_ucb_raw

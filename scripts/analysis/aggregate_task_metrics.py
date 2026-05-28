@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from reporting.summary_console_reporter import SummaryConsoleReporter
+
 
 PAPER_METRIC_COLUMNS = [
     "cutting_error_volume",
@@ -469,6 +471,28 @@ def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
     return summary_df.sort_values(sort_cols)
 
 
+def print_summary_for_console(
+    summary_df: pd.DataFrame,
+    decimals: int = 2,
+) -> None:
+    """
+    Print summary table for console readability.
+
+    CSV files keep full precision, while terminal output is rounded
+    to the same precision as paper tables.
+    """
+    formatters = {}
+
+    for col in summary_df.columns:
+        if pd.api.types.is_float_dtype(summary_df[col]):
+            formatters[col] = (
+                lambda x, decimals=decimals:
+                "" if pd.isna(x) else f"{x:.{decimals}f}"
+            )
+
+    print(summary_df.to_string(index=False, formatters=formatters))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
 
@@ -535,8 +559,7 @@ def main() -> None:
     print(f"[OK] Saved summary metrics    : {summary_path}")
 
     print("\nSummary:")
-    print(summary_df.to_string(index=False))
-
+    SummaryConsoleReporter(decimals=2).print(summary_df)
 
 if __name__ == "__main__":
     main()

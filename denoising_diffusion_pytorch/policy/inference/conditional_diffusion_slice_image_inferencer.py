@@ -13,10 +13,10 @@ from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 i
 class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
     def __init__(
         self,
-        inferencer: GaussianDiffusion,
-        sample_image_num: int,
-        control_mode: str,
-        guidance_scale: float,
+        inferencer        : GaussianDiffusion,
+        sample_image_num  : int,
+        control_mode      : str,
+        guidance_scale    : float,
         sampling_timesteps: int | None = None,
     ):
         self.inferencer       = inferencer

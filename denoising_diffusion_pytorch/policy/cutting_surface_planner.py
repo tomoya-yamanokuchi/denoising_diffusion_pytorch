@@ -1,3 +1,4 @@
+# denoising_diffusion_pytorch/policy/cutting_surface_planner.py
 import numpy as np
 
 from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy, pil_image_load_to_numpy
@@ -55,7 +56,12 @@ class cutting_surface_planner():
             iters              : int,
             save_path          : str,
         ):
-        last_step_images = self.slice_image_inferencer.predict(planning_input)
+        if self.policy_config.control.mode == "oracle_obs":
+            last_step_images = self._predict_oracle_images()
+            # import ipdb; ipdb.set_trace()
+        else:
+            last_step_images = self.slice_image_inferencer.predict(planning_input)
+            # import ipdb; ipdb.set_trace()
 
         raw_pred_image_save_path = save_path+f"/raw_pred_image/step_{iters}"
         create_folder(raw_pred_image_save_path)
@@ -128,6 +134,29 @@ class cutting_surface_planner():
 
     def set_oracle_obs(self,oracle_obs_image):
         self.oracle_image_z = oracle_obs_image
+
+
+    def _predict_oracle_images(self) -> np.ndarray:
+        if self.oracle_image_z is None:
+            raise RuntimeError(
+                "oracle_image_z is None. "
+                "set_oracle_obs() must be called before oracle_obs planning."
+            )
+
+        oracle = np.asarray(self.oracle_image_z)
+
+        # oracle_obs_model の画像は通常 0–1 float。
+        # ただし将来 0–255 が渡っても壊れないようにガードする。
+        if oracle.max() <= 1.0:
+            oracle = oracle * 255.0
+
+        oracle = np.clip(oracle, 0, 255).astype(np.uint8)
+
+        return np.repeat(
+            oracle[None, ...],
+            repeats=self.sample_image_num,
+            axis=0,
+        )
 
 
     def update_visibility_constraints(self, candidates: ActionCandidates):

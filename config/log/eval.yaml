@@ -1,7 +1,8 @@
 logbase : logs
 prefix  : eval
 layout  : dataset
-tag     : "sensitivity_sampling_timesteps"
+# tag     : null # "sensitivity_sampling_timesteps"
+tag     : "internal_GT"
 suffix  : null
 exp_name: null
 
