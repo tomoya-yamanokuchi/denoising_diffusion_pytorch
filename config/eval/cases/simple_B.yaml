@@ -5,20 +5,20 @@ cases:
     dataset_format: boxy_generated_yaml
     dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_6_13900k/geom_test_1/Boxy_0
     initial_global_action_range:
-      start: 47
-      stop : 41
+      start: 0
+      stop : 4
 
   - name: Object_8
     dataset_format: boxy_generated_yaml
     dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_6_13900k/geom_test_1/Boxy_1
     initial_global_action_range:
-      start: 47
-      stop : 41
+      start: 0
+      stop : 4
 
   - name: Object_9
     dataset_format: boxy_generated_yaml
     dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_6_13900k/geom_test_1/Boxy_2
     initial_global_action_range:
-      start: 47
-      stop : 41
+      start: 0
+      stop : 4
 

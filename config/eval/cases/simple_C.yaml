@@ -1,7 +1,6 @@
-name : simple
+name : simple_C
 
 cases:
-  # Object: C
   - name: Object_1
     dataset_format: boxy_generated_yaml
     dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4_12900k/geom_test_3/Boxy_0

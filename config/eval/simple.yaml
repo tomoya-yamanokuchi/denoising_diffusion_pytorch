@@ -1,5 +1,5 @@
 defaults:
-  - cases          : simple_A
+  - cases          : simple_C
   - policy         : default
   - task           : default
   - execution_error: default
