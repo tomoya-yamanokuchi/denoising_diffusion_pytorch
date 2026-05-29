@@ -1,6 +1,8 @@
+# denoising_diffusion_pytorch/policy/planning/action_selection/random_selection_policy.py
 from __future__ import annotations
 
 import random
+import secrets
 
 from ..action_definition.action_candidates import ActionCandidates
 from ...types import SliceCandidates
@@ -13,11 +15,12 @@ class RandomSelectionPolicy:
     1. Randomly choose one valid axis from z/x/y.
     2. Randomly choose one unexecuted action from that axis.
 
-    The returned ActionCandidates contains exactly one action.
+    If seed is None, a random seed is generated automatically.
     """
 
     def __init__(self, seed: int | None = None):
-        self._rng = random.Random(seed)
+        self.seed = int(seed) if seed is not None else secrets.randbits(32)
+        self._rng = random.Random(self.seed)
 
     def choose(
         self,

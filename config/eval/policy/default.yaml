@@ -5,6 +5,8 @@ control:
   # mode: oracle_obs
   # mode: no_cond
   mode: random
+  # ---
+  random_seed: null
 
 inference:
   model             : conditional_diffusion
@@ -16,10 +18,6 @@ decision:
   mode : clip_ucb_raw
   param:
     ucb_lb: 0.5
-
-selection:
-  mode: longest
-  seed: null
 
 segmentation:
   blue:
