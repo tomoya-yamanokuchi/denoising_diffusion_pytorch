@@ -1,8 +1,13 @@
 logbase : logs
 prefix  : eval
 layout  : dataset
-# tag     : null # "sensitivity_sampling_timesteps"
-tag     : "internal_GT"
 suffix  : null
 exp_name: null
+
+# ----- tag settings -----
+# tag     : null # "sensitivity_sampling_timesteps"
+# tag     : "internal_GT"
+# tag     : "proposed_no_cond"
+# tag     : "proposed_no_cond_epsilon_greedy_00"
+tag     : "random_latest"
 

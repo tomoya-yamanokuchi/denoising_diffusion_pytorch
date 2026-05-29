@@ -9,8 +9,11 @@ from denoising_diffusion_pytorch.policy.planning.candidate_building.axis_candida
 from denoising_diffusion_pytorch.policy.planning.action_selection.selection_policy import SelectionPolicy
 from denoising_diffusion_pytorch.policy.planning.action_selection.action_candidates_selector import ActionCandidatesSelector
 from denoising_diffusion_pytorch.policy.planning.candidate_building.action_candidate_building_coordinator import ActionCandidateBuildingCoordinator
-
 from denoising_diffusion_pytorch.policy.inference.slice_image_inferencer_factory import SliceImageInferencerFactory
+from denoising_diffusion_pytorch.policy.planning.action_selection.random_selection_policy import RandomSelectionPolicy
+from denoising_diffusion_pytorch.policy.planning.candidate_building.full_action_space_candidate_coordinator import FullActionSpaceCandidateCoordinator
+
+
 
 class PolicyFactory:
     def __init__(self, assets: PolicyAssets):
@@ -35,12 +38,9 @@ class PolicyFactory:
             expected_side_length    = side_length,
         )
 
-        action_candidates_selector = ActionCandidatesSelector(
-            candidate_coordinator = ActionCandidateBuildingCoordinator(
-                candidate_builder    = axis_candidate_range_builder,
-                expected_side_length = side_length,
-            ),
-            selection_policy = SelectionPolicy(),
+        action_candidates_selector = self._build_action_candidates_selector(
+            axis_candidate_range_builder = axis_candidate_range_builder,
+            side_length                  = side_length,
         )
 
         slice_image_inferencer = SliceImageInferencerFactory.build(
@@ -55,3 +55,35 @@ class PolicyFactory:
             action_candidates_selector = action_candidates_selector,
         )
 
+
+
+    def _build_action_candidates_selector(
+        self,
+        *,
+        axis_candidate_range_builder,
+        side_length: int,
+    ) -> ActionCandidatesSelector:
+        selection_cfg = self._assets.policy_config.selection
+
+        if selection_cfg.mode == "longest":
+            candidate_coordinator = ActionCandidateBuildingCoordinator(
+                candidate_builder    = axis_candidate_range_builder,
+                expected_side_length = side_length,
+            )
+            selection_policy = SelectionPolicy()
+
+        elif selection_cfg.mode == "random":
+            candidate_coordinator = FullActionSpaceCandidateCoordinator(
+                expected_side_length = side_length,
+            )
+            selection_policy = RandomSelectionPolicy(
+                seed = selection_cfg.seed,
+            )
+
+        else:
+            raise ValueError(f"Unknown selection mode: {selection_cfg.mode}")
+
+        return ActionCandidatesSelector(
+            candidate_coordinator = candidate_coordinator,
+            selection_policy      = selection_policy,
+        )

@@ -30,6 +30,7 @@ class ActionCandidateBuildingCoordinator:
                 observation_history = observation_history,
             )
 
+        # import ipdb; ipdb.set_trace()
         return SliceCandidates(
             x = built["x"],
             y = built["y"],

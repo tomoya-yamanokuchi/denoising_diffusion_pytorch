@@ -148,6 +148,7 @@ class PolicyConfig:
     inference             : InferenceConfig
     segmentation          : SegmentationConfig
     decision              : DecisionConfig
+    selection             : SelectionConfig
     voxel_grid_side_length: int
 
 
@@ -157,3 +158,11 @@ import torch
 @dataclass(frozen=True)
 class PlanningPolicyInput:
     normalized_cond: torch.Tensor | None
+    debug_save_dir : str | None = None
+    step_idx       : int | None = None
+
+
+@dataclass
+class SelectionConfig:
+    mode: str = "longest"
+    seed: int | None = None

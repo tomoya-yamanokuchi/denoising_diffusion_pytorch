@@ -7,6 +7,7 @@ from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
 
 from ..resize_utils import _crop_images_to_hw, _pad_cond_to_model_size
 from .slice_image_inferencer import SliceImageInferencer
+from .condition_debug_image_writer import save_condition_debug_images
 from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 import GaussianDiffusion
 
 
@@ -64,10 +65,11 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         )
 
         if self.control_mode == "no_cond":
-            cond = None
-            normalized_cond = normalized_cond.clone()
+            cond               = None
+            normalized_cond    = normalized_cond.clone()
             normalized_cond[:] = -1.0
-            mask = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
+            mask_tmp           = (normalized_cond != -1.0).any(dim=0)
+            mask               = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
         else:
             mask_tmp = (normalized_cond != -1.0).any(dim=0)
             cond = {
@@ -77,6 +79,13 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
                 }
             }
             mask = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
+
+        save_condition_debug_images(
+            normalized_cond = normalized_cond,
+            mask_observed   = mask_tmp,
+            debug_save_dir  = planning_input.debug_save_dir,
+            step_idx        = planning_input.step_idx,
+        )
 
         sample_image = self.inferencer.ema_model.sample(
             batch_size           = self.sample_image_num,
@@ -93,4 +102,8 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         last_step_images = batch_images[:, -1, :, :, :]
         last_step_images = _crop_images_to_hw(last_step_images, original_hw)
         return last_step_images
+
+
+
+
 

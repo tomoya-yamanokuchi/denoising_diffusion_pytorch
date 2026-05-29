@@ -51,7 +51,9 @@ class LegacyPolicyPlannerAdapter:
         )
 
         planning_input = self._build_planning_policy_input(
-            planning_observation=planning_observation,
+            planning_observation = planning_observation,
+            artifact_root        = str(episode_ctx.path.artifact_episodic_root),
+            executed_step_idx    = executed_step_idx,
         )
 
         selected_candidates, infos = self.policy.get_optimal_act(
@@ -104,6 +106,8 @@ class LegacyPolicyPlannerAdapter:
         self,
         *,
         planning_observation: DismantlingObservation,
+        artifact_root       : str | None = None,
+        executed_step_idx   : int | None = None,
     ):
         slice_img = planning_observation.axis_images.z # 学習とテストで固定させておく
 
@@ -112,7 +116,9 @@ class LegacyPolicyPlannerAdapter:
         normalized_cond = to_torch(normalized_cond)
 
         return PlanningPolicyInput(
-            normalized_cond=normalized_cond,
+            normalized_cond = normalized_cond,
+            debug_save_dir  = artifact_root,
+            step_idx        = executed_step_idx,
         )
 
 

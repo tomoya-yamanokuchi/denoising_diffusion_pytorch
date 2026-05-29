@@ -2,7 +2,9 @@ infer_model: conditional_diffusion
 
 control:
   # mode: epsilon_greedy_00
-  mode: oracle_obs
+  # mode: oracle_obs
+  # mode: no_cond
+  mode: random
 
 inference:
   model             : conditional_diffusion
@@ -14,6 +16,10 @@ decision:
   mode : clip_ucb_raw
   param:
     ucb_lb: 0.5
+
+selection:
+  mode: longest
+  seed: null
 
 segmentation:
   blue:

@@ -10,6 +10,7 @@ from denoising_diffusion_pytorch.policy.types import (
     InferenceConfig,
     PolicyConfig,
     SegmentationConfig,
+    SelectionConfig,
 )
 
 
@@ -25,6 +26,10 @@ def build_policy_config(
         cfg_policy            : DictConfig,
         voxel_grid_side_length: int,
     ) -> PolicyConfig:
+
+
+    selection_cfg = getattr(cfg_policy, "selection", None)
+
     return PolicyConfig(
         control=ControlConfig(
             mode = str(cfg_policy.control.mode),
@@ -44,6 +49,14 @@ def build_policy_config(
             mode  = str(cfg_policy.decision.mode),
             param = DecisionParamConfig(
                 ucb_lb = float(cfg_policy.decision.param.ucb_lb),
+            ),
+        ),
+        selection = SelectionConfig(
+            mode=str(getattr(selection_cfg, "mode", "longest")),
+            seed=(
+                None
+                if selection_cfg is None or getattr(selection_cfg, "seed", None) is None
+                else int(selection_cfg.seed)
             ),
         ),
         voxel_grid_side_length = voxel_grid_side_length,
