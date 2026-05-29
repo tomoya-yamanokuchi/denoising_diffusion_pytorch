@@ -1,3 +1,7 @@
 grid:
   bounds     : [-0.3, 0.3, -0.3, 0.3, -0.3, 0.3]
   side_length: 49
+
+pre_near_by_cells_cache:
+  enabled: true
+  path   : ./for_eval_my_dict_49.pkl

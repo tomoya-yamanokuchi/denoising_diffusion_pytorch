@@ -1,3 +1,4 @@
+# app/wiring/builder/eval_builder.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -56,15 +57,50 @@ class EvalBuilder:
         from app.wiring.factories.mesh_component_factory import MeshComponentFactory
         self.mesh_factory = MeshComponentFactory()
 
+
+    def build_pre_near_by_cells(self) -> None:
+        from app.wiring.factories.pre_near_by_cells_factory import PreNearByCellsFactory
+
+        cache_cfg = getattr(self.cfg.env, "pre_near_by_cells_cache", None)
+
+        if cache_cfg is None or not bool(getattr(cache_cfg, "enabled", False)):
+            self.pre_near_by_cells = None
+            return
+
+        cases_list = self.cfg.eval.cases.cases
+        if len(cases_list) == 0:
+            self.pre_near_by_cells = None
+            return
+
+        # グリッド幾何キャッシュなので、最初のcaseで代表して作る
+        first_case_spec = cases_list[0]
+        first_mesh_components = self.mesh_factory.create(first_case_spec)
+
+        factory = PreNearByCellsFactory(
+            grid_config=self.cfg.env.grid,
+            cache_config=cache_cfg,
+        )
+
+        self.pre_near_by_cells = factory.create(first_mesh_components)
+
+
     def build_env_factory(self) -> None:
         from app.wiring.factories.env_factory import EnvFactory
-        self.env_factory = EnvFactory(grid_config=self.cfg.env.grid)
+
+        self.env_factory = EnvFactory(
+            grid_config=self.cfg.env.grid,
+            pre_near_by_cells=self.pre_near_by_cells,
+        )
 
 
     def build_obs_model_factory(self):
         from app.wiring.factories.obs_model_factory import VoxelObsModelFactory
-        # ---
-        self.obs_model_factory = VoxelObsModelFactory(grid_config=self.cfg.env.grid)
+
+        self.obs_model_factory = VoxelObsModelFactory(
+            grid_config=self.cfg.env.grid,
+            pre_near_by_cells=self.pre_near_by_cells,
+        )
+
 
     def build_case_context_factory(self):
         from app.wiring.factories.case_context_factory import CaseContextFactory
@@ -178,6 +214,8 @@ class EvalBuilder:
         from app.usecases.eval.eval_orchestrator import EvalOrchestrator
         self.eval_orchestrator = EvalOrchestrator(self)
 
+
+
     # --------------------------------------------------
     def build_all(self) -> "EvalContext":
         # --- config ---
@@ -196,6 +234,7 @@ class EvalBuilder:
         self.build_policy_factory()
 
         self.build_mesh_components_factory()
+        self.build_pre_near_by_cells()
         self.build_env_factory()
         self.build_obs_model_factory()
         self.build_case_context_factory()
