@@ -1,51 +1,51 @@
 from __future__ import annotations
 
 from denoising_diffusion_pytorch.policy.planning.action_definition.action_candidates import ActionCandidates
-import numpy as np
-from typing import Dict
-
-from .selection_policy import SelectionPolicy
-from ...types import (
+from denoising_diffusion_pytorch.policy.types import (
     AxisCostSet,
     SliceSelectionResult,
 )
-from ..candidate_building.action_candidate_building_coordinator import ActionCandidateBuildingCoordinator
+from denoising_diffusion_pytorch.policy.planning.candidate_building.candidate_coordinator import (
+    CandidateCoordinator,
+)
+from .selection_policy import SelectionPolicy
 
 
 class ActionCandidatesSelector:
     """
-    Coordinate axis-wise candidate building and final slice-range selection.
+    Coordinate candidate building and final candidate selection.
     """
 
     def __init__(
         self,
-        candidate_coordinator: ActionCandidateBuildingCoordinator,
-        selection_policy     : SelectionPolicy,
+        candidate_coordinator: CandidateCoordinator,
+        selection_policy: SelectionPolicy,
     ):
         self.candidate_coordinator = candidate_coordinator
-        self.selection_policy      = selection_policy
+        self.selection_policy = selection_policy
 
     def select(
         self,
-        axis_costs         : AxisCostSet,
-        observation_history: Dict[int, dict],
+        axis_costs: AxisCostSet | None,
+        observation_history: dict[int, dict],
     ) -> SliceSelectionResult:
-
         slice_range_candidates_across_axes = self.candidate_coordinator.build(
-            axis_costs          = axis_costs,
-            observation_history = observation_history,
+            axis_costs=axis_costs,
+            observation_history=observation_history,
         )
 
-        optimal_selected_slice_range = self.selection_policy.choose(slice_range_candidates_across_axes)
+        optimal_selected_slice_range = self.selection_policy.choose(
+            slice_range_candidates_across_axes
+        )
 
         if optimal_selected_slice_range is None:
             optimal_selected_slice_range = self._build_fallback_candidates(
-                side_length = len(axis_costs.x),
+                side_length=self._infer_side_length(slice_range_candidates_across_axes),
             )
 
         return SliceSelectionResult(
-            optimal_selected_slice_range       = optimal_selected_slice_range,
-            slice_range_candidates_across_axes = slice_range_candidates_across_axes,
+            optimal_selected_slice_range=optimal_selected_slice_range,
+            slice_range_candidates_across_axes=slice_range_candidates_across_axes,
         )
 
 

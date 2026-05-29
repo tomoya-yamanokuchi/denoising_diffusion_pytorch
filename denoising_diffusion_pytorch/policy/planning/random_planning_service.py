@@ -28,14 +28,13 @@ class RandomPlanningService:
 
     def plan(
         self,
-        *,
         observation_history: dict[int, dict],
         iters: int,
         save_path: str,
     ) -> tuple[ActionCandidates, dict[str, Any]]:
         selection = self.action_candidates_selector.select(
-            axis_costs=None,
-            observation_history=observation_history,
+            axis_costs          = None,
+            observation_history = observation_history,
         )
 
         selected_candidates = selection.optimal_selected_slice_range

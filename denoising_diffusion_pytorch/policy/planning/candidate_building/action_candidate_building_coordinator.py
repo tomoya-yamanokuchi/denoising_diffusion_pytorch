@@ -1,22 +1,29 @@
-from typing import Dict
-from .axis_candidate_range_builder import AxisCandidateRangeBuilder
-from ...types import AxisCostVector, AxisCostSet, SliceCandidates
+from __future__ import annotations
+
+from denoising_diffusion_pytorch.policy.types import AxisCostVector, AxisCostSet, SliceCandidates
+from .candidate_coordinator import CandidateCoordinator
 
 
-class ActionCandidateBuildingCoordinator:
+class ActionCandidateBuildingCoordinator(CandidateCoordinator):
     def __init__(
         self,
-        candidate_builder   : AxisCandidateRangeBuilder,
+        candidate_builder,
         expected_side_length: int,
     ):
         self.candidate_builder    = candidate_builder
-        self.expected_side_length = int(expected_side_length)
+        self.expected_side_length = expected_side_length
 
     def build(
         self,
-        axis_costs         : AxisCostSet,
-        observation_history: Dict[int, dict],
+        axis_costs: AxisCostSet | None,
+        observation_history: dict[int, dict],
     ) -> SliceCandidates:
+        if axis_costs is None:
+            raise ValueError(
+                "ActionCandidateBuildingCoordinator requires axis_costs, "
+                "but got None."
+            )
+
         built = {}
         for axis, cost in axis_costs.items():
             axis_cost = AxisCostVector(
@@ -24,15 +31,13 @@ class ActionCandidateBuildingCoordinator:
                 values               = cost,
                 expected_side_length = self.expected_side_length,
             )
-
             built[axis] = self.candidate_builder.build(
                 axis_cost           = axis_cost,
                 observation_history = observation_history,
             )
 
-        # import ipdb; ipdb.set_trace()
         return SliceCandidates(
-            x = built["x"],
-            y = built["y"],
-            z = built["z"],
+            z=built["z"],
+            x=built["x"],
+            y=built["y"],
         )

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Dict
 
+from denoising_diffusion_pytorch.policy.types import AxisCostSet, SliceCandidates
+from .candidate_coordinator import CandidateCoordinator
 from ..action_definition.action_candidates import ActionCandidates
-from ...types import AxisCostSet, SliceCandidates
 
 
-class FullActionSpaceCandidateCoordinator:
+class FullActionSpaceCandidateCoordinator(CandidateCoordinator):
     """
     Build candidates from the full voxel-indexed action space.
 
@@ -42,5 +43,4 @@ class FullActionSpaceCandidateCoordinator:
         if candidates is None:
             return None
 
-        # import ipdb; ipdb.set_trace()
         return candidates.prune_by_observation_history(observation_history)

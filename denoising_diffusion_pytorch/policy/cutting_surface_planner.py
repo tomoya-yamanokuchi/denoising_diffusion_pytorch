@@ -71,7 +71,6 @@ class cutting_surface_planner():
                 save_path=save_path,
             )
             self.update_visibility_constraints(selected_candidates)
-            import ipdb; ipdb.set_trace()
             return selected_candidates, infos
 
         if self.policy_config.control.mode == "oracle_obs":
