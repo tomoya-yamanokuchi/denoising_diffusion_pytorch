@@ -45,27 +45,6 @@ class TargetColorSegmenter:
     color_range: TargetColorRange
 
     @classmethod
-    def create_default_blue_segmenter(cls) -> "TargetColorSegmenter":
-        """
-        Create the default segmenter for the current task setting.
-
-        This reproduces the previous implementation:
-
-            target_mask_b = np.asarray([0.2, 0.8, 0.8])
-            lb = target_mask_b - np.asarray([0.1, 0.1, 0.1])
-            ub = target_mask_b + np.asarray([0.7, 0.2, 0.2])
-        """
-        target_mask = np.asarray([0.2, 0.8, 0.8], dtype=float)
-
-        return cls(
-            color_range=TargetColorRange(
-                target_mask=target_mask,
-                target_mask_lb=target_mask - np.asarray([0.1, 0.1, 0.1], dtype=float),
-                target_mask_ub=target_mask + np.asarray([0.7, 0.2, 0.2], dtype=float),
-            )
-        )
-
-    @classmethod
     def from_legacy_config(
         cls,
         config: dict[str, Any],

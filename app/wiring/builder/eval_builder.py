@@ -84,12 +84,40 @@ class EvalBuilder:
         self.pre_near_by_cells = factory.create(first_mesh_components)
 
 
+
+    def build_metric_calculator(self) -> None:
+        from denoising_diffusion_pytorch.env.metrics.cutting_metric_calculator import (
+            CuttingMetricCalculator,
+        )
+        from denoising_diffusion_pytorch.env.metrics.target_color_segmenter import (
+            TargetColorSegmenter,
+        )
+
+        blue_cfg = self.cfg.eval.policy.segmentation.blue
+
+        target_segmenter = TargetColorSegmenter.from_legacy_config({
+            "target_mask":    list(blue_cfg.target_mask),
+            "target_mask_lb": list(blue_cfg.target_mask_lb),
+            "target_mask_ub": list(blue_cfg.target_mask_ub),
+        })
+
+        self.metric_calculator = CuttingMetricCalculator(
+            target_segmenter=target_segmenter,
+        )
+
+        print("[EvalBuilder] metric target color config")
+        print("target_mask   :", list(blue_cfg.target_mask))
+        print("target_mask_lb:", list(blue_cfg.target_mask_lb))
+        print("target_mask_ub:", list(blue_cfg.target_mask_ub))
+
+
     def build_env_factory(self) -> None:
         from app.wiring.factories.env_factory import EnvFactory
 
         self.env_factory = EnvFactory(
-            grid_config=self.cfg.env.grid,
-            pre_near_by_cells=self.pre_near_by_cells,
+            grid_config       = self.cfg.env.grid,
+            pre_near_by_cells = self.pre_near_by_cells,
+            metric_calculator = self.metric_calculator,
         )
 
 
@@ -235,6 +263,7 @@ class EvalBuilder:
 
         self.build_mesh_components_factory()
         self.build_pre_near_by_cells()
+        self.build_metric_calculator()
         self.build_env_factory()
         self.build_obs_model_factory()
         self.build_case_context_factory()

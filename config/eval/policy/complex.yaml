@@ -1,0 +1,19 @@
+defaults:
+  - default
+  - _self_
+
+segmentation:
+  blue:
+    target_mask   : [0.0, 0.0, 1.0]
+    target_mask_lb: [-0.1, -0.1, 0.9]
+    target_mask_ub: [0.1, 0.1, 1.0]
+
+  red:
+    target_mask   : [1.0, 0.0, 0.0]
+    target_mask_lb: [0.9, -0.1, -0.1]
+    target_mask_ub: [1.0, 0.1, 0.1]
+
+  yellow:
+    target_mask   : [0.0, 1.0, 0.0]
+    target_mask_lb: [-0.1, 0.9, -0.1]
+    target_mask_ub: [0.1, 1.0, 0.1]

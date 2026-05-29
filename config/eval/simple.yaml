@@ -1,13 +1,11 @@
 defaults:
   - cases          : simple_A
-  - policy         : default
+  - policy         : simple
   - task           : default
   - execution_error: default
 
 # ---- training run directory settings ----
-# train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_20260504_204336
 train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_20260504_204421
 
 # ------ epoch and evaluation settings ------
-# epoch   : "200000"
 epoch   : "100000"

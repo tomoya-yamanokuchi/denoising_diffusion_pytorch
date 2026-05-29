@@ -32,12 +32,18 @@ class dismantling_env():
         mini_batch_image_dim (tuple)      : Dimensions for the mini-batch image.
     """
 
-    def __init__(self, grid_config, mesh_components, pre_near_by_cells=None):
+    def __init__(
+        self,
+        grid_config,
+        mesh_components,
+        pre_near_by_cells=None,
+        metric_calculator=None,
+    ):
         # --- static config ---
         self.grid_config       = grid_config
         self.mesh_components   = mesh_components
         self.pre_near_by_cells = pre_near_by_cells
-
+        self.metric_calculator = metric_calculator
         # --- observation model ---
         self.oracle_obs_model = voxel_cut_handler(
             grid_config       = self.grid_config,
@@ -55,8 +61,6 @@ class dismantling_env():
 
         self.action_table           = self.get_action_table(grid_config=self.grid_config)
         self.observation_history    = {}
-
-        self.metric_calculator      = CuttingMetricCalculator.create_default()
 
         oracle_slice_image_z            = self.oracle_obs_model.init_imgs_z
         self.oracle_target_shape_vol    = self.calculate_cutting_error_volume(oracle_slice_image_z)

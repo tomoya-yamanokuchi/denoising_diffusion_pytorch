@@ -51,17 +51,6 @@ class CuttingMetricCalculator:
     target_segmenter: TargetColorSegmenter
     remaining_volume_epsilon: float = 1e-6
 
-    @classmethod
-    def create_default(cls) -> "CuttingMetricCalculator":
-        """
-        Create a metric calculator for the current task setting.
-
-        Current task:
-          target part = blue component
-        """
-        return cls(
-            target_segmenter=TargetColorSegmenter.create_default_blue_segmenter()
-        )
 
     def calculate_cutting_error_volume(
         self,
