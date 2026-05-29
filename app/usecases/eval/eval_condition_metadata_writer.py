@@ -76,10 +76,10 @@ class EvalConditionMetadataWriter:
             "sampling_timesteps": inference["sampling_timesteps"],
 
             "execution_error": {
-                "enabled": bool(self._cfg_get(cfg.eval.execution_error, "enabled", False)),
-                "mode": str(self._cfg_get(cfg.eval.execution_error, "mode", "none")),
+                "enabled"      : bool(self._cfg_get(cfg.eval.execution_error, "enabled", False)),
+                "mode"         : str(self._cfg_get(cfg.eval.execution_error, "mode", "none")),
                 "max_abs_shift": delta,
-                "seed": self._cfg_get(cfg.eval.execution_error, "seed", None),
+                "seed"         : self._cfg_get(cfg.eval.execution_error, "seed", None),
             },
 
             # Useful run information

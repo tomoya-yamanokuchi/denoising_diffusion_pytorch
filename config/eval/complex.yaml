@@ -1,7 +1,8 @@
 defaults:
-  - cases : complex
-  - policy: default
-  - task  : default
+  - cases          : complex_A
+  - policy         : default
+  - task           : default
+  - execution_error: default
 
 # # ---- training run directory settings ----
 # train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D128_T1000_S20_real_sheetsander_z49_20260504_202728
