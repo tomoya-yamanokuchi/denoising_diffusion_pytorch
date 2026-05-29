@@ -1,12 +1,13 @@
 infer_model: conditional_diffusion
 
 control:
-  mode: epsilon_greedy_00
+  # mode: epsilon_greedy_00
   # mode: oracle_obs
   # mode: no_cond
-  # mode: random
+  mode: random
   # ---
   random_seed: null
+  random_max_range_length: 3
 
 inference:
   model             : conditional_diffusion

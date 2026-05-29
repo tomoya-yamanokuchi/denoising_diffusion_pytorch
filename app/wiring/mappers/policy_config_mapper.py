@@ -27,11 +27,22 @@ def build_policy_config(
 ) -> PolicyConfig:
     control_cfg = cfg_policy.control
     random_seed = getattr(control_cfg, "random_seed", None)
+    random_max_range_length = getattr(
+        control_cfg,
+        "random_max_range_length",
+        3,
+    )
+
 
     return PolicyConfig(
         control=ControlConfig(
             mode=str(control_cfg.mode),
             random_seed=None if random_seed is None else int(random_seed),
+            random_max_range_length=(
+                None
+                if random_max_range_length is None
+                else int(random_max_range_length)
+            ),
         ),
         inference=InferenceConfig(
             model=str(cfg_policy.inference.model),

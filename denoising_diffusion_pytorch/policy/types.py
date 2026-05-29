@@ -114,6 +114,7 @@ class ActionPlan:
 class ControlConfig:
     mode       : str
     random_seed: int | None = None
+    random_max_range_length: int | None = 3
 
 @dataclass
 class InferenceConfig:

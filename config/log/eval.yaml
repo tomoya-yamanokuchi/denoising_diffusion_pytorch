@@ -9,5 +9,5 @@ exp_name: null
 # tag     : "internal_GT"
 # tag     : "proposed_no_cond"
 # tag     : "proposed_no_cond_epsilon_greedy_00"
-tag     : "random_latest_greedy"
+tag     : "random"
 

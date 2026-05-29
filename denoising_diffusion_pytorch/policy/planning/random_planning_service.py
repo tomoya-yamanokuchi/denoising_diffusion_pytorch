@@ -66,10 +66,11 @@ class RandomPlanningService:
         selection_policy = self.action_candidates_selector.selection_policy
         random_seed      = getattr(selection_policy, "seed", None)
         return {
-            "planning_mode" : "random",
-            "random_seed"   : random_seed,
-            "cost_ensembles": None,
-            "costs_decision": None,
+            "planning_mode"          : "random",
+            "random_seed"            : random_seed,
+            "random_max_range_length": getattr(selection_policy, "max_range_length", None),
+            "cost_ensembles"         : None,
+            "costs_decision"         : None,
             "slice_candidate": {
                 "candidate_x": None if candidates.x is None else candidates.x.to_list(),
                 "candidate_y": None if candidates.y is None else candidates.y.to_list(),

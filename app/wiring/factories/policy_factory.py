@@ -10,7 +10,7 @@ from denoising_diffusion_pytorch.policy.planning.action_selection.selection_poli
 from denoising_diffusion_pytorch.policy.planning.action_selection.action_candidates_selector import ActionCandidatesSelector
 from denoising_diffusion_pytorch.policy.planning.candidate_building.action_candidate_building_coordinator import ActionCandidateBuildingCoordinator
 from denoising_diffusion_pytorch.policy.inference.slice_image_inferencer_factory import SliceImageInferencerFactory
-from denoising_diffusion_pytorch.policy.planning.action_selection.random_selection_policy import RandomSelectionPolicy
+from denoising_diffusion_pytorch.policy.planning.action_selection.random_contiguous_selection_policy import RandomContiguousSelectionPolicy
 from denoising_diffusion_pytorch.policy.planning.candidate_building.full_action_space_candidate_coordinator import FullActionSpaceCandidateCoordinator
 
 
@@ -69,8 +69,9 @@ class PolicyFactory:
             candidate_coordinator = FullActionSpaceCandidateCoordinator(
                 expected_side_length=side_length,
             )
-            selection_policy = RandomSelectionPolicy(
+            selection_policy = RandomContiguousSelectionPolicy(
                 seed=control_cfg.random_seed,
+                max_range_length=control_cfg.random_max_range_length,
             )
         else:
             candidate_coordinator = ActionCandidateBuildingCoordinator(
