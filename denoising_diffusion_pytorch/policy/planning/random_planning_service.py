@@ -62,10 +62,12 @@ class RandomPlanningService:
         selection,
         selected_candidates: ActionCandidates | None,
     ) -> dict[str, Any]:
-        candidates = selection.slice_range_candidates_across_axes
-
+        candidates       = selection.slice_range_candidates_across_axes
+        selection_policy = self.action_candidates_selector.selection_policy
+        random_seed      = getattr(selection_policy, "seed", None)
         return {
-            "planning_mode": "random",
+            "planning_mode" : "random",
+            "random_seed"   : random_seed,
             "cost_ensembles": None,
             "costs_decision": None,
             "slice_candidate": {

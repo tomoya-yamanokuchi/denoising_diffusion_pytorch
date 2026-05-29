@@ -1,51 +1,52 @@
 from __future__ import annotations
 
 from denoising_diffusion_pytorch.policy.planning.action_definition.action_candidates import ActionCandidates
-from denoising_diffusion_pytorch.policy.types import (
+from typing import Dict
+
+from .selection_policy import SelectionPolicy
+from ...types import (
     AxisCostSet,
     SliceSelectionResult,
 )
-from denoising_diffusion_pytorch.policy.planning.candidate_building.candidate_coordinator import (
-    CandidateCoordinator,
-)
-from .selection_policy import SelectionPolicy
+from ..candidate_building.action_candidate_building_coordinator import ActionCandidateBuildingCoordinator
 
 
 class ActionCandidatesSelector:
     """
-    Coordinate candidate building and final candidate selection.
+    Coordinate axis-wise candidate building and final slice-range selection.
     """
 
     def __init__(
         self,
-        candidate_coordinator: CandidateCoordinator,
-        selection_policy: SelectionPolicy,
+        candidate_coordinator: ActionCandidateBuildingCoordinator,
+        selection_policy     : SelectionPolicy,
+        side_length          : int,
     ):
         self.candidate_coordinator = candidate_coordinator
-        self.selection_policy = selection_policy
+        self.selection_policy      = selection_policy
+        self.side_length           = side_length
 
     def select(
         self,
-        axis_costs: AxisCostSet | None,
-        observation_history: dict[int, dict],
+        axis_costs         : AxisCostSet,
+        observation_history: Dict[int, dict],
     ) -> SliceSelectionResult:
+
         slice_range_candidates_across_axes = self.candidate_coordinator.build(
-            axis_costs=axis_costs,
-            observation_history=observation_history,
+            axis_costs          = axis_costs,
+            observation_history = observation_history,
         )
 
-        optimal_selected_slice_range = self.selection_policy.choose(
-            slice_range_candidates_across_axes
-        )
+        optimal_selected_slice_range = self.selection_policy.choose(slice_range_candidates_across_axes)
 
         if optimal_selected_slice_range is None:
             optimal_selected_slice_range = self._build_fallback_candidates(
-                side_length=self._infer_side_length(slice_range_candidates_across_axes),
+                side_length = self.side_length,
             )
 
         return SliceSelectionResult(
-            optimal_selected_slice_range=optimal_selected_slice_range,
-            slice_range_candidates_across_axes=slice_range_candidates_across_axes,
+            optimal_selected_slice_range       = optimal_selected_slice_range,
+            slice_range_candidates_across_axes = slice_range_candidates_across_axes,
         )
 
 
@@ -60,3 +61,4 @@ class ActionCandidatesSelector:
         if fallback is None:
             raise RuntimeError("Failed to construct legacy fallback ActionCandidates.")
         return fallback
+

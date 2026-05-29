@@ -82,4 +82,5 @@ class PolicyFactory:
         return ActionCandidatesSelector(
             candidate_coordinator=candidate_coordinator,
             selection_policy=selection_policy,
+            side_length=side_length,
         )
