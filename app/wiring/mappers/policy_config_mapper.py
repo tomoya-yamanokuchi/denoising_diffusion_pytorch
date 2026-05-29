@@ -10,7 +10,6 @@ from denoising_diffusion_pytorch.policy.types import (
     InferenceConfig,
     PolicyConfig,
     SegmentationConfig,
-    SelectionConfig,
 )
 
 
@@ -23,41 +22,33 @@ def _build_color_mask_config(cfg_mask: DictConfig) -> ColorMaskConfig:
 
 
 def build_policy_config(
-        cfg_policy            : DictConfig,
-        voxel_grid_side_length: int,
-    ) -> PolicyConfig:
-
-
-    selection_cfg = getattr(cfg_policy, "selection", None)
+    cfg_policy: DictConfig,
+    voxel_grid_side_length: int,
+) -> PolicyConfig:
+    control_cfg = cfg_policy.control
+    random_seed = getattr(control_cfg, "random_seed", None)
 
     return PolicyConfig(
         control=ControlConfig(
-            mode = str(cfg_policy.control.mode),
+            mode=str(control_cfg.mode),
+            random_seed=None if random_seed is None else int(random_seed),
         ),
         inference=InferenceConfig(
-            model              = str(cfg_policy.inference.model),
-            guidance_scale     = float(cfg_policy.inference.guidance_scale),
-            sample_image_num   = int(cfg_policy.inference.sample_image_num),
-            sampling_timesteps = int(cfg_policy.inference.sampling_timesteps),
+            model=str(cfg_policy.inference.model),
+            guidance_scale=float(cfg_policy.inference.guidance_scale),
+            sample_image_num=int(cfg_policy.inference.sample_image_num),
+            sampling_timesteps=int(cfg_policy.inference.sampling_timesteps),
         ),
         segmentation=SegmentationConfig(
-            blue   = _build_color_mask_config(cfg_policy.segmentation.blue),
-            red    = _build_color_mask_config(cfg_policy.segmentation.red),
-            yellow = _build_color_mask_config(cfg_policy.segmentation.yellow),
+            blue=_build_color_mask_config(cfg_policy.segmentation.blue),
+            red=_build_color_mask_config(cfg_policy.segmentation.red),
+            yellow=_build_color_mask_config(cfg_policy.segmentation.yellow),
         ),
         decision=DecisionConfig(
-            mode  = str(cfg_policy.decision.mode),
-            param = DecisionParamConfig(
-                ucb_lb = float(cfg_policy.decision.param.ucb_lb),
+            mode=str(cfg_policy.decision.mode),
+            param=DecisionParamConfig(
+                ucb_lb=float(cfg_policy.decision.param.ucb_lb),
             ),
         ),
-        selection = SelectionConfig(
-            mode=str(getattr(selection_cfg, "mode", "longest")),
-            seed=(
-                None
-                if selection_cfg is None or getattr(selection_cfg, "seed", None) is None
-                else int(selection_cfg.seed)
-            ),
-        ),
-        voxel_grid_side_length = voxel_grid_side_length,
+        voxel_grid_side_length=voxel_grid_side_length,
     )

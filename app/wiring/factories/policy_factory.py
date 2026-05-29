@@ -63,27 +63,23 @@ class PolicyFactory:
         axis_candidate_range_builder,
         side_length: int,
     ) -> ActionCandidatesSelector:
-        selection_cfg = self._assets.policy_config.selection
+        control_cfg = self._assets.policy_config.control
 
-        if selection_cfg.mode == "longest":
+        if control_cfg.mode == "random":
+            candidate_coordinator = FullActionSpaceCandidateCoordinator(
+                expected_side_length=side_length,
+            )
+            selection_policy = RandomSelectionPolicy(
+                seed=control_cfg.random_seed,
+            )
+        else:
             candidate_coordinator = ActionCandidateBuildingCoordinator(
-                candidate_builder    = axis_candidate_range_builder,
-                expected_side_length = side_length,
+                candidate_builder=axis_candidate_range_builder,
+                expected_side_length=side_length,
             )
             selection_policy = SelectionPolicy()
 
-        elif selection_cfg.mode == "random":
-            candidate_coordinator = FullActionSpaceCandidateCoordinator(
-                expected_side_length = side_length,
-            )
-            selection_policy = RandomSelectionPolicy(
-                seed = selection_cfg.seed,
-            )
-
-        else:
-            raise ValueError(f"Unknown selection mode: {selection_cfg.mode}")
-
         return ActionCandidatesSelector(
-            candidate_coordinator = candidate_coordinator,
-            selection_policy      = selection_policy,
+            candidate_coordinator=candidate_coordinator,
+            selection_policy=selection_policy,
         )

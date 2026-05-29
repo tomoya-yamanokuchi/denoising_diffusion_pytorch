@@ -9,12 +9,16 @@ from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMask
 from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
 from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
 from denoising_diffusion_pytorch.policy.inference.slice_image_inferencer import SliceImageInferencer
+from denoising_diffusion_pytorch.policy.planning.random_planning_service import (
+    RandomPlanningService,
+)
 
 from .ensemble_image_builder import EnsembleImageBuilder
 from .types import PolicyConfig, AxisCostSet
 from .planning.action_selection.action_candidates_selector import ActionCandidatesSelector
 from .planning.visibility.visibility_constraint_set import VisibilityConstraintSet
 from .planning.action_definition.action_candidates import ActionCandidates
+
 
 
 
@@ -44,6 +48,10 @@ class cutting_surface_planner():
         self.ensemble_image_builder    = EnsembleImageBuilder(obs_model)
         self.visibility_constraints    = VisibilityConstraintSet(self.voxel_grid_side_length)
         self.oracle_image_z            = None
+        # ---
+        self.random_planning_service = RandomPlanningService(
+            action_candidates_selector=action_candidates_selector,
+        )
 
     def reset(self):
         self.visibility_constraints = VisibilityConstraintSet(self.voxel_grid_side_length)
@@ -56,6 +64,16 @@ class cutting_surface_planner():
             iters              : int,
             save_path          : str,
         ):
+        if self.policy_config.control.mode == "random":
+            selected_candidates, infos = self.random_planning_service.plan(
+                observation_history=observation_history,
+                iters=iters,
+                save_path=save_path,
+            )
+            self.update_visibility_constraints(selected_candidates)
+            import ipdb; ipdb.set_trace()
+            return selected_candidates, infos
+
         if self.policy_config.control.mode == "oracle_obs":
             last_step_images = self._predict_oracle_images()
             # import ipdb; ipdb.set_trace()
