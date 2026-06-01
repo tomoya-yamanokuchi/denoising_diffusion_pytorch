@@ -63,10 +63,12 @@ class RunDirPlanner:
 
         parts = [Path(cfg.path.logs)]
 
-        log_prefix = select_str(cfg, "log.prefix", default="")
-        if log_prefix:
-            parts.append(Path(log_prefix))
+        # if layout == "dataset":
+        #     dataset_class = select_str(cfg, self.dataset_class_key, default="")
+        #     if dataset_class:
+        #         parts.append(Path(dataset_class))
 
+        # exp_name が "train/20260504/..." のようにサブディレクトリを含んでもOK
         parts.append(Path(exp_name))
 
         control_mode = select_str(cfg, self.control_mode_key, default="")

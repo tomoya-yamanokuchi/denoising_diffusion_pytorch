@@ -6,10 +6,5 @@ defaults:
   - /watch/train: vaeac
   - _self_
 
+name  : train
 device: cuda:0
-
-log:
-  prefix  : train/vaeac
-  exp_name: null
-  layout  : dataset
-  suffix  : null

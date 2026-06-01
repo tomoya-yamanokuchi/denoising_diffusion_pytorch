@@ -1,7 +1,10 @@
-watch:
-  - { key: inferencer.name, label: "" }
-  - { key: dataset.image_size, label: "D" }
-  - { key: inferencer.trainer.train.train_step, label: "T" }
-  - { key: inferencer.network.n_hidden, label: "H" }
-  - { key: inferencer.network.fc_out, label: "Z" }
-  - { key: inferencer.log.tag, label: "" }
+watch_base:
+  - { key: log.prefix,                       label: "",  as_dir: true }
+  - { key: inferencer.name,                  label: "",  as_dir: true }
+  - { key: inferencer.network.name,          label: "" }
+  - { key: dataset.image_size,               label: "D" }
+  - { key: inferencer.network.n_hidden,      label: "H" }
+  - { key: inferencer.network.fc_out,        label: "Z" }
+  - { key: dataset.name,                     label: "" }
+  - { key: log.tag,                          label: "" }
+  - { kind: date, format: "%Y%m%d_%H%M%S", timezone: "Asia/Tokyo" }
