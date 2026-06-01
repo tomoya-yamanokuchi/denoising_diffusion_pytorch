@@ -214,78 +214,100 @@ def init_weights(model, cfg):
     return model
 
 
+
 def re_normalize(image, cfg):
     '''
     Renormalize to [0, 1]
     useful for plotting and saving
     '''
-    min_val = cfg['dataset']['min']*1.0
-    max_val = cfg['dataset']['max']*1.0
+    min_val = cfg['min']*1.0
+    max_val = cfg['max']*1.0
     return (image - min_val)/(max_val - min_val)
 
 
-# def save_images(data, outs, cfg, save_index, suffix=''):
-#     '''
-#     Save black-and-white or colored images
-#     Store 3 images:
-#         - Original image
-#         - Observed image (x_b)
-#         - Output of the VAEAC
-#     '''
-#     import ipdb;ipdb.set_trace()
-
-#     if cfg['network']['inp_channels'] == 1:
-#         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             data['image'][0, 0].data.cpu().numpy())
-#         io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             data['observed'][0, 0].data.cpu().numpy())
-#         io.imsave('{}/{}_out_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             outs['out'][0, 1].data.cpu().numpy())
-#         print("Saved for ckpt: {} {}".format(save_index, suffix))
-
-#     elif cfg['network']['inp_channels'] == 3:
-#         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             ((re_normalize(data['image'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
-#         io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             ((re_normalize(data['observed'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
-#         io.imsave('{}/{}_out_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             ((re_normalize(outs['out'][0].data.cpu().numpy().transpose(1, 2, 0)[:, :, 3:], cfg))*255.0).astype(np.uint8))
-#         print("Saved for ckpt: {} {}".format(save_index, suffix))
-
-#     else:
-#         raise NotImplementedError
 
 
-def save_images(data, outs, cfg, save_index, suffix='' ,save_path = "./"):
-    '''
-    Save black-and-white or colored images
-    Store 3 images:
-        - Original image
-        - Observed image (x_b)
-        - Output of the VAEAC
-    '''
+def save_images(
+    data,
+    outs,
+    inferencer_cfg,
+    dataset_cfg,
+    save_index,
+    suffix="",
+    save_path="./",
+):
+    """
+    Save VAEAC validation images.
 
-    if cfg.model_config['model']['inp_channels'] == 1:
-        io.imsave('{}/{}_img_{}.png'.format(save_path, save_index, suffix), \
-            data['image'][0, 0].data.cpu().numpy())
-        io.imsave('{}/{}_obs_{}.png'.format(save_path, save_index, suffix), \
-            data['observed'][0, 0].data.cpu().numpy())
-        io.imsave('{}/{}_out_{}.png'.format(save_path, save_index, suffix), \
-            outs['out'][0, 1].data.cpu().numpy())
-        print("Saved for ckpt: {} {}".format(save_index, suffix))
+    inferencer_cfg:
+        cfg.inferencer 相当。
+        例: inferencer_cfg.network.inp_channels
 
-    elif cfg.model_config['model']['inp_channels'] == 3:
-        io.imsave('{}/{}_img_{}.png'.format(save_path, save_index, suffix), \
-            ((re_normalize(data['image'][0].data.cpu().numpy().transpose(1, 2, 0),cfg.dataset_config))*255.0).astype(np.uint8))
-        io.imsave('{}/{}_obs_{}.png'.format(save_path, save_index, suffix), \
-            ((re_normalize(data['observed'][0].data.cpu().numpy().transpose(1, 2, 0),cfg.dataset_config))*255.0).astype(np.uint8))
-        io.imsave('{}/{}_out_{}.png'.format(save_path, save_index, suffix), \
-            ((re_normalize(outs['out'][0].data.cpu().numpy().transpose(1, 2, 0)[:, :, 3:], cfg.dataset_config))*255.0).astype(np.uint8))
-        print("Saved for ckpt: {} {}".format(save_index, suffix))
+    dataset_cfg:
+        cfg.dataset 相当。
+        例: dataset_cfg.min, dataset_cfg.max
+    """
+
+    os.makedirs(save_path, exist_ok=True)
+
+    inp_channels = int(inferencer_cfg.network.inp_channels)
+
+    if suffix:
+        suffix_text = f"_{suffix}"
+    else:
+        suffix_text = ""
+
+    if inp_channels == 1:
+        img = data["image"][0, 0].detach().cpu().numpy()
+        obs = data["observed"][0, 0].detach().cpu().numpy()
+        out = outs["out"][0, 1].detach().cpu().numpy()
+
+        io.imsave(
+            f"{save_path}/{save_index}_img{suffix_text}.png",
+            img,
+        )
+        io.imsave(
+            f"{save_path}/{save_index}_obs{suffix_text}.png",
+            obs,
+        )
+        io.imsave(
+            f"{save_path}/{save_index}_out{suffix_text}.png",
+            out,
+        )
+
+        print(f"Saved for ckpt: {save_index} {suffix}")
+
+    elif inp_channels == 3:
+        img = data["image"][0].detach().cpu().numpy().transpose(1, 2, 0)
+        obs = data["observed"][0].detach().cpu().numpy().transpose(1, 2, 0)
+
+        # VAEAC の outs["out"] は RGB 3ch ではなく、
+        # 旧実装では後半3chを可視化対象としていたため、その挙動を踏襲する。
+        out = outs["out"][0].detach().cpu().numpy().transpose(1, 2, 0)[:, :, 3:]
+
+        img = (re_normalize(img, dataset_cfg) * 255.0).clip(0, 255).astype(np.uint8)
+        obs = (re_normalize(obs, dataset_cfg) * 255.0).clip(0, 255).astype(np.uint8)
+        out = (re_normalize(out, dataset_cfg) * 255.0).clip(0, 255).astype(np.uint8)
+
+        io.imsave(
+            f"{save_path}/{save_index}_img{suffix_text}.png",
+            img,
+        )
+        io.imsave(
+            f"{save_path}/{save_index}_obs{suffix_text}.png",
+            obs,
+        )
+        io.imsave(
+            f"{save_path}/{save_index}_out{suffix_text}.png",
+            out,
+        )
+
+        print(f"Saved for ckpt: {save_index} {suffix}")
 
     else:
-        raise NotImplementedError
-
+        raise NotImplementedError(
+            f"Unsupported inp_channels for VAEAC save_images: {inp_channels}"
+        )
 
 
 def save_val_images(data, outs, cfg, save_index, suffix='val'):

@@ -44,6 +44,7 @@ class VAEACBuilder:
             model=self.model,
             dataset=self.dataset,
             cfg=self.cfg.inferencer,
+            dataset_cfg=self.cfg.dataset,
             savepath=str(self.artifact_static_root),
         )
         return self.trainer

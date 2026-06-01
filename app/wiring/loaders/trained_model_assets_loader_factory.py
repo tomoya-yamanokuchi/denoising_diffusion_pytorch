@@ -24,7 +24,9 @@ class TrainedModelAssetsLoaderFactory:
 
     def create(self, infer_model: str):
         if infer_model == "vaeac":
-            return VaeacAssetsLoader()
+            return VaeacAssetsLoader(
+                config_loader=self.config_loader,
+            )
 
         if infer_model in _DIFFUSION_INFER_MODELS:
             return ConditionalDiffusionAssetsLoader(

@@ -35,5 +35,5 @@ trainer:
     gradient_accumulate_every: 2
     shuffle                  : true
     step-log                 : 5
-    peek-validation          : 10000
+    peek-validation          : 20 # 10000 # save_and_sample_every in conditional_diffusion.yaml
 

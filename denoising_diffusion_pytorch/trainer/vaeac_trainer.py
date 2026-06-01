@@ -42,19 +42,21 @@ class Trainer(object):
         model,
         dataset,
         cfg,
+        dataset_cfg,
         savepath,
     ):
         super().__init__()
-
-
         model                            = init_weights(model, cfg)
         optim                            = get_optimizers(model, cfg)
         self.loss_fn                     = get_losses(cfg)
         self.model, self.optim, metadata = load_ckpt(model, optim, cfg.trainer)
         self.dataset                     = dataset
         self.gradient_accumulate_every   = cfg.trainer["train"]["gradient_accumulate_every"]
-        # ----
-        self.config                      = cfg
+        # ---
+        self.config      = cfg
+        self.dataset_cfg = dataset_cfg
+        self.savepath    = savepath
+
         # Set up random seeds
         seed = np.random.randint(2**32)
         self.step = 0
@@ -86,16 +88,9 @@ class Trainer(object):
         self.val_dl = cycle(torch.utils.data.DataLoader(
             val_dataset, batch_size=1, num_workers=1, shuffle=True))
 
-        # create summary writer save folder
-        # self.sw_savepath = os.path.join(self.config.savepath, f'summary_writer')
         self.sw_savepath = os.path.join(savepath, f'summary_writer')
         os.makedirs(self.sw_savepath, exist_ok=True)
-        # # Get loss file handle to dump logs to
-        # if not os.path.exists(self.config.savepath):
-        #     os.makedirs(self.config.savepath)
-        # lossesfile = open(os.path.join(self.config.savepath, 'losses.txt'), 'a+')
 
-        # import ipdb;ipdb.set_trace()
 
 
     def load(self, milestone):
@@ -186,17 +181,26 @@ class Trainer(object):
 
                         # Get all outputs
                         outputs = self.model(val_data)
-                        loss_val = self.loss_fn(outputs, val_data, self.config.model_config)
+                        loss_val = self.loss_fn(outputs, val_data, self.config)
 
                         print('Validation loss: {}'.format(loss_val.data.cpu().numpy()))
                         self.writer.add_scalar("Valid_loss",loss_val.data,self.step)
-                        # lossesfile.write('Validation loss: {}\n'.format(loss_val.data.cpu().numpy()))
-                        save_images(val_data, outputs, self.config, self.step,suffix="",save_path=self.config.savepath)
+
+                        save_images(
+                            val_data,
+                            outputs,
+                            self.config,
+                            self.dataset_cfg,
+                            self.step,
+                            suffix="",
+                            save_path=self.savepath,
+                        )
+
                         # break
-                    self.writer.add_images('output_image', outputs["out"][:,3:,:], self.step,  dataformats='NCHW')
-                    self.writer.add_images('observation_image', val_data["observed"], self.step,  dataformats='NCHW')
-                    self.writer.add_images('target_image', val_data["image"], self.step,  dataformats='NCHW')
+                    self.writer.add_images('output_image',      outputs["out"][:,3:,:], self.step,  dataformats='NCHW')
+                    self.writer.add_images('observation_image', val_data["observed"],   self.step,  dataformats='NCHW')
+                    self.writer.add_images('target_image',      val_data["image"],      self.step,  dataformats='NCHW')
                     self.model.train()
                     # Save checkpoint
-                    save_ckpt((self.model, self.optim), self.config.trainer, self.step, 0 ,override=False, save_path=self.config.savepath)
+                    save_ckpt((self.model, self.optim), self.config.trainer, self.step, 0 ,override=False, save_path=self.savepath)
                 pbar.update(1)
