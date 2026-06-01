@@ -15,23 +15,6 @@ voxel_cut_handler = VoxelCutHandler
 
 
 class dismantling_env():
-    """Dismantling Environment for voxel-based cutting tasks.
-
-    This environment simulates the process of slicing a 3D voxel model using cutting actions,
-    calculating rewards based on cutting costs, and managing observations through sequential
-    voxel slice updates.
-
-    Attributes:
-        grid_config (dict)                : Configuration of the voxel grid,  including bounds and side length.
-        oracle_obs_model (VoxelCutHandler): Model for oracle observation of the voxel grid (non-modified).
-        seq_obs_model (VoxelCutHandler)   : Model for sequential observation, updating after each action.
-        action_table (dict)               : A table mapping action indices to actions (axis and location).
-        observation_history (dict)        : A history of actions taken during the environment's operation.
-        oracle_target_shape_vol (float)   : The initial volume of the target shape (used for reward calculation).
-        image_dim (tuple)                 : The dimensions of the image slice from the voxel grid.
-        mini_batch_image_dim (tuple)      : Dimensions for the mini-batch image.
-    """
-
     def __init__(
         self,
         grid_config,
@@ -39,6 +22,12 @@ class dismantling_env():
         pre_near_by_cells=None,
         metric_calculator=None,
     ):
+        if metric_calculator is None:
+            raise ValueError(
+                "metric_calculator must be provided. "
+                "Build it from Hydra config in EvalBuilder."
+            )
+
         # --- static config ---
         self.grid_config       = grid_config
         self.mesh_components   = mesh_components
@@ -62,14 +51,8 @@ class dismantling_env():
         self.action_table           = self.get_action_table(grid_config=self.grid_config)
         self.observation_history    = {}
 
-        oracle_slice_image_z            = self.oracle_obs_model.init_imgs_z
-        self.oracle_target_shape_vol    = self.calculate_cutting_error_volume(oracle_slice_image_z)
-
-        self.image_dim                  =  oracle_slice_image_z.shape
-        self.mini_batch_image_dim       =  (self.grid_config["side_length"],self.grid_config["side_length"],self.image_dim[2])
-
-
-
+        oracle_slice_image_z         = self.oracle_obs_model.init_imgs_z
+        self.oracle_target_shape_vol = self.calculate_cutting_error_volume(oracle_slice_image_z)
 
 
     def get_action_table(self,grid_config):

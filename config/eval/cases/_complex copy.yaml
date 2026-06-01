@@ -1,0 +1,50 @@
+name: complex
+
+cases:
+  - name: Object_1
+    dataset_format: product_parts_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_0
+    model_config  : SheetSander_type0.yaml
+    initial_global_action_range:
+      start: 48
+      stop : 25
+
+  - name: Object_2
+    dataset_format: product_parts_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_1
+    model_config  : SheetSander_type2.yaml
+    initial_global_action_range:
+      start: 97
+      stop : 72
+
+  - name: Object_3
+    dataset_format: product_parts_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_2
+    model_config  : SheetSander_type4.yaml
+    initial_global_action_range:
+      start: 97
+      stop : 69
+
+  - name: Object_4
+    dataset_format: product_parts_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_3
+    model_config  : SheetSander_type1.yaml
+    initial_global_action_range:
+      start: 48
+      stop : 25
+
+  - name: Object_5
+    dataset_format: product_parts_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_4
+    model_config  : SheetSander_type3.yaml
+    initial_global_action_range:
+      start: 98
+      stop : 126
+
+  - name: Object_6
+    dataset_format: product_parts_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_5
+    model_config  : SheetSander_type5.yaml
+    initial_global_action_range:
+      start: 97
+      stop : 73

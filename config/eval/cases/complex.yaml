@@ -1,0 +1,37 @@
+name: complex_paper
+
+cases:
+  - name            : Object_D
+    paper_label     : Object D
+    legacy_name     : Object_4
+    sample_id       : samples_1
+    dataset_format  : product_parts_yaml
+    dataset_dir     : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_1
+    model_config    : SheetSander_type1.yaml
+    initial_global_action_range:
+      start: 48
+      stop : 25
+
+  - name            : Object_E
+    paper_label     : Object E
+    legacy_name     : Object_6
+    legacy_eval_data: eval_data6
+    sample_id       : samples_5
+    dataset_format  : product_parts_yaml
+    dataset_dir     : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_5
+    model_config    : SheetSander_type5.yaml
+    initial_global_action_range:
+      start: 97
+      stop : 73
+
+  - name            : Object_F
+    paper_label     : Object F
+    legacy_name     : Object_2
+    legacy_eval_data: eval_data2
+    sample_id       : samples_2
+    dataset_format  : product_parts_yaml
+    dataset_dir     : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_2
+    model_config    : SheetSander_type2.yaml
+    initial_global_action_range:
+      start: 97
+      stop : 72
