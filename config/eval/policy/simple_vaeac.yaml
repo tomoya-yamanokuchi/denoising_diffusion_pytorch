@@ -1,0 +1,12 @@
+defaults:
+  - simple
+  - _self_
+
+infer_model: vaeac
+
+inference:
+  model: vaeac
+  sample_image_num: 32
+  # build_policy_config が現状常に読むため、ダミーとして残す
+  guidance_scale: 0.0
+  sampling_timesteps: 1

@@ -1,0 +1,10 @@
+defaults:
+  - /inferencer : vaeac_complex
+  - /dataset    : complex
+  - /log        : train
+  - /path       : local
+  - /watch/train: vaeac
+  - _self_
+
+name  : train
+device: cuda:0
