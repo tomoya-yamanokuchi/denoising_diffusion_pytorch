@@ -1,0 +1,39 @@
+# config/watch/eval/vaeac_eval.yaml
+
+watch_base:
+  - key: log.prefix
+    label: ''
+    as_dir: true
+
+  - kind: basename
+    key: eval.train_run_dir
+    label: ''
+    as_dir: true
+
+  - key: eval.cases.name
+    label: ''
+
+  - key: eval.task.task_step
+    label: T
+
+  - key: eval.task.num_episodes
+    label: N
+
+  - key: eval.policy.infer_model
+    label: ''
+
+  - key: eval.policy.decision.param.ucb_lb
+    label: eta
+    value_format: safe_float
+
+  - key: eval.execution_error.max_abs_shift
+    label: D
+
+  - key: eval.policy.inference.sample_image_num
+    label: M
+
+  - key: eval.epoch
+    label: E
+
+  - key: log.tag
+    label: ''

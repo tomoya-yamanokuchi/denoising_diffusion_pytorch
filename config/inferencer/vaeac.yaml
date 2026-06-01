@@ -31,9 +31,10 @@ trainer:
   pretrained: null
   train:
     train_step               : 100000
+    peek-validation          : 10000 # save_and_sample_every in conditional_diffusion.yaml
     batch_size               : 96
     gradient_accumulate_every: 2
     shuffle                  : true
     step-log                 : 5
-    peek-validation          : 20 # 10000 # save_and_sample_every in conditional_diffusion.yaml
+
 
