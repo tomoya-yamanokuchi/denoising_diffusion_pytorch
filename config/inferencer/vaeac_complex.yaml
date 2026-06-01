@@ -1,0 +1,17 @@
+defaults:
+  - vaeac
+  - _self_
+
+network:
+  n_hidden : 96
+  fc_hidden: 300
+  fc_out   : 150
+
+trainer:
+  train:
+    batch_size               : 18
+    gradient_accumulate_every: 5
+    peek-validation          : 10000
+
+log:
+  tag: complex_D344

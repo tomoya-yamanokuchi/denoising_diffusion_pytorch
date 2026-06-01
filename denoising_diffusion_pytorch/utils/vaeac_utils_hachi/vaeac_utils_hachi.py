@@ -63,9 +63,9 @@ def get_model(cfg):
     '''
     Get the model from name
     '''
-    if cfg['network']['name'] == 'EncoderDecoderNetMini'.lower():
+    if cfg['model']['name'] == 'EncoderDecoderNetMini'.lower():
         model = EncoderDecoderNetMini(cfg)
-    elif cfg['network']['name'] == 'EncoderDecoderNet'.lower():
+    elif cfg['model']['name'] == 'EncoderDecoderNet'.lower():
         model = EncoderDecoder(cfg)
     else:
         raise NotImplementedError
@@ -144,7 +144,7 @@ def get_losses(cfg):
     '''
     Get loss functions from the loss dictionary
     '''
-    loss = cfg['network']['loss']
+    loss = cfg['model']['loss']
     loss = LOSS_DICT[loss]
 
     return loss
@@ -154,7 +154,7 @@ def get_optimizers(model, cfg):
     '''
     Get optimizers for generator and discriminator
     '''
-    subcfg = cfg['network']
+    subcfg = cfg['model']
     # Get the optimizer with all parameters for discriminator
     if subcfg['optimizer'] == 'adam':
         optim = Adam(model.parameters(), lr=subcfg['lr'], \
@@ -170,7 +170,7 @@ def get_schedulers(optim, cfg, ckpt):
     '''
     Get scheduler for the optimizers
     '''
-    subcfg = cfg['network']
+    subcfg = cfg['model']
 
     if subcfg['scheduler'] == 'step':
         scheduler = lr_scheduler.StepLR(optim, subcfg['decay-steps'], \
@@ -179,9 +179,9 @@ def get_schedulers(optim, cfg, ckpt):
         raise NotImplementedError
 
     # override lr here if specified
-    if cfg['network'].get('lr-override', False):
+    if cfg['model'].get('lr-override', False):
         for param_group in optim.param_groups:
-            param_group['lr'] = cfg['network']['lr']
+            param_group['lr'] = cfg['model']['lr']
 
     return scheduler
 
@@ -207,7 +207,7 @@ def init_weights(model, cfg):
                 initializer_(param.weight)
 
     # Get sub configs and update
-    subcfg = cfg['network']
+    subcfg = cfg['model']
     # subcfg = cfg
     # Get init
     init_helper(model, subcfg)
@@ -234,7 +234,7 @@ def re_normalize(image, cfg):
 #     '''
 #     import ipdb;ipdb.set_trace()
 
-#     if cfg['network']['inp_channels'] == 1:
+#     if cfg['model']['inp_channels'] == 1:
 #         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
 #             data['image'][0, 0].data.cpu().numpy())
 #         io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
@@ -243,7 +243,7 @@ def re_normalize(image, cfg):
 #             outs['out'][0, 1].data.cpu().numpy())
 #         print("Saved for ckpt: {} {}".format(save_index, suffix))
 
-#     elif cfg['network']['inp_channels'] == 3:
+#     elif cfg['model']['inp_channels'] == 3:
 #         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
 #             ((re_normalize(data['image'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
 #         io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
@@ -295,7 +295,7 @@ def save_val_images(data, outs, cfg, save_index, suffix='val'):
     '''
     N, _, H, W = outs['out'].shape
 
-    if cfg['network']['inp_channels'] == 1:
+    if cfg['model']['inp_channels'] == 1:
         out_img = np.zeros((H, W*(N + 2)))
         out_img[:, :W] = data['observed'][0, 0].data.cpu().numpy()
         # Paste the samples along the width axis
@@ -308,7 +308,7 @@ def save_val_images(data, outs, cfg, save_index, suffix='val'):
         print("Saved for ckpt: {} {}".format(save_index, suffix))
 
 
-    elif cfg['network']['inp_channels'] == 3:
+    elif cfg['model']['inp_channels'] == 3:
         # Treat colored images a little differently
         # Transpose is required to convert format from NCHW to NHWC
         out_img = np.zeros((H, W*(N + 2), 3))

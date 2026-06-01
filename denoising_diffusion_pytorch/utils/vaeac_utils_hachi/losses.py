@@ -23,7 +23,7 @@ class MSERecon(nn.Module):
         # first term: reconstruction loss
         # second term: KL divergence
         # third term: regularizer (optional)
-        channels = cfg['network']['inp_channels']
+        channels = cfg['model']['inp_channels']
 
         mask = (1 - inputs['mask'])
         recon_loss = mask*((outputs['out'][:, :channels] - inputs['image'])**2)
@@ -78,7 +78,7 @@ class BCERecon(nn.Module):
         # first term: reconstruction loss
         # second term: KL divergence
         # third term: regularizer (optional)
-        channels = cfg['network']['inp_channels']
+        channels = cfg['model']['inp_channels']
         mask = 1 - inputs['mask']
         # Get recon loss
         image = (inputs['image'] + 1.0)/2

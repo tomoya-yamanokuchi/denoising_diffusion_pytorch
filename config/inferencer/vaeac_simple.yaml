@@ -1,0 +1,17 @@
+defaults:
+  - vaeac
+  - _self_
+
+network:
+  n_hidden : 32
+  fc_hidden: 100
+  fc_out   : 50
+
+trainer:
+  train:
+    batch_size               : 96
+    gradient_accumulate_every: 2
+    peek-validation          : 10000
+
+log:
+  tag: simple_D64

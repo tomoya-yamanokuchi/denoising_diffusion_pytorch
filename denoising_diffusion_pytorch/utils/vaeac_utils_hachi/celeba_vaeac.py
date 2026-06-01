@@ -6,18 +6,11 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from denoising_diffusion_pytorch.utils.vaeac_utils import parts as parts
 # from networks import parts
-import denoising_diffusion_pytorch.models.vaeac.vaeac_parts as parts
-
-
-'''
-CHAN：画像のチャンネル数（）
-'''
 
 #import parts as parts
-CHAN = 8 # defalut value for image_dim = 64
-# CHAN = 43  # value for image dim = 344
-
+CHAN = 8
 
 class ProposalNet(nn.Module):
     '''
@@ -68,16 +61,22 @@ class ProposalNet(nn.Module):
 
 
 class EncoderDecoder(nn.Module):
-    def __init__(self, cfg, activation=F.leaky_relu):
+    '''
+    Prior and generator network
+    Prior network tries to learn p(z|x_{1-b}, b)
+    Generator tries to learn p(x_b | z, x_{1-b}, b)
+    '''
+    def __init__(self,
+                 cfg,
+                 activation=F.leaky_relu,
+                ):
         super(EncoderDecoder, self).__init__()
-        # ---- Get model config ---
-        model_cfg = cfg["network"]
-        # ----
-        n_hidden     = model_cfg["n_hidden"]
-        fc_hidden    = model_cfg["fc_hidden"]
-        fc_out       = model_cfg["fc_out"]
-        inp_channels = model_cfg["inp_channels"]
-        last_layer   = model_cfg["last_layer"]
+        model_cfg = cfg['model']
+        n_hidden = model_cfg['n_hidden']
+        fc_hidden = model_cfg['fc_hidden']
+        fc_out = model_cfg['fc_out']
+        inp_channels = model_cfg['inp_channels']
+        last_layer = model_cfg['last_layer']
 
         # Store the last layer activation
         if last_layer == 'tanh':
@@ -157,10 +156,12 @@ class EncoderDecoder(nn.Module):
         mean = self.fc_mean(out)
         logs = self.fc_sigma(out)
 
-        if not self.training:
-            sample = mean + F.softplus(logs)*torch.randn(mean.shape).to(mean.device)
-        else:
-            sample = prop_mean + F.softplus(prop_logs)*torch.randn(mean.shape).to(mean.device)
+        # if not self.training:
+        #     sample = mean + F.softplus(logs)*torch.randn(mean.shape).to(mean.device)
+        # else:
+        #     sample = prop_mean + F.softplus(prop_logs)*torch.randn(mean.shape).to(mean.device)
+
+        sample = mean + F.softplus(logs)*torch.randn(mean.shape).to(mean.device)
 
         # Decoder net
         out = self.activation(self.out_fc1(sample))

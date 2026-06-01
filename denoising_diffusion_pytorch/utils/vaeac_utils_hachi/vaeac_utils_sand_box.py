@@ -29,14 +29,6 @@ LOSS_DICT = {
     'bce': BCERecon(),
 }
 
-def vaeac_validate(model= None, data = None):
-
-    outputs = model(data)
-
-    N, _, H, W = outputs['out'].shape
-
-    return outputs["out"][:,3:,]
-
 def convert_to_lower(cfg):
     '''
     Convert all key values in config file to lower case
@@ -63,9 +55,9 @@ def get_model(cfg):
     '''
     Get the model from name
     '''
-    if cfg['network']['name'] == 'EncoderDecoderNetMini'.lower():
+    if cfg['model']['name'] == 'EncoderDecoderNetMini'.lower():
         model = EncoderDecoderNetMini(cfg)
-    elif cfg['network']['name'] == 'EncoderDecoderNet'.lower():
+    elif cfg['model']['name'] == 'EncoderDecoderNet'.lower():
         model = EncoderDecoder(cfg)
     else:
         raise NotImplementedError
@@ -123,6 +115,7 @@ def save_ckpt(model_and_optim, cfg, ckpt, seed, override=False , save_path = Non
         state_dict['ckpt'] = ckpt
         state_dict['model'] = model.state_dict()
         state_dict['optim'] = optim.state_dict()
+    
 
         # if not os.path.exists(cfg['save-path']):
         #     os.makedirs(cfg['save-path'])
@@ -138,13 +131,14 @@ def save_ckpt(model_and_optim, cfg, ckpt, seed, override=False , save_path = Non
         path = os.path.join(save_path, 'model_checkpoint_{}.pt'.format(ckpt))
         torch.save(state_dict, path)
         print('Saved checkpoint at {}\n'.format(path))
+        import ipdb;ipdb.set_trace()
 
 
 def get_losses(cfg):
     '''
     Get loss functions from the loss dictionary
     '''
-    loss = cfg['network']['loss']
+    loss = cfg['model']['loss']
     loss = LOSS_DICT[loss]
 
     return loss
@@ -154,7 +148,7 @@ def get_optimizers(model, cfg):
     '''
     Get optimizers for generator and discriminator
     '''
-    subcfg = cfg['network']
+    subcfg = cfg['model']
     # Get the optimizer with all parameters for discriminator
     if subcfg['optimizer'] == 'adam':
         optim = Adam(model.parameters(), lr=subcfg['lr'], \
@@ -170,7 +164,7 @@ def get_schedulers(optim, cfg, ckpt):
     '''
     Get scheduler for the optimizers
     '''
-    subcfg = cfg['network']
+    subcfg = cfg['model']
 
     if subcfg['scheduler'] == 'step':
         scheduler = lr_scheduler.StepLR(optim, subcfg['decay-steps'], \
@@ -179,9 +173,9 @@ def get_schedulers(optim, cfg, ckpt):
         raise NotImplementedError
 
     # override lr here if specified
-    if cfg['network'].get('lr-override', False):
+    if cfg['model'].get('lr-override', False):
         for param_group in optim.param_groups:
-            param_group['lr'] = cfg['network']['lr']
+            param_group['lr'] = cfg['model']['lr']
 
     return scheduler
 
@@ -207,8 +201,7 @@ def init_weights(model, cfg):
                 initializer_(param.weight)
 
     # Get sub configs and update
-    subcfg = cfg['network']
-    # subcfg = cfg
+    subcfg = cfg['model']
     # Get init
     init_helper(model, subcfg)
     return model
@@ -224,39 +217,7 @@ def re_normalize(image, cfg):
     return (image - min_val)/(max_val - min_val)
 
 
-# def save_images(data, outs, cfg, save_index, suffix=''):
-#     '''
-#     Save black-and-white or colored images
-#     Store 3 images:
-#         - Original image
-#         - Observed image (x_b)
-#         - Output of the VAEAC
-#     '''
-#     import ipdb;ipdb.set_trace()
-
-#     if cfg['network']['inp_channels'] == 1:
-#         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             data['image'][0, 0].data.cpu().numpy())
-#         io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             data['observed'][0, 0].data.cpu().numpy())
-#         io.imsave('{}/{}_out_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             outs['out'][0, 1].data.cpu().numpy())
-#         print("Saved for ckpt: {} {}".format(save_index, suffix))
-
-#     elif cfg['network']['inp_channels'] == 3:
-#         io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             ((re_normalize(data['image'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
-#         io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             ((re_normalize(data['observed'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
-#         io.imsave('{}/{}_out_{}.png'.format(cfg['save-path'], save_index, suffix), \
-#             ((re_normalize(outs['out'][0].data.cpu().numpy().transpose(1, 2, 0)[:, :, 3:], cfg))*255.0).astype(np.uint8))
-#         print("Saved for ckpt: {} {}".format(save_index, suffix))
-
-#     else:
-#         raise NotImplementedError
-
-
-def save_images(data, outs, cfg, save_index, suffix='' ,save_path = "./"):
+def save_images(data, outs, cfg, save_index, suffix=''):
     '''
     Save black-and-white or colored images
     Store 3 images:
@@ -264,28 +225,28 @@ def save_images(data, outs, cfg, save_index, suffix='' ,save_path = "./"):
         - Observed image (x_b)
         - Output of the VAEAC
     '''
-
-    if cfg.model_config['model']['inp_channels'] == 1:
-        io.imsave('{}/{}_img_{}.png'.format(save_path, save_index, suffix), \
+    import ipdb;ipdb.set_trace()
+    
+    if cfg['model']['inp_channels'] == 1:
+        io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
             data['image'][0, 0].data.cpu().numpy())
-        io.imsave('{}/{}_obs_{}.png'.format(save_path, save_index, suffix), \
+        io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
             data['observed'][0, 0].data.cpu().numpy())
-        io.imsave('{}/{}_out_{}.png'.format(save_path, save_index, suffix), \
+        io.imsave('{}/{}_out_{}.png'.format(cfg['save-path'], save_index, suffix), \
             outs['out'][0, 1].data.cpu().numpy())
         print("Saved for ckpt: {} {}".format(save_index, suffix))
 
-    elif cfg.model_config['model']['inp_channels'] == 3:
-        io.imsave('{}/{}_img_{}.png'.format(save_path, save_index, suffix), \
-            ((re_normalize(data['image'][0].data.cpu().numpy().transpose(1, 2, 0),cfg.dataset_config))*255.0).astype(np.uint8))
-        io.imsave('{}/{}_obs_{}.png'.format(save_path, save_index, suffix), \
-            ((re_normalize(data['observed'][0].data.cpu().numpy().transpose(1, 2, 0),cfg.dataset_config))*255.0).astype(np.uint8))
-        io.imsave('{}/{}_out_{}.png'.format(save_path, save_index, suffix), \
-            ((re_normalize(outs['out'][0].data.cpu().numpy().transpose(1, 2, 0)[:, :, 3:], cfg.dataset_config))*255.0).astype(np.uint8))
+    elif cfg['model']['inp_channels'] == 3:
+        io.imsave('{}/{}_img_{}.png'.format(cfg['save-path'], save_index, suffix), \
+            ((re_normalize(data['image'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
+        io.imsave('{}/{}_obs_{}.png'.format(cfg['save-path'], save_index, suffix), \
+            ((re_normalize(data['observed'][0].data.cpu().numpy().transpose(1, 2, 0),cfg))*255.0).astype(np.uint8))
+        io.imsave('{}/{}_out_{}.png'.format(cfg['save-path'], save_index, suffix), \
+            ((re_normalize(outs['out'][0].data.cpu().numpy().transpose(1, 2, 0)[:, :, 3:], cfg))*255.0).astype(np.uint8))
         print("Saved for ckpt: {} {}".format(save_index, suffix))
 
     else:
         raise NotImplementedError
-
 
 
 def save_val_images(data, outs, cfg, save_index, suffix='val'):
@@ -295,7 +256,7 @@ def save_val_images(data, outs, cfg, save_index, suffix='val'):
     '''
     N, _, H, W = outs['out'].shape
 
-    if cfg['network']['inp_channels'] == 1:
+    if cfg['model']['inp_channels'] == 1:
         out_img = np.zeros((H, W*(N + 2)))
         out_img[:, :W] = data['observed'][0, 0].data.cpu().numpy()
         # Paste the samples along the width axis
@@ -308,7 +269,7 @@ def save_val_images(data, outs, cfg, save_index, suffix='val'):
         print("Saved for ckpt: {} {}".format(save_index, suffix))
 
 
-    elif cfg['network']['inp_channels'] == 3:
+    elif cfg['model']['inp_channels'] == 3:
         # Treat colored images a little differently
         # Transpose is required to convert format from NCHW to NHWC
         out_img = np.zeros((H, W*(N + 2), 3))
