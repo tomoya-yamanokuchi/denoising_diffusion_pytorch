@@ -6,9 +6,9 @@ exp_name: null
 
 # ----- tag settings -----
 # tag     : null # "sensitivity_sampling_timesteps"
-# tag     : "internal_GT"
-tag     : "proposed"
+# tag     : "proposed"
+# tag     : "proposed_GT"
 # tag     : "proposed_no_cond"
-# tag     : "proposed_no_cond_epsilon_greedy_00"
+tag     : "proposed_eta0p0"
 # tag     : "random"
 
