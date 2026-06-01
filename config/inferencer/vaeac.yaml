@@ -37,8 +37,3 @@ trainer:
     step-log                 : 5
     peek-validation          : 10000
 
-log:
-  prefix  : train/vaeac
-  exp_name: null
-  layout  : dataset
-  suffix  : null

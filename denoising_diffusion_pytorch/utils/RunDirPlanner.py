@@ -1,3 +1,4 @@
+# denoising_diffusion_pytorch/utils/RunDirPlanner.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -62,12 +63,10 @@ class RunDirPlanner:
 
         parts = [Path(cfg.path.logs)]
 
-        # if layout == "dataset":
-        #     dataset_class = select_str(cfg, self.dataset_class_key, default="")
-        #     if dataset_class:
-        #         parts.append(Path(dataset_class))
+        log_prefix = select_str(cfg, "log.prefix", default="")
+        if log_prefix:
+            parts.append(Path(log_prefix))
 
-        # exp_name が "train/20260504/..." のようにサブディレクトリを含んでもOK
         parts.append(Path(exp_name))
 
         control_mode = select_str(cfg, self.control_mode_key, default="")

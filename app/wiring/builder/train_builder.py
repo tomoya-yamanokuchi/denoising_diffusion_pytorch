@@ -85,6 +85,11 @@ class TrainBuilder:
         self.method     = sub.build_method()
         self.trainer    = sub.build_trainer()
 
+        print("[DEBUG] train inferencer.name:", self.cfg.inferencer.name)
+        print("[DEBUG] train dataset.path:", self.cfg.dataset.path)
+        print("[DEBUG] artifact_static_root:", self.artifact_static_root)
+        import ipdb; ipdb.set_trace()
+
     def build_orchestrator(self):
         from app.usecases.train.train_orchestrator import TrianOrchestrator
         self.train_orchestrator = TrianOrchestrator(self)
