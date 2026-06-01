@@ -5,8 +5,9 @@ suffix  : null
 exp_name: null
 
 # ----- tag settings -----
-tag     : null # "sensitivity_sampling_timesteps"
+# tag     : null # "sensitivity_sampling_timesteps"
 # tag     : "internal_GT"
+tag     : "proposed"
 # tag     : "proposed_no_cond"
 # tag     : "proposed_no_cond_epsilon_greedy_00"
 # tag     : "random"

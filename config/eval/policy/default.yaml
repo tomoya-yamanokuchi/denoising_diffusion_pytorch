@@ -14,11 +14,11 @@ inference:
   guidance_scale    : 0.2
 
   # --------- settings for debug image saving during inference (optional) ---
-  # sample_image_num  : 32
-  # sampling_timesteps: 20
+  sample_image_num  : 32
+  sampling_timesteps: 20
 
-  sample_image_num  : 1
-  sampling_timesteps: 1
+  # sample_image_num  : 1
+  # sampling_timesteps: 1
   # --------------------------------------------------------------------------------
 
 
