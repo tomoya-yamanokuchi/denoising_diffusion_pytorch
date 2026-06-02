@@ -9,6 +9,5 @@ exp_name: null
 # tag     : "proposed"
 # tag     : "proposed_GT"
 # tag     : "proposed_no_cond"
-tag     : "proposed_eta0p0"
 # tag     : "random"
-
+tag     : "vaeac"

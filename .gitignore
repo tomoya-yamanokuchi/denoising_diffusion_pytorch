@@ -9,3 +9,6 @@ results/
 .serena/
 *.pdf
 *.csv
+
+analysis/**/*.jpg
+analysis/**/*.png
