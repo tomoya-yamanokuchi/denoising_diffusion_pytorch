@@ -1,10 +1,11 @@
 defaults:
   - cases          : simple_paper
-  - policy         : simple
+  - policy         : simple_vaeac
   - task           : default
   - execution_error: default
 
 # ---- training run directory settings ----
-train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_20260601_192154
+train_run_dir : /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_20260601_192829
+
 # ------ epoch and evaluation settings ------
 epoch   : "100000"
