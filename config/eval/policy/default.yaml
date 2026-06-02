@@ -1,4 +1,4 @@
-infer_model: conditional_diffusion
+# config/eval/policy/default.yaml
 
 control:
   mode: epsilon_greedy_00
@@ -9,22 +9,14 @@ control:
   random_seed: null
   random_max_range_length: 3
 
+
 inference:
-  model             : conditional_diffusion
-  guidance_scale    : 0.2
-
-  # --------- settings for debug image saving during inference (optional) ---
-  sample_image_num  : 32
-  sampling_timesteps: 20
-
-  # sample_image_num  : 1
-  # sampling_timesteps: 1
-  # --------------------------------------------------------------------------------
+  sample_image_num: 32 # モデル非依存で共通に使う値
 
 
 decision:
   mode : clip_ucb_raw
   param:
-    ucb_lb: 0.0
-    # ucb_lb: 0.5
+    # ucb_lb: 0.0
+    ucb_lb: 0.5
     # ucb_lb: 1.0

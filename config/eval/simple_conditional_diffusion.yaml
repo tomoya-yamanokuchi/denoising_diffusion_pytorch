@@ -1,6 +1,6 @@
 defaults:
   - cases          : simple_paper
-  - policy         : simple
+  - policy         : simple_conditional_diffusion
   - task           : default
   - execution_error: default
 

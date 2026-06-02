@@ -1,3 +1,5 @@
+# config/eval/policy/vaeac_simple.yaml
+
 defaults:
   - simple
   - _self_
@@ -5,8 +7,7 @@ defaults:
 infer_model: vaeac
 
 inference:
-  model: vaeac
-  sample_image_num: 32
+  model : vaeac
 
   # build_policy_config が現状常に読むため、ダミーとして残す
   guidance_scale    : 0.0
