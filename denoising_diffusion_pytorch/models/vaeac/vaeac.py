@@ -90,7 +90,8 @@ class EncoderDecoder(nn.Module):
             inp_channels=inp_channels+1,
             n_hidden=n_hidden,
             fc_hidden=fc_hidden,
-            fc_out=fc_out
+            fc_out=fc_out,
+            chan=chan,
             )
 
         self.n_hidden = n_hidden
