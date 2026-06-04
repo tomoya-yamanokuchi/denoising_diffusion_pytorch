@@ -1,12 +1,13 @@
 # config/dataset/simple_1d.yaml
-name      : simple_1d
-path      : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13900k/voxel_images_w_multi_color_v1
+name: simple_1d
 
-class     : Image_diffusion_1D
+path: /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1
 
-# Dataset1D specific
-image_size       : 64
-grid_3dim        : 16
-is_shuffle       : false
-horizontal_flip  : false
-convert_image_to : null
+class : Image_diffusion_2D
+loader: Dataset1D
+
+image_size      : 64
+grid_3dim       : 16
+is_shuffle      : false
+horizontal_flip : true
+convert_image_to: null

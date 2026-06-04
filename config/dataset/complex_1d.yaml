@@ -1,0 +1,14 @@
+# config/dataset/complex_1d.yaml
+name: complex_1d
+
+path: /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/sheetsander_cast_images_z_49
+
+class : Image_diffusion_2D
+loader: Dataset1D
+
+image_size      : 343
+grid_3dim       : 49
+is_shuffle      : true
+horizontal_flip : false
+convert_image_to: null
+

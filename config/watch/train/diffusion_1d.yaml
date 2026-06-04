@@ -1,0 +1,9 @@
+watch_base:
+  - { key: log.prefix,                              label: "",  as_dir: true }
+  - { key: inferencer.name,                         label: "" , as_dir: true }
+  - { key: inferencer.network.name,                 label: "" }
+  - { key: inferencer.diffusion.timesteps,          label: "T" }
+  - { key: inferencer.diffusion.sampling_timesteps, label: "S" }
+  - { key: dataset.name,                            label: "" }
+  - { key: log.tag,                                 label: "" }
+  - { kind: date, format: "%Y%m%d_%H%M%S", timezone: "Asia/Tokyo" }
