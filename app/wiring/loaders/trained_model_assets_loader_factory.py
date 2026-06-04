@@ -28,6 +28,9 @@ class TrainedModelAssetsLoaderFactory:
                 config_loader=self.config_loader,
             )
 
+        if infer_model in {"diffusion_1d", "diffusion_1D"}:
+            return Diffusion1DAssetsLoader(...)
+
         if infer_model in _DIFFUSION_INFER_MODELS:
             return ConditionalDiffusionAssetsLoader(
                 config_loader            = self.config_loader,

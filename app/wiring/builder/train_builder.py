@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Type
 from omegaconf import DictConfig, OmegaConf
+from app.wiring.method.Diffusion1DBuilder import Diffusion1DBuilder
 from app.wiring.method.protocols import TrainMethodBuilder
 from denoising_diffusion_pytorch.utils.omega_config_util import select_str
 from app.wiring.method.ConditionalImageDiffusionBuilder import ConditionalImageDiffusionBuilder
@@ -15,6 +16,7 @@ from app.wiring.services.config_validator import ConfigValidator
 _METHOD_BUILDERS: Dict[str, Type[TrainMethodBuilder]] = {
     "conditional_diffusion": ConditionalImageDiffusionBuilder,
     "vaeac"                : VAEACBuilder,
+    "diffusion_1d"         : Diffusion1DBuilder,
 }
 
 
