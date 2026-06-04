@@ -3,21 +3,25 @@
 import math
 from pathlib import Path
 from multiprocessing import cpu_count
+
 import torch
 from torch.optim import Adam
+from torch.utils.data import Dataset, DataLoader
+
 from accelerate import Accelerator
 from ema_pytorch import EMA
+
 from tqdm.auto import tqdm
+
 from denoising_diffusion_pytorch.version import __version__
+
+
 from torchvision import transforms as T, utils
 from torch.utils.tensorboard import SummaryWriter
 # constants
-from denoising_diffusion_pytorch.models.helpers import num_to_groups,has_int_squareroot,exists,cycle
 
-from denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import (
-    get_slice_image_from_voxel_grid,
-    get_1d_samples_to_2d_images,
-)
+
+from denoising_diffusion_pytorch.models.helpers import num_to_groups,has_int_squareroot,exists,default,cycle,normalize_to_neg_one_to_one,unnormalize_to_zero_to_one,identity,extract,linear_beta_schedule,cosine_beta_schedule,sigmoid_beta_schedule
 
 
 class Trainer1D(object):
@@ -226,7 +230,7 @@ class Trainer1D(object):
 
                             # import ipdb;ipdb.set_trace()
                             # dd = aa.reshape(64,64,-1)
-                            dd = get_slice_image_from_voxel_grid(aa)
+                            dd = self.get_slice_image(aa)
                             # import ipdb;ipdb.set_trace()
 
                             pp = dd[None,:,:,:]
@@ -244,12 +248,50 @@ class Trainer1D(object):
 
 
     def get_slice_image(self, image=None):
-        return get_slice_image_from_voxel_grid(image)
+        # image: (D, H, W, C)
+        dim, _, _, channel = image.shape
+        batch_img_len = int(math.sqrt(dim))  # e.g., 7 if dim=49
 
+        # (D=dim*dim, H, W, C) → (batch_img_len, batch_img_len, H, W, C)
+        image = image.view(batch_img_len, batch_img_len, *image.shape[1:])  # (by, bx, H, W, C)
+
+        # → (by * H, bx * W, C)
+        cast_image = image.permute(0, 2, 1, 3, 4).reshape(
+            batch_img_len * image.shape[2], batch_img_len * image.shape[3], channel
+        )
+
+        return cast_image
 
     def get_1d_to_2d_images(self, all_samples):
-        return get_1d_samples_to_2d_images(
-            all_samples=all_samples,
-            grid_3dim=self.grid_3dim,
-            grid_2dim=self.grid_2dim,
-        )
+        all_samples_tp = torch.permute(all_samples,(0,2,1))
+        # all_samples_tp_index = all_samples_tp[:,:,:3]
+
+        all_samples_batch = torch.zeros(all_samples.shape[0],3,self.grid_2dim,self.grid_2dim).to(self.device)
+        # all_samples_batch = torch.zeros(all_samples.shape[0],3,self.grid_2dim,self.grid_2dim)
+        # import ipdb;ipdb.set_trace()
+
+        # data = next(self.dl).to(device)
+        # all_samples_tp =  torch.permute(data[:self.num_samples,:],(0,2,1))
+
+        for i in range(all_samples_batch.shape[0]):
+            all_samples_tp_index  = torch.round(all_samples_tp[:,:,:3]*(self.grid_3dim-1.0)).int()[i]
+            # all_samples_tp_index  = torch.round(all_samples_tp[:,:,:3]).int()[i]
+            all_samples_tp_values = all_samples_tp[:,:,3:][i]
+            aa= torch.zeros(self.grid_3dim,self.grid_3dim,self.grid_3dim,3).to(self.device)
+            # aa= torch.zeros(self.grid_3dim,self.grid_3dim,self.grid_3dim,3)
+            all_samples_tp_index = torch.clip(all_samples_tp_index,0,15)
+            import ipdb;ipdb.set_trace()
+
+
+            aa[all_samples_tp_index[:,0],all_samples_tp_index[:,1],all_samples_tp_index[:,2]]=all_samples_tp_values
+
+            # import ipdb;ipdb.set_trace()
+            # dd = aa.reshape(64,64,-1)
+            dd = self.get_slice_image(aa)
+            # import ipdb;ipdb.set_trace()
+
+            pp = dd[None,:,:,:]
+            samples = torch.permute(pp,(0,3,1,2))
+            all_samples_batch[i]=samples
+
+        return all_samples_batch

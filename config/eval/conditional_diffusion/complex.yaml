@@ -5,7 +5,7 @@ defaults:
   - base
   - /eval/cases@cases  : complex_paper
   - /eval/policy@policy: complex
-  - /eval/policy/conditional_diffusion@policy: base
+  - /eval/policy/method@policy: conditional_diffusion
   - _self_
 
 train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D128_T1000_S20_real_sheetsander_z49_20260504_202728

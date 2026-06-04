@@ -8,6 +8,7 @@ from app.wiring.loaders.conditional_diffusion_assets_loader import (
     ConditionalDiffusionAssetsLoader,
 )
 from app.wiring.loaders.vaeac_assets_loader import VaeacAssetsLoader
+from app.wiring.loaders.diffusion_1d_assets_loader import Diffusion1DAssetsLoader
 
 
 _DIFFUSION_INFER_MODELS = {
@@ -29,7 +30,9 @@ class TrainedModelAssetsLoaderFactory:
             )
 
         if infer_model in {"diffusion_1d", "diffusion_1D"}:
-            return Diffusion1DAssetsLoader(...)
+            return Diffusion1DAssetsLoader(
+                config_loader=self.config_loader,
+            )
 
         if infer_model in _DIFFUSION_INFER_MODELS:
             return ConditionalDiffusionAssetsLoader(

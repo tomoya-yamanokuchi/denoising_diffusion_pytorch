@@ -34,6 +34,8 @@ class VaeacSliceImageInferencer(SliceImageInferencer):
             model_size = model_size,
         )
 
+        # import ipdb; ipdb.set_trace()
+
         self.inferencer.eval()
 
         if self.control_mode == "no_cond":
@@ -59,10 +61,11 @@ class VaeacSliceImageInferencer(SliceImageInferencer):
             "observed": observation,
         }
 
-        sample_image_ = vaeac_validate(
-            model=self.inferencer,
-            data=data,
-        ).detach().cpu()
+        with torch.inference_mode():
+            sample_image_ = vaeac_validate(
+                model=self.inferencer,
+                data=data,
+            ).detach().cpu()
 
         sample_image = sample_image_.unsqueeze(1)
 

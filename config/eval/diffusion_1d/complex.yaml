@@ -1,11 +1,11 @@
-# config/eval/conditional_diffusion/complex.yaml
+# config/eval/diffusion_1d/complex.yaml
 # @package eval
 
 defaults:
   - base
   - /eval/cases@cases  : complex_paper
   - /eval/policy@policy: complex
-  - /eval/policy/method@policy: vaeac
+  - /eval/policy/method@policy: diffusion_1d
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D344_H96_Z150_E100000_complex_2d_20260604_175600
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/unet1d_D128_T1000_S20_complex_1d_20260604_192633

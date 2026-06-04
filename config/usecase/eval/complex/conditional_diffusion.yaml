@@ -3,8 +3,8 @@
 
 defaults:
   - /eval/conditional_diffusion@eval: complex
-  - /watch/eval: conditional_diffusion_eval
-  - /env       : complex
+  - /env                            : complex
+  - /watch/eval: conditional_diffusion
   - /path      : local
   - /log       : eval
   - _self_

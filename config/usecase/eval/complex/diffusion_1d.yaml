@@ -1,9 +1,9 @@
-# config/usecase/eval/simple/diffusion_1d.yaml
+# config/usecase/eval/complex/diffusion_1d.yaml
 # @package usecase
 
 defaults:
-  - /eval/diffusion_1d@eval: simple
-  - /env                   : simple
+  - /eval/diffusion_1d@eval: complex
+  - /env                   : complex
   - /watch/eval: diffusion_1d
   - /path      : local
   - /log       : eval

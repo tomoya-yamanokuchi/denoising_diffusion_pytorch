@@ -8,7 +8,9 @@ from denoising_diffusion_pytorch.models.conditional_image_diffusion_cfg_devel2 i
 
 
 from .vaeac_slice_image_inferencer import VaeacSliceImageInferencer
+from .diffusion_1d_slice_image_inferencer import Diffusion1DSliceImageInferencer
 from denoising_diffusion_pytorch.models.vaeac.vaeac import EncoderDecoder
+
 
 class SliceImageInferencerFactory:
     @staticmethod
@@ -23,6 +25,14 @@ class SliceImageInferencerFactory:
                 inferencer       = inferencer,
                 sample_image_num = policy_config.inference.sample_image_num,
                 control_mode     = policy_config.control.mode,
+            )
+
+        if model_name in {"diffusion_1d", "diffusion_1D"}:
+            return Diffusion1DSliceImageInferencer(
+                inferencer         = inferencer,
+                sample_image_num   = policy_config.inference.sample_image_num,
+                control_mode       = policy_config.control.mode,
+                sampling_timesteps = policy_config.inference.sampling_timesteps,
             )
 
         if model_name == "conditional_diffusion":

@@ -87,13 +87,14 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
             step_idx        = planning_input.step_idx,
         )
 
-        sample_image = self.inferencer.ema_model.sample(
-            batch_size           = self.sample_image_num,
-            return_all_timesteps = True,
-            cond                 = cond,
-            mask                 = mask,
-            omega                = self.guidance_scale,
-        ).detach().cpu()
+        with torch.inference_mode():
+            sample_image = self.inferencer.ema_model.sample(
+                batch_size           = self.sample_image_num,
+                return_all_timesteps = True,
+                cond                 = cond,
+                mask                 = mask,
+                omega                = self.guidance_scale,
+            ).detach().cpu()
 
         batch_images = (
             torch.permute(sample_image, (0, 1, 3, 4, 2)) * 255.0

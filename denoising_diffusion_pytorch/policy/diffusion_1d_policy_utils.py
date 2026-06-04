@@ -1,49 +1,97 @@
-
-
 import torch
+import math
 
 
 
-# def get_2d_image_to_1d(image, grid_3_dim , is_shuffle):
-#         mini_batch_image    = get_2d_image_to_mini_batch_image(image, grid_3_dim, "z")
-#         mini_batch_dim      = mini_batch_image.shape[0]
+def get_slice_image_from_voxel_grid(image: torch.Tensor) -> torch.Tensor:
+    """
+    Convert voxel grid image [D, H, W, C] to tiled slice image [H2, W2, C].
 
-#         # インデックスを作成 (0から15の範囲)
-#         indices = torch.tensor([[i, j, k] for i in range(mini_batch_dim) for j in range(mini_batch_dim) for k in range(mini_batch_dim)])  # shape: [4096, 3]
-#         values  = mini_batch_image[indices[:, 0], indices[:, 1], indices[:, 2]]
-#         result  = torch.cat((indices/(mini_batch_dim-1.0), values), dim=1)
-#         # result  = torch.cat((indices, values), dim=1)
-#         # result  = torch.cat((indices, values), dim=1)
+    For example:
+      D = 16 -> 4 x 4 tiles -> 64 x 64
+      D = 49 -> 7 x 7 tiles -> 343 x 343
+    """
+    dim, _, _, channel = image.shape
+    batch_img_len = int(math.sqrt(dim))
 
-#         if is_shuffle is True:
-#             result_  =result[torch.randperm(result.size(0))]
-#             result_tp = torch.permute(result_,(1,0))
-#         else:
-#             result_tp = torch.permute(result,(1,0))
+    if batch_img_len * batch_img_len != dim:
+        raise ValueError(
+            f"grid_3dim must be a perfect square for tiled image conversion. "
+            f"Got dim={dim}."
+        )
+
+    image = image.view(batch_img_len, batch_img_len, *image.shape[1:])
+
+    cast_image = image.permute(0, 2, 1, 3, 4).reshape(
+        batch_img_len * image.shape[2],
+        batch_img_len * image.shape[3],
+        channel,
+    )
+
+    return cast_image
 
 
-#         return result_tp
+def get_1d_samples_to_2d_images(
+    all_samples: torch.Tensor,
+    grid_3dim: int,
+    grid_2dim: int | None = None,
+) -> torch.Tensor:
+    """
+    Convert diffusion 1D output [B, 6, N] to tiled 2D images [B, 3, H, W].
 
-# def get_2d_image_to_mini_batch_image(image=None, grid_3dim=16, permute = "z"):
-#     grid_2dim    = image.shape[0]
-#     grid_3dim    = grid_3dim
-#     batch_img_len = int(grid_2dim/grid_3dim)
+    all_samples:
+      [B, 6, N]
+      channel 0:3 = normalized xyz position in [0, 1]
+      channel 3:6 = RGB value
+    """
+    device = all_samples.device
+    grid_2dim = grid_2dim or int(math.sqrt(grid_3dim)) * grid_3dim
 
-#     batch_2d_image_ = torch.zeros((grid_3dim, grid_3dim, grid_3dim, 3))
-#     k = 0
-#     for j in range(batch_img_len):
-#         for i in range(batch_img_len):
-#             batch_2d_image_[k] = image[j*grid_3dim:(j+1)*grid_3dim,i*grid_3dim:(i+1)*grid_3dim]
-#             k = k+1
+    all_samples_tp = torch.permute(all_samples, (0, 2, 1))  # [B, N, 6]
 
-#     if permute == "z":
-#         batch_2d_image  = batch_2d_image_
-#     elif permute == "y":
-#         batch_2d_image  = batch_2d_image_.transpose(1,0,2,3)
-#     elif permute == "x":
-#         batch_2d_image  = batch_2d_image_.transpose(2,1,0,3)
+    all_samples_batch = torch.zeros(
+        all_samples.shape[0],
+        3,
+        grid_2dim,
+        grid_2dim,
+        device=device,
+        dtype=all_samples.dtype,
+    )
 
-#     return batch_2d_image
+    for i in range(all_samples_batch.shape[0]):
+        all_samples_tp_index = torch.round(
+            all_samples_tp[:, :, :3] * (grid_3dim - 1.0)
+        ).long()[i]
+
+        # ここが重要: 15 固定ではなく grid_3dim - 1 にする
+        all_samples_tp_index = torch.clamp(
+            all_samples_tp_index,
+            0,
+            grid_3dim - 1,
+        )
+
+        all_samples_tp_values = all_samples_tp[:, :, 3:][i]
+
+        voxel_grid = torch.zeros(
+            grid_3dim,
+            grid_3dim,
+            grid_3dim,
+            3,
+            device=device,
+            dtype=all_samples.dtype,
+        )
+
+        voxel_grid[
+            all_samples_tp_index[:, 0],
+            all_samples_tp_index[:, 1],
+            all_samples_tp_index[:, 2],
+        ] = all_samples_tp_values
+
+        slice_image = get_slice_image_from_voxel_grid(voxel_grid)
+        all_samples_batch[i] = torch.permute(slice_image[None, :, :, :], (0, 3, 1, 2))[0]
+
+    return all_samples_batch
+
 
 
 def get_2d_image_to_1d(image, grid_3_dim , is_shuffle):
@@ -57,6 +105,7 @@ def get_2d_image_to_1d(image, grid_3_dim , is_shuffle):
         result_tp = torch.permute(result,(1,0))
 
         return result_tp
+
 
 def generate_3d_indices(mini_batch_dim):
     r = torch.arange(mini_batch_dim)
