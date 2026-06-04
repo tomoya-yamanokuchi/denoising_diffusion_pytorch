@@ -1,5 +1,5 @@
 defaults:
-  # - /watch/train: conditional_diffusion
+  - /watch/train: conditional_diffusion
   - network : unet_D128 # <--
   - _self_
 
@@ -14,7 +14,7 @@ diffusion:
 trainer:
   train_batch_size         : 18 # <--
   train_lr                 : 8e-5
-  train_num_steps          : 800000
+  train_num_steps          : 100000
   save_and_sample_every    : 2000
   gradient_accumulate_every: 5 # <--
   ema_decay                : 0.995

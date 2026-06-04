@@ -1,5 +1,5 @@
 defaults:
-  # - /watch/train: conditional_diffusion
+  - /watch/train: conditional_diffusion
   - network : unet_D64 # <--
   - _self_
 

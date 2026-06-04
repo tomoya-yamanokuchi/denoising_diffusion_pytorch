@@ -1,6 +1,6 @@
 defaults:
   - /inferencer : diffusion_1d_complex
-  - /dataset    : complex_2d
+  - /dataset    : complex_1d
   - /log        : train
   - /path       : local
   - _self_
