@@ -1,9 +1,8 @@
 defaults:
   - /inferencer : vaeac_simple
-  - /dataset    : simple
+  - /dataset    : simple_2d
   - /log        : train
   - /path       : local
-  - /watch/train: vaeac
   - _self_
 
 name  : train

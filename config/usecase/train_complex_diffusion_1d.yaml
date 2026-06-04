@@ -1,9 +1,8 @@
 defaults:
   - /inferencer : diffusion_1d_complex
-  - /dataset    : complex_1d
+  - /dataset    : complex_2d
   - /log        : train
   - /path       : local
-  - /watch/train: diffusion_1d
   - _self_
 
 name  : train

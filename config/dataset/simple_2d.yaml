@@ -1,4 +1,6 @@
-name      : simple
+# config/dataset/simple_2d.yaml
+name: simple_2d
+
 path      : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1
 # ---
 min       : -1

@@ -1,0 +1,5 @@
+name: unet1d_D128
+
+dim           : 128
+dim_mults     : [1, 2, 4, 8]
+self_condition: false

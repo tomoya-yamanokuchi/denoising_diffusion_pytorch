@@ -1,6 +1,6 @@
 defaults:
   - /watch/train: diffusion_1d
-  - network: unet1d_D64
+  - network: unet1d_D128
   - _self_
 
 name     : diffusion_1d
@@ -12,10 +12,10 @@ diffusion:
   sampling_timesteps: 20
 
 trainer:
-  train_batch_size         : 96
+  train_batch_size         : 3
   train_lr                 : 8e-5
   train_num_steps          : 100000
-  save_and_sample_every    : 50 # 5000
-  gradient_accumulate_every: 2
+  save_and_sample_every    : 5 # 5000
+  gradient_accumulate_every: 30
   ema_decay                : 0.995
   amp                      : true

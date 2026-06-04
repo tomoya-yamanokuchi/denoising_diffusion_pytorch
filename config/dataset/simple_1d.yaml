@@ -6,6 +6,6 @@ loader: Dataset1D
 
 image_size      : 64
 grid_3dim       : 16
-is_shuffle      : false
-horizontal_flip : true
+is_shuffle      : true  # original -> false
+horizontal_flip : false # original -> true
 convert_image_to: null

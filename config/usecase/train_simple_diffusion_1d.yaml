@@ -3,7 +3,6 @@ defaults:
   - /dataset    : simple_1d
   - /log        : train
   - /path       : local
-  - /watch/train: diffusion_1d
   - _self_
 
 name  : train
