@@ -1,12 +1,12 @@
-# config/usecase/eval/simple/conditional_diffusion.yaml
+# config/usecase/eval/complex/conditional_diffusion.yaml
 # @package usecase
 
 defaults:
-  - /eval      : simple_conditional_diffusion
+  - /eval/conditional_diffusion@eval: complex
   - /watch/eval: conditional_diffusion_eval
+  - /env       : complex
   - /path      : local
   - /log       : eval
-  - /env       : simple
   - _self_
 
 name      : eval
