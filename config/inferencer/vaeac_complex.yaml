@@ -6,6 +6,7 @@ network:
   n_hidden : 96
   fc_hidden: 300
   fc_out   : 150
+  chan     : 43
 
 trainer:
   train:

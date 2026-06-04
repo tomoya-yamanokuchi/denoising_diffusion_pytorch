@@ -1,8 +1,8 @@
 defaults:
-  - /path       : local
+  - /inferencer : conditional_diffusion_simple
+  - /dataset    : simple_2d
   - /log        : train
-  - /inferencer : vaeac_simple # conditional_diffusion_simple
-  - /dataset    : simple
+  - /path       : local
   - _self_
 
 name  : train

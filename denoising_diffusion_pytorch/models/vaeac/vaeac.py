@@ -1,3 +1,4 @@
+# denoising_diffusion_pytorch/models/vaeac/vaeac.py
 '''
 Network for MNIST
 Author: Rohit Jena
@@ -10,14 +11,6 @@ from torch import nn
 import denoising_diffusion_pytorch.models.vaeac.vaeac_parts as parts
 
 
-'''
-CHAN：画像のチャンネル数（）
-'''
-
-#import parts as parts
-CHAN = 8 # defalut value for image_dim = 64
-# CHAN = 43  # value for image dim = 344
-
 
 class ProposalNet(nn.Module):
     '''
@@ -29,11 +22,13 @@ class ProposalNet(nn.Module):
                  n_hidden=16,
                  fc_hidden=50,
                  fc_out=16,
+                 chan=8,
                  activation=F.leaky_relu,
                 ):
         super(ProposalNet, self).__init__()
+        self.chan         = chan
         self.inp_channels = inp_channels
-        self.activation = activation
+        self.activation   = activation
         # Get modules
         self.in_conv = parts.InConv(inp_channels, n_hidden)
         self.resblock1 = parts.ResBlock(n_hidden, n_hidden)
@@ -43,8 +38,8 @@ class ProposalNet(nn.Module):
         self.resblock5 = parts.ResBlock(n_hidden, n_hidden)
         self.pool = nn.AvgPool2d(2, stride=2)
         # fc layers
-        self.fc1 = nn.Linear(n_hidden * CHAN * CHAN, fc_hidden)
-        self.fc_mean = nn.Linear(fc_hidden, fc_out)
+        self.fc1      = nn.Linear(n_hidden * self.chan * self.chan, fc_hidden)
+        self.fc_mean  = nn.Linear(fc_hidden, fc_out)
         self.fc_sigma = nn.Linear(fc_hidden, fc_out)
 
     def forward(self, image):
@@ -88,6 +83,8 @@ class EncoderDecoder(nn.Module):
             print("Using no activation at final layer...")
             self.last_activation = None
 
+        chan = model_cfg.get("chan", 8)
+
         # Proposal Net will take input channels + 1 for mask
         self.proposal_net = ProposalNet(
             inp_channels=inp_channels+1,
@@ -110,13 +107,14 @@ class EncoderDecoder(nn.Module):
         self.resblock5 = parts.ResBlock(n_hidden, n_hidden)
         self.pool = nn.AvgPool2d(2, stride=2)
         # fc layers
-        self.fc1 = nn.Linear(n_hidden * CHAN * CHAN, fc_hidden)
-        self.fc_mean = nn.Linear(fc_hidden, fc_out)
+        self.chan = chan
+        self.fc1      = nn.Linear(n_hidden * self.chan * self.chan, fc_hidden)
+        self.fc_mean  = nn.Linear(fc_hidden, fc_out)
         self.fc_sigma = nn.Linear(fc_hidden, fc_out)
 
         # Decoder network
         self.out_fc1 = nn.Linear(fc_out, fc_hidden)
-        self.out_fc2 = nn.Linear(fc_hidden, n_hidden * CHAN * CHAN)
+        self.out_fc2 = nn.Linear(fc_hidden, n_hidden * self.chan * self.chan)
         # resblocks
         self.out_resblock1 = parts.ResBlock(2 * n_hidden, n_hidden)
         self.out_resblock2 = parts.ResBlock(2 * n_hidden, n_hidden)
@@ -165,7 +163,7 @@ class EncoderDecoder(nn.Module):
         # Decoder net
         out = self.activation(self.out_fc1(sample))
         out = self.activation(self.out_fc2(out))
-        out = out.view(out.shape[0], self.n_hidden, CHAN, CHAN)
+        out = out.view(out.shape[0], self.n_hidden, self.chan, self.chan)
         # Conv
         out = self.out_resblock1(out, out5)
         out = self.upsample(out)
@@ -189,23 +187,3 @@ class EncoderDecoder(nn.Module):
         }
 
 
-# if __name__ == '__main__':
-#     CFG = {
-#         'model': {
-#             'n_hidden': 16,
-#             'fc_hidden': 50,
-#             'fc_out': 16,
-#             'inp_channels':3,
-#             'last_layer': 'tanh',
-#         }
-#     }
-#     network = EncoderDecoder(CFG)
-#     inputs = {
-#         'image': torch.rand(8, 3, 64, 64),
-#         'mask': torch.rand(8, 1, 64, 64),
-#         'observed': torch.rand(8, 3, 64, 64),
-#     }
-#     outputs = network(inputs)
-#     print 'inputs', inputs
-#     for key, value in outputs.items():
-#         print key, value.shape
