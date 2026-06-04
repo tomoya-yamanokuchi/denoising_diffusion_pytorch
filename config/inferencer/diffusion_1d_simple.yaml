@@ -1,5 +1,5 @@
 defaults:
-  - /watch/train: diffusion_1d
+  # - /watch/train: diffusion_1d
   - network: unet1d_D64
   - _self_
 

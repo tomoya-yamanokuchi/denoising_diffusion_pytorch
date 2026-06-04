@@ -1,9 +1,7 @@
 # config/dataset/simple_1d.yaml
 name: simple_1d
 
-path: /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1
-
-class : Image_diffusion_2D
+path  : /home/dev/workspace/dataset/nedo_product_dataset/dataset_4142435161_13901k/voxel_images_w_multi_color_v1
 loader: Dataset1D
 
 image_size      : 64

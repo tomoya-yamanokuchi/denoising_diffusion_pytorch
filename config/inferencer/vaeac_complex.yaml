@@ -1,5 +1,5 @@
 defaults:
-  - vaeac
+  - vaeac_base
   - _self_
 
 network:
