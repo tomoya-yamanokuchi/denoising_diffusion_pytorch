@@ -1,12 +1,12 @@
-# config/usecase/eval/simple/conditional_diffusion.yaml
+# config/usecase/eval/complex/vaeac.yaml
 # @package usecase
 
 defaults:
-  - /eval      : simple_vaeac
+  - /eval/vaeac@eval: complex
+  - /env            : complex
   - /watch/eval: vaeac_eval
   - /path      : local
   - /log       : eval
-  - /env       : simple
   - _self_
 
 name      : eval

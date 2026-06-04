@@ -1,13 +1,10 @@
-# config/eval/policy/vaeac_simple.yaml
-
-defaults:
-  - simple
-  - _self_
+# config/eval/policy/method/vaeac.yaml
+# @package eval.policy
 
 infer_model: vaeac
 
 inference:
-  model : vaeac
+  model: vaeac
 
   # build_policy_config が現状常に読むため、ダミーとして残す
   guidance_scale    : 0.0

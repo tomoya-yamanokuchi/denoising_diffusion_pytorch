@@ -1,7 +1,0 @@
-# config/eval/policy/conditional_diffusion/complex.yaml
-# @package eval.policy
-
-defaults:
-  - /eval/policy: complex
-  - base
-  - _self_

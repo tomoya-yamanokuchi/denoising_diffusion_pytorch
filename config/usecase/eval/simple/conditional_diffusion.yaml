@@ -2,11 +2,11 @@
 # @package usecase
 
 defaults:
-  - /eval      : simple_conditional_diffusion
+  - /eval/conditional_diffusion@eval: simple
   - /watch/eval: conditional_diffusion_eval
+  - /env       : simple
   - /path      : local
   - /log       : eval
-  - /env       : simple
   - _self_
 
 name      : eval

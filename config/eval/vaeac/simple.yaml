@@ -1,0 +1,11 @@
+# config/eval/vaeac/simple.yaml
+# @package eval
+
+defaults:
+  - base
+  - /eval/cases@cases  : simple_paper
+  - /eval/policy@policy: simple
+  - /eval/policy/method@policy: vaeac
+  - _self_
+
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_2d_20260604_123220

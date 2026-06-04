@@ -10,4 +10,5 @@ exp_name: null
 # tag     : "proposed_GT"
 # tag     : "proposed_no_cond"
 # tag     : "random"
-tag     : "vaeac"
+# tag     : "vaeac"
+tag     : "debug"

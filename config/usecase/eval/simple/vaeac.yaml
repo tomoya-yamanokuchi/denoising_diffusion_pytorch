@@ -2,11 +2,11 @@
 # @package usecase
 
 defaults:
-  - /eval      : simple_vaeac
+  - /eval/vaeac@eval: simple
   - /watch/eval: vaeac_eval
+  - /env       : simple
   - /path      : local
   - /log       : eval
-  - /env       : simple
   - _self_
 
 name      : eval
