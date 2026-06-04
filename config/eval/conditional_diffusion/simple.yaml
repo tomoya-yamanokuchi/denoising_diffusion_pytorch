@@ -5,7 +5,7 @@ defaults:
   - base
   - /eval/cases@cases  : simple_paper
   - /eval/policy@policy: simple
-  - /eval/policy/conditional_diffusion@policy: base
+  - /eval/policy/method@policy: conditional_diffusion
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_2d_20260604_173949
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_2d_20260604_180830

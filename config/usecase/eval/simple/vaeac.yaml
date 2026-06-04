@@ -3,7 +3,7 @@
 
 defaults:
   - /eval/vaeac@eval: simple
-  - /watch/eval: vaeac_eval
+  - /watch/eval: vaeac
   - /env       : simple
   - /path      : local
   - /log       : eval

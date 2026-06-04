@@ -1,9 +1,9 @@
-# config/usecase/eval/simple/conditional_diffusion.yaml
+# config/usecase/eval/simple/diffusion_1d.yaml
 # @package usecase
 
 defaults:
-  - /eval/conditional_diffusion@eval: simple
-  - /watch/eval: conditional_diffusion
+  - /eval/diffusion_1d@eval: simple
+  - /watch/eval: diffusion_1d
   - /env       : simple
   - /path      : local
   - /log       : eval

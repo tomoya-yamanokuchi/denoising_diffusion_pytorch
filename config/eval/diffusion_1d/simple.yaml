@@ -1,0 +1,11 @@
+# config/eval/diffusion_1d/simple.yaml
+# @package eval
+
+defaults:
+  - base
+  - /eval/cases@cases  : simple_paper
+  - /eval/policy@policy: simple
+  - /eval/policy/method@policy: diffusion_1d
+  - _self_
+
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/unet1d_D64_T1000_S20_simple_1d_20260604_181335

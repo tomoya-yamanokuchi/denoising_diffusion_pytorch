@@ -1,4 +1,4 @@
-# config/eval/conditional_diffusion/base.yaml
+# config/eval/diffusion_1d/base.yaml
 # @package eval
 
 defaults:
@@ -6,5 +6,5 @@ defaults:
   - /eval/execution_error@execution_error: default
   - _self_
 
-epoch: "100000"
-# epoch: "10"
+# epoch: "100000"
+epoch: "10"
