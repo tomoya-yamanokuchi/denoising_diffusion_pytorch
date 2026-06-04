@@ -1,0 +1,12 @@
+# config/usecase/train/complex/conditional_diffusion.yaml
+# @package usecase
+
+defaults:
+  - /inferencer/conditional_diffusion@inferencer: complex
+  - /dataset    : complex_2d
+  - /log        : train
+  - /path       : local
+  - _self_
+
+name  : train
+device: cuda:0

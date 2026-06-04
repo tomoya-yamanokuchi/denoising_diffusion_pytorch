@@ -1,5 +1,8 @@
+# config/usecase/train/complex/vaeac.yaml
+# @package usecase
+
 defaults:
-  - /inferencer/conditional_diffusion@inferencer: complex
+  - /inferencer/vaeac@inferencer: complex
   - /dataset    : complex_2d
   - /log        : train
   - /path       : local

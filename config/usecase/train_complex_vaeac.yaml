@@ -1,9 +1,0 @@
-defaults:
-  - /inferencer : vaeac_complex
-  - /dataset    : complex_2d
-  - /log        : train
-  - /path       : local
-  - _self_
-
-name  : train
-device: cuda:0

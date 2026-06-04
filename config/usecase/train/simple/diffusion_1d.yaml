@@ -1,3 +1,6 @@
+# config/usecase/train/simple/diffusion_1d.yaml
+# @package usecase
+
 defaults:
   - /inferencer/diffusion_1d@inferencer: simple
   - /dataset    : simple_1d

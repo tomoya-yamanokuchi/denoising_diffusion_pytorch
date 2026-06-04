@@ -1,9 +1,0 @@
-defaults:
-  - /path                    : local
-  - /log                     : train
-  - /inferencer              : conditional_diffusion_real
-  - /dataset                 : real_sheetsander_z49
-  - _self_
-
-name  : train
-device: cuda:0
