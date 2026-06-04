@@ -1,0 +1,11 @@
+# config/inferencer/conditional_diffusion/simple.yaml
+# @package inferencer
+
+defaults:
+  - base
+  - /inferencer/network@network: unet_D64
+  - _self_
+
+trainer:
+  train_batch_size         : 96
+  gradient_accumulate_every: 2

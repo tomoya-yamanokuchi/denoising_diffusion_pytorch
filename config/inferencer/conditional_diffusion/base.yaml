@@ -1,10 +1,11 @@
+# config/inferencer/conditional_diffusion/base.yaml
+# @package inferencer
+
 defaults:
-  - /watch/train: diffusion_1d
-  - network: unet1d_D128
+  - /watch/train: conditional_diffusion
   - _self_
 
-name     : diffusion_1d
-USER_NAME: user
+name: conditional_diffusion
 
 diffusion:
   beta_schedule     : sigmoid
@@ -12,10 +13,9 @@ diffusion:
   sampling_timesteps: 20
 
 trainer:
-  train_batch_size         : 3
   train_lr                 : 8e-5
   train_num_steps          : 100000
-  save_and_sample_every    : 5 # 5000
-  gradient_accumulate_every: 30
+  save_and_sample_every    : 2000
   ema_decay                : 0.995
   amp                      : true
+  calculate_fid            : false

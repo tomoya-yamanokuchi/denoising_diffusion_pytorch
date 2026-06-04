@@ -1,5 +1,5 @@
 defaults:
-  - /inferencer : conditional_diffusion_simple
+  - /inferencer/conditional_diffusion@inferencer: simple
   - /dataset    : simple_2d
   - /log        : train
   - /path       : local

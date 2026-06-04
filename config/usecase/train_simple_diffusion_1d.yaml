@@ -1,5 +1,5 @@
 defaults:
-  - /inferencer : diffusion_1d_simple
+  - /inferencer/diffusion_1d@inferencer: simple
   - /dataset    : simple_1d
   - /log        : train
   - /path       : local

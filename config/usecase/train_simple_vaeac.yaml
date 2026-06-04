@@ -1,5 +1,5 @@
 defaults:
-  - /inferencer : vaeac_simple
+  - /inferencer/vaeac@inferencer: simple
   - /dataset    : simple_2d
   - /log        : train
   - /path       : local

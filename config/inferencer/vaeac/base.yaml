@@ -1,3 +1,6 @@
+# config/inferencer/vaeac/base.yaml
+# @package inferencer
+
 defaults:
   - /watch/train: vaeac
   - _self_

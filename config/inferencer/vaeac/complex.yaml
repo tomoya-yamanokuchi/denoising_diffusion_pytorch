@@ -1,5 +1,8 @@
+# config/inferencer/vaeac/complex.yaml
+# @package inferencer
+
 defaults:
-  - vaeac_base
+  - base
   - _self_
 
 network:

@@ -1,0 +1,11 @@
+# config/inferencer/diffusion_1d/complex.yaml
+# @package inferencer
+
+defaults:
+  - base
+  - /inferencer/network@network: unet1d_D128
+  - _self_
+
+trainer:
+  train_batch_size         : 3
+  gradient_accumulate_every: 30
