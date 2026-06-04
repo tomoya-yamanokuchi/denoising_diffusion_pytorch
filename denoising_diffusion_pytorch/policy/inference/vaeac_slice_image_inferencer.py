@@ -8,6 +8,7 @@ from denoising_diffusion_pytorch.utils.vaeac_utils.vaeac_utils import vaeac_vali
 
 from .slice_image_inferencer import SliceImageInferencer
 from denoising_diffusion_pytorch.models.vaeac.vaeac import EncoderDecoder
+from ..resize_utils import _crop_images_to_hw, _pad_cond_to_model_size
 
 
 class VaeacSliceImageInferencer(SliceImageInferencer):
@@ -26,6 +27,12 @@ class VaeacSliceImageInferencer(SliceImageInferencer):
         normalized_cond = planning_input.normalized_cond
         if normalized_cond is None:
             raise ValueError("normalized_cond must not be None for VAEAC inference.")
+
+        model_size = int(getattr(self.inferencer, "chan")) * 8
+        normalized_cond, original_hw = _pad_cond_to_model_size(
+            cond       = normalized_cond,
+            model_size = model_size,
+        )
 
         self.inferencer.eval()
 
@@ -64,4 +71,6 @@ class VaeacSliceImageInferencer(SliceImageInferencer):
         ).clamp(0, 255).cpu().numpy().astype(np.uint8)
 
         last_step_images = batch_images[:, -1, :, :, :]
+        last_step_images = _crop_images_to_hw(last_step_images, original_hw)
+
         return last_step_images
