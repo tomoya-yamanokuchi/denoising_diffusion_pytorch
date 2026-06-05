@@ -8,4 +8,4 @@ defaults:
   - /eval/policy/method@policy: vaeac
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_2d_20260604_123220
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_2d_20260605_140352

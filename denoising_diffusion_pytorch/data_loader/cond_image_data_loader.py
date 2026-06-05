@@ -301,21 +301,7 @@ class Cond_image_dataloader(Dataset):
         # import ipdb;ipdb.set_trace()
 
         image_ = transformed_image
-
-        if self.image_size != 344:
-            image_ = self._RandomHorizontalFlip(image_=image_)
-
-
-        # Convert image to right format (Crop and scale)
-        # original_image = cv2.resize(image, (self.image_size, self.image_size))
-
-        # image_ = self._RandomHorizontalFlip(image_=original_image)
-
-        # image_2 = self._RandomVerticalFlip(image_=image_1)
-        # image_ = self._RandomRotation90(image_=image_2)
-
-
-        # image_ = original_image
+        # print('\n No flip augmentation (Conditional Diffusion) \n')
 
         image = (image_[:, :, ::-1]/255.0)*2 - 1
 

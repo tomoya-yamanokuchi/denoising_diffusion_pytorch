@@ -6,9 +6,9 @@ exp_name: null
 
 # ----- tag settings -----
 # tag     : null # "sensitivity_sampling_timesteps"
-# tag     : "proposed"
+tag     : "proposed"
 # tag     : "proposed_GT"
 # tag     : "proposed_no_cond"
 # tag     : "random"
 # tag     : "vaeac"
-tag     : "debug"
+# tag     : "debug"

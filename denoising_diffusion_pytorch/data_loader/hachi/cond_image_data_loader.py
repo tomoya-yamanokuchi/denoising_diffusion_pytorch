@@ -68,7 +68,7 @@ def divide_dataset_basic(path, fraction=0.85):
         print("Copied all {} files to {}".format(key, cur_path))
 
 
-class VAEAC_dataloader(Dataset):
+class Cond_image_dataloader(Dataset):
     """
     A dataset class for loading and processing images for vaeac.
 
@@ -98,13 +98,14 @@ class VAEAC_dataloader(Dataset):
             image_size (int): The target size for resizing the images.
 
         """
-        super(VAEAC_dataloader, self).__init__()
+        super(Cond_image_dataloader, self).__init__()
         # self.mode = mode
-        self.path = cfg['dataset']['path']
-        self.height = cfg['dataset']['h']
-        self.type = cfg['dataset'].get('type', None)
-        self.p = cfg['dataset'].get('p', 1)
-        self.image_size = image_size
+        self.path         = cfg['dataset']['path']
+        self.height       = cfg['dataset']['h']
+        self.type         = cfg['dataset'].get('type', None)
+        self.p            = cfg['dataset'].get('p', 1)
+        # ---
+        self.image_size   = image_size
         self.pattern_mask = self._get_pattern_mask()
         # assert (mode in ['train', 'val']), 'mode in {} should be train/val'.format(self.__name__)
         self._get_files()
@@ -113,6 +114,7 @@ class VAEAC_dataloader(Dataset):
             T.Resize(image_size,interpolation=InterpolationMode.NEAREST),
             T.ToTensor()  # 最後に Tensor 化
         ])
+        # import ipdb; ipdb.set_trace()
 
 
     def _get_pattern_mask(self):
@@ -123,15 +125,8 @@ class VAEAC_dataloader(Dataset):
         then thresholding it to create a binary mask.
 
         Returns:
-            np.ndarray: A binary mask of shape (10000, 10000).
+            np.ndarray: A binary mask of shape (, ).
         """
-        # dim_scale = 6 # 344/64
-        # # Get the pattern mask described in the paper
-        # image = np.random.rand(600, 600)
-        # image = cv2.resize(image, (10000, 10000), cv2.INTER_CUBIC)  # for 64 dim setting
-        # # image = cv2.resize(image, (10000*dim_scale, 10000*dim_scale), cv2.INTER_CUBIC) # for 344 dim setting
-        # image = (image > 0.25).astype(float)
-        # return image
         dim_scale = 6 # 344/64
         # Get the pattern mask
         image = np.random.rand(600, 600)
@@ -142,8 +137,6 @@ class VAEAC_dataloader(Dataset):
         image = (image > 0.25).astype(float)# for 64 dim setting
         # image = (image > 0.45).astype(float)# for 343 dim setting # H100_real_models_dataset_v2_4
         return image
-
-
 
 
     def _get_pattern_sample(self):
@@ -161,15 +154,6 @@ class VAEAC_dataloader(Dataset):
         """
         # Get a mask sampled from the pattern image
         # Fraction of pixels dropped, this value has to be between 20 and 30 percent
-        # frac = 0
-        # dim_scale = 6
-        # # while not (frac >= 0.2 and frac <= 0.999):
-        # while not (frac >= 0.05 and frac <= 0.9):
-        #     y_coord, x_coord = np.random.randint(10000-self.image_size, size=(2, )) # for 64 dim setting
-        #     # y_coord, x_coord = np.random.randint((10000*dim_scale)-self.image_size, size=(2, )) # for 344 dim setting
-        #     mask = self.pattern_mask[y_coord:y_coord+self.image_size, x_coord:x_coord+self.image_size]
-        #     frac = 1 - (mask).mean()
-        # return mask
         frac = 0
         dim_scale = 6
         # while not (frac >= 0.2 and frac <= 0.999):
@@ -317,8 +301,21 @@ class VAEAC_dataloader(Dataset):
         # import ipdb;ipdb.set_trace()
 
         image_ = transformed_image
-        # print('\n No flip augmentation (VAEAC) \n')
-        # import ipdb; ipdb.set_trace()
+
+        if self.image_size != 344:
+            image_ = self._RandomHorizontalFlip(image_=image_)
+            print('\n Applied horizontal flip augmentation \n')
+
+        # Convert image to right format (Crop and scale)
+        # original_image = cv2.resize(image, (self.image_size, self.image_size))
+
+        # image_ = self._RandomHorizontalFlip(image_=original_image)
+
+        # image_2 = self._RandomVerticalFlip(image_=image_1)
+        # image_ = self._RandomRotation90(image_=image_2)
+
+
+        # image_ = original_image
 
         image = (image_[:, :, ::-1]/255.0)*2 - 1
 

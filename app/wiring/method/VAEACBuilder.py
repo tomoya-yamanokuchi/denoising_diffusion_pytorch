@@ -15,13 +15,13 @@ class VAEACBuilder:
         self.artifact_static_root = artifact_static_root
 
     def build_dataset(self) -> Any:
-        from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import (
-            Cond_image_dataloader,
+        from denoising_diffusion_pytorch.data_loader.vaeac_data_loader import (
+            VAEAC_dataloader,
         )
 
-        self.dataset = Cond_image_dataloader(
-            cfg=self.cfg,
-            image_size=self.cfg.dataset.image_size,
+        self.dataset = VAEAC_dataloader(
+            cfg        = self.cfg,
+            image_size = self.cfg.dataset.image_size,
         )
         return self.dataset
 

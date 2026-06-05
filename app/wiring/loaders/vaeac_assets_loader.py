@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import re
-
+from typing import Any
 import torch
 
 from .saved_run_config_loader import SavedRunConfigLoader
@@ -56,15 +56,16 @@ class VaeacAssetsLoader:
             cfg_train=cfg,
         )
 
-    def _build_dataset(self, cfg):
-        from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import (
-            Cond_image_dataloader,
+    def _build_dataset(self, cfg) -> Any:
+        from denoising_diffusion_pytorch.data_loader.vaeac_data_loader import (
+            VAEAC_dataloader,
         )
 
-        return Cond_image_dataloader(
+        self.dataset = VAEAC_dataloader(
             cfg=cfg,
             image_size=cfg.dataset.image_size,
         )
+        return self.dataset
 
     def _build_inferencer(self, cfg, device: str):
         from denoising_diffusion_pytorch.models.vaeac.vaeac import EncoderDecoder
