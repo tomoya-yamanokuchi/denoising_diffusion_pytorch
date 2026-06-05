@@ -8,4 +8,4 @@ defaults:
   - /eval/policy/method@policy: diffusion_1d
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/unet1d_D128_T1000_S20_complex_1d_20260604_192633
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/pointnet1d_D128_T1000_S20_complex_1d_20260605_104825

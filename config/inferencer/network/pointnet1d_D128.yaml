@@ -1,0 +1,11 @@
+# config/inferencer/network/pointnet1d_D128.yaml
+# @package network
+
+name: pointnet1d_D128
+
+dim           : 128
+channels      : 6
+self_condition: false
+
+depth     : 6
+global_dim: 128

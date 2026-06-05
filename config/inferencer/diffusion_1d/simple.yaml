@@ -3,7 +3,8 @@
 
 defaults:
   - base
-  - /inferencer/network@network: unet1d_D64
+  # - /inferencer/network@network: unet1d_D64
+  - /inferencer/network@network: pointnet1d_D64
   - _self_
 
 trainer:

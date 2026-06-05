@@ -35,9 +35,9 @@ class Diffusion1DAssetsLoader:
                 f"cfg.inferencer.name={cfg.inferencer.name}"
             )
 
-        dataset = self._build_dataset(cfg)
+        dataset    = self._build_dataset(cfg)
         inferencer = self._build_inferencer(cfg, dataset, device)
-        trainer = self._build_trainer(cfg, inferencer, dataset)
+        trainer    = self._build_trainer(cfg, inferencer, dataset)
 
         loaded_epoch = self._restore_checkpoint(
             trainer=trainer,
@@ -70,17 +70,32 @@ class Diffusion1DAssetsLoader:
 
     def _build_inferencer(self, cfg, dataset, device: str):
         from denoising_diffusion_pytorch.models.unet_1d import Unet1D
+        from denoising_diffusion_pytorch.models.pointnet_1d import PointNet1D
         from denoising_diffusion_pytorch.models.diffusion_1d import GaussianDiffusion1D
 
         channels, seq_len = dataset[0].shape
+        network_cfg = cfg.inferencer.network
 
-        network = Unet1D(
-            dim=cfg.inferencer.network.dim,
-            dim_mults=cfg.inferencer.network.dim_mults,
-            channels=channels,
-            out_dim=channels,
-            self_condition=cfg.inferencer.network.self_condition,
-        ).to(device)
+        if network_cfg.name == "unet1d":
+            network = Unet1D(
+                dim             = network_cfg.dim,
+                dim_mults       = network_cfg.dim_mults,
+                channels        = channels,
+                out_dim         = channels,
+                self_condition  = network_cfg.self_condition,
+            ).to(device)
+
+        elif "pointnet1d" in network_cfg.name:
+            network = PointNet1D(
+                dim             = network_cfg.dim,
+                channels        = channels,
+                self_condition  = network_cfg.self_condition,
+                depth           = network_cfg.get("depth", 6),
+                global_dim      = network_cfg.get("global_dim", network_cfg.dim),
+            ).to(device)
+
+        else:
+            raise ValueError(f"Unknown network: {network_cfg.name}")
 
         method = GaussianDiffusion1D(
             model=network,

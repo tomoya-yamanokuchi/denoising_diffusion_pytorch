@@ -29,17 +29,30 @@ class Diffusion1DBuilder:
 
     def build_model(self) -> Any:
         from denoising_diffusion_pytorch.models.unet_1d import Unet1D
+        from denoising_diffusion_pytorch.models.pointnet_1d import PointNet1D
 
         channels, seq_len = self.dataset[0].shape
         self.seq_len = seq_len
 
-        model = Unet1D(
-            dim            = self.cfg.inferencer.network.dim,
-            dim_mults      = self.cfg.inferencer.network.dim_mults,
-            channels       = channels,
-            out_dim         = channels,
-            self_condition = self.cfg.inferencer.network.self_condition,
-        )
+        if self.cfg.inferencer.network.name == "unet1d":
+            model = Unet1D(
+                dim            = self.cfg.inferencer.network.dim,
+                dim_mults      = self.cfg.inferencer.network.dim_mults,
+                channels       = channels,
+                out_dim        = channels,
+                self_condition = self.cfg.inferencer.network.self_condition,
+            )
+        elif "pointnet1d" in self.cfg.inferencer.network.name:
+            model = PointNet1D(
+                dim             = self.cfg.inferencer.network.dim,
+                channels        = channels,
+                self_condition  = self.cfg.inferencer.network.self_condition,
+                depth           = self.cfg.inferencer.network.get("depth", 6),
+                global_dim      = self.cfg.inferencer.network.get("global_dim", self.cfg.inferencer.network.dim),
+            )
+        else:
+            raise ValueError(f"Unknown network: {self.cfg.inferencer.network.name}")
+
         self.model = self._maybe_to_device(model)
         return self.model
 
