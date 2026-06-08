@@ -1,4 +1,4 @@
-# config/eval/policy/method/conditional_diffusion.yaml
+# config/eval/method/conditional_diffusion/policy.yaml
 # @package eval.policy
 
 infer_model: conditional_diffusion

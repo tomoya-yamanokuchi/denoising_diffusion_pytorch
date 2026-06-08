@@ -1,0 +1,10 @@
+# # config/eval/policy/method/conditional_diffusion.yaml
+# # @package eval.policy
+
+# infer_model: conditional_diffusion
+
+# inference:
+#   model: conditional_diffusion
+
+#   guidance_scale    : 0.2
+#   sampling_timesteps: 20

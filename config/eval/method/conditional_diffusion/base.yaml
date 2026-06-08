@@ -1,0 +1,9 @@
+# config/eval/method/conditional_diffusion/base.yaml
+# @package eval
+
+defaults:
+  - /eval/common/task@task                      : default
+  - /eval/common/execution_error@execution_error: default
+  - _self_
+
+epoch: "100000"

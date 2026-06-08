@@ -2,12 +2,12 @@
 # @package usecase
 
 defaults:
-  - /eval/conditional_diffusion@eval: simple
+  - /eval/method/conditional_diffusion@eval: simple
+  - /env                                   : simple
   - /watch/eval: conditional_diffusion
-  - /env       : simple
-  - /path      : local
-  - /log       : eval
+  - /path: local
+  - /log : eval
   - _self_
 
-name      : eval
-device    : cuda:0
+name  : eval
+device: cuda:0

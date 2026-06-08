@@ -2,12 +2,12 @@
 # @package usecase
 
 defaults:
-  - /eval/vaeac@eval: simple
+  - /eval/method/vaeac@eval: simple
+  - /env                   : simple
   - /watch/eval: vaeac
-  - /env       : simple
-  - /path      : local
-  - /log       : eval
+  - /path: local
+  - /log : eval
   - _self_
 
-name      : eval
-device    : cuda:0
+name  : eval
+device: cuda:0

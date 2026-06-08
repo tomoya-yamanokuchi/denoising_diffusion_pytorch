@@ -2,8 +2,8 @@
 # @package usecase
 
 defaults:
-  - /eval/vaeac@eval: complex
-  - /env            : complex
+  - /eval/method/vaeac@eval: complex
+  - /env                   : complex
   - /watch/eval: vaeac
   - /path      : local
   - /log       : eval

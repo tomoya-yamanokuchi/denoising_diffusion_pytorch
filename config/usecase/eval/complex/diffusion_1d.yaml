@@ -2,8 +2,8 @@
 # @package usecase
 
 defaults:
-  - /eval/diffusion_1d@eval: complex
-  - /env                   : complex
+  - /eval/method/diffusion_1d@eval: complex
+  - /env                          : complex
   - /watch/eval: diffusion_1d
   - /path      : local
   - /log       : eval

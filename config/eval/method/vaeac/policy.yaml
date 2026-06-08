@@ -1,4 +1,4 @@
-# config/eval/policy/method/vaeac.yaml
+# config/eval/method/vaeac/policy.yaml
 # @package eval.policy
 
 infer_model: vaeac

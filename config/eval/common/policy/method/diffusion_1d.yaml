@@ -1,0 +1,10 @@
+# # config/eval/policy/method/diffusion_1d.yaml
+# # @package eval.policy
+
+# infer_model: diffusion_1d
+
+# inference:
+#   model: diffusion_1d
+
+#   guidance_scale    : 0.2
+#   sampling_timesteps: 20

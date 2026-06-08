@@ -2,8 +2,8 @@
 # @package usecase
 
 defaults:
-  - /eval/conditional_diffusion@eval: complex
-  - /env                            : complex
+  - /eval/method/conditional_diffusion@eval: complex
+  - /env                                   : complex
   - /watch/eval: conditional_diffusion
   - /path      : local
   - /log       : eval

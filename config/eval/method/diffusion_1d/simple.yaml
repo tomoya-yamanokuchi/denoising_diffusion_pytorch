@@ -3,9 +3,10 @@
 
 defaults:
   - base
-  - /eval/cases@cases  : simple_paper
-  - /eval/policy@policy: simple
-  - /eval/policy/method@policy: diffusion_1d
+  - /eval/common/cases@cases  : simple_paper
+  - /eval/common/policy@policy: simple
+  # - /eval/policy/method@policy: diffusion_1d
+  - /eval/method/diffusion_1d/policy@policy
   - _self_
 
 train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/pointnet1d_T1000_S20_simple_1d_20260605_103038

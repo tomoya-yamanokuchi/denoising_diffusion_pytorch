@@ -1,0 +1,12 @@
+# config/eval/conditional_diffusion/simple.yaml
+# @package eval
+
+defaults:
+  - base
+  - /eval/common/cases@cases  : simple_paper
+  - /eval/common/policy@policy: simple
+  # - /eval/policy/method@policy: conditional_diffusion
+  - /eval/method/conditional_diffusion/policy@policy
+  - _self_
+
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_2d_20260605_133339

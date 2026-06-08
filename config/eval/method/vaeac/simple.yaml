@@ -3,9 +3,10 @@
 
 defaults:
   - base
-  - /eval/cases@cases  : simple_paper
-  - /eval/policy@policy: simple
-  - /eval/policy/method@policy: vaeac
+  - /eval/common/cases@cases  : simple_paper
+  - /eval/common/policy@policy: simple
+  # - /eval/policy/method@policy: vaeac
+  - /eval/method/vaeac/policy@policy
   - _self_
 
 train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_2d_20260605_140352

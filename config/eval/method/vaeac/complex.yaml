@@ -3,9 +3,10 @@
 
 defaults:
   - base
-  - /eval/cases@cases  : complex_paper
-  - /eval/policy@policy: complex
-  - /eval/policy/method@policy: vaeac
+  - /eval/common/cases@cases  : complex_paper
+  - /eval/common/policy@policy: complex
+  # - /eval/policy/method@policy: vaeac
+  - /eval/method/vaeac/policy@policy
   - _self_
 
 train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D344_H96_Z150_E100000_complex_2d_20260604_175600
