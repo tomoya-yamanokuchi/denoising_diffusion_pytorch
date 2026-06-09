@@ -23,26 +23,29 @@ def plot_time(
     subset = df[df["sweep"] == x_axis].copy()
     subset = subset.sort_values(x_axis)
 
-    fig, ax = plt.subplots(figsize=(5.0, 4.0))
+    fig, ax = plt.subplots(figsize=(3.7, 2.7))
 
     ax.errorbar(
         subset[x_axis],
         subset["mean_time_sec"],
-        yerr=subset["sem_time_sec"],
+        yerr=subset["std_time_sec"],
         marker="o",
         capsize=4,
+        color="tab:purple",
     )
 
-    ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=14)
-    ax.set_ylabel("Diffusion inference time [s]", fontsize=14)
+    # import ipdb; ipdb.set_trace()
+
+    ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=12.5)
+    ax.set_ylabel("Inference time [sec]", fontsize=12.5)
 
     ticks = sorted(subset[x_axis].unique())
     ax.set_xticks(ticks)
 
-    if x_axis == "sample_image_num":
-        ax.set_xscale("log", base=2)
-        ax.set_xticks(ticks)
-        ax.set_xticklabels([str(int(v)) for v in ticks])
+    # if x_axis == "sample_image_num":
+    #     ax.set_xscale("log", base=2)
+    #     ax.set_xticks(ticks)
+    #     ax.set_xticklabels([str(int(v)) for v in ticks])
 
     ax.tick_params(axis="x", labelsize=12)
     ax.tick_params(axis="y", labelsize=12)
@@ -71,3 +74,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+python scripts/analysis/plot_inference_time.py \
+  --csv analysis/revise/sensitivity/inference_time/diffusion_inference_time.csv \
+  --out_dir analysis/revise/sensitivity/inference_time/figures \
+  --format pdf
+'''

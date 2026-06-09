@@ -131,11 +131,6 @@ def benchmark_one_condition(
         "num_repeats": int(repeats),
         "mean_time_sec": float(elapsed.mean()),
         "std_time_sec": float(elapsed.std(ddof=1)) if len(elapsed) > 1 else 0.0,
-        "sem_time_sec": (
-            float(elapsed.std(ddof=1) / np.sqrt(len(elapsed)))
-            if len(elapsed) > 1
-            else 0.0
-        ),
         "all_times_sec": elapsed.tolist(),
     }
 
@@ -231,10 +226,25 @@ def main() -> None:
             "sampling_timesteps",
             "mean_time_sec",
             "std_time_sec",
-            "sem_time_sec",
         ]
     ].to_string(index=False))
 
 
 if __name__ == "__main__":
     main()
+
+'''
+python scripts/analysis/benchmark_diffusion_inference_time.py \
+  --train_run_dir /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_2d_20260605_133339 \
+  --epoch 100000 \
+  --device cuda:0 \
+  --out_csv analysis/revise/sensitivity/inference_time/diffusion_inference_time.csv \
+  --mode both \
+  --guidance_scale 0.2 \
+  --sample_image_nums 1,4,8,16,32,64 \
+  --sampling_timesteps_list 2,5,10,20,50 \
+  --default_M 32 \
+  --default_S 20 \
+  --warmup 2 \
+  --repeats 10
+'''
