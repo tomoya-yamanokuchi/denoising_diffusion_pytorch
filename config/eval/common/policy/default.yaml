@@ -13,10 +13,7 @@ control:
 inference:
   sample_image_num: 32 # モデル非依存で共通に使う値
 
-
 decision:
   mode : clip_ucb_raw
   param:
-    # ucb_lb: 0.0
     ucb_lb: 0.5
-    # ucb_lb: 1.0

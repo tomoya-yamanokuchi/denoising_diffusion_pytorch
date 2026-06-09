@@ -11,6 +11,7 @@ import pandas as pd
 from aggregate_task_metrics import (
     PAPER_METRIC_COLUMNS,
     CONDITION_COLUMNS,
+    STD_DDOF,
     aggregate_single_root,
     read_optional_float,
     read_optional_int,
@@ -80,24 +81,16 @@ def aggregate_from_manifest_with_manifest_columns(
     return pd.concat(all_frames, ignore_index=True)
 
 
-def metric_mean_std_sem(
+def metric_mean_std(
     group: pd.DataFrame,
     metric: str,
 ) -> dict[str, float]:
     values = group[metric].to_numpy(dtype=float)
-
     return {
         f"{metric}_mean": float(np.mean(values)),
-        f"{metric}_std": (
-            float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
-        ),
-        f"{metric}_sem": (
-            float(np.std(values, ddof=1) / np.sqrt(len(values)))
-            if len(values) > 1
-            else 0.0
-        ),
-        f"{metric}_min": float(np.min(values)),
-        f"{metric}_max": float(np.max(values)),
+        f"{metric}_std" : float(np.std(values, ddof=STD_DDOF)) if len(values) > 0 else 0.0,
+        f"{metric}_min" : float(np.min(values)),
+        f"{metric}_max" : float(np.max(values)),
     }
 
 
@@ -124,7 +117,7 @@ def build_summary(
             row["num_success_no_cut_error"] = int(np.sum(cut_values == 0.0))
 
         for metric in PAPER_METRIC_COLUMNS:
-            row.update(metric_mean_std_sem(group, metric))
+            row.update(metric_mean_std(group, metric))
 
         # Diagnostics, if available.
         for diagnostic in [
@@ -317,3 +310,14 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+usesage: ex.
+
+python scripts/analysis/aggregate_task_metrics_by_object.py \
+    --manifest ./analysis/revise/proposed/manifest.csv \
+    --out_dir ./analysis/revise/proposed
+'''
+
+

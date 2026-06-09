@@ -54,7 +54,7 @@ class SummaryConsoleReporter:
             if mean_col not in row.index:
                 continue
 
-            value = self._format_mean_sem(row=row, metric=metric)
+            value = self._format_mean_std(row=row, metric=metric)
             lines.append(f"  {label:<{max_label_len}} : {value}")
 
         return "\n".join(lines)
@@ -108,17 +108,18 @@ class SummaryConsoleReporter:
 
         settings.append(f"{label}={int(value)}")
 
-    def _format_mean_sem(self, *, row: pd.Series, metric: str) -> str:
+    def _format_mean_std(self, *, row: pd.Series, metric: str) -> str:
         mean_col = f"{metric}_mean"
-        sem_col = f"{metric}_sem"
+        std_col = f"{metric}_std"
 
         mean = self._format_float(row[mean_col])
 
-        if sem_col not in row.index or self._is_missing(row[sem_col]):
+        if std_col not in row.index or self._is_missing(row[std_col]):
             return mean
 
-        sem = self._format_float(row[sem_col])
-        return f"{mean} ± {sem}"
+        std = self._format_float(row[std_col])
+        return f"{mean} ± {std}"
+
 
     def _format_float(self, value: Any) -> str:
         if self._is_missing(value):

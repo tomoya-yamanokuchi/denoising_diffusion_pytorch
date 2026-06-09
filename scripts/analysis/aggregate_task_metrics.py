@@ -28,6 +28,10 @@ CONDITION_COLUMNS = [
 ]
 
 
+# Match the legacy NumPy std() behavior used in scripts_hachi/post_process_data_v3.py.
+STD_DDOF = 1
+
+
 def get_nested(
     data: dict[str, Any] | None,
     keys: list[str],
@@ -427,15 +431,9 @@ def build_summary(per_episode_df: pd.DataFrame) -> pd.DataFrame:
 
         for metric in PAPER_METRIC_COLUMNS:
             values = group[metric].to_numpy(dtype=float)
+
             row[f"{metric}_mean"] = float(np.mean(values))
-            row[f"{metric}_std"] = (
-                float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
-            )
-            row[f"{metric}_sem"] = (
-                float(np.std(values, ddof=1) / np.sqrt(len(values)))
-                if len(values) > 1
-                else 0.0
-            )
+            row[f"{metric}_std"]  = float(np.std(values, ddof=STD_DDOF)) if len(values) > 0 else 0.0
 
             # import ipdb; ipdb.set_trace()
 

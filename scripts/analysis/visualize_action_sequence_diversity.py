@@ -1176,3 +1176,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+python scripts/analysis/visualize_action_sequence_diversity.py \
+  --root /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_AA/epsilon_greedy_00 \
+  --out_dir analysis/paper/proposed/action_diversity_planned \
+  --action_key planned_actions
+'''

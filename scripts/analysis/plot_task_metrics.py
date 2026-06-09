@@ -45,7 +45,7 @@ def plot_metric(
     group_by: str | None,
 ) -> None:
     mean_col = f"{metric_name}_mean"
-    sem_col = f"{metric_name}_sem"
+    std_col = f"{metric_name}_std"
 
     if mean_col not in summary_df.columns:
         raise KeyError(f"Missing column: {mean_col}")
@@ -71,7 +71,7 @@ def plot_metric(
         x = group[x_axis].to_numpy()
         y = group[mean_col].to_numpy()
 
-        yerr = group[sem_col].to_numpy() if sem_col in group.columns else None
+        yerr = group[std_col].to_numpy() if std_col in group.columns else None
 
         label = None
         if group_by is not None:
@@ -95,8 +95,8 @@ def plot_metric(
     x_tick_values = sorted(summary_df[x_axis].dropna().unique())
     ax.set_xticks(x_tick_values)
 
-    if x_axis in ["delta", "sample_image_num", "sampling_timesteps"]:
-        ax.set_xlim(min(x_tick_values) - 0.1, max(x_tick_values) + 0.1)
+    if x_axis in ["delta", "eta", "guidance_scale", "sample_image_num", "sampling_timesteps"]:
+        ax.set_xlim(*get_padded_xlim(x_tick_values))
 
     ax.tick_params(axis="x", labelsize=12)
     ax.tick_params(axis="y", labelsize=12)
@@ -107,8 +107,26 @@ def plot_metric(
         ax.legend(fontsize=12)
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=300)
+    # fig.savefig(out_path, dpi=300)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
+
+
+def get_padded_xlim(
+    x_tick_values: list[float],
+    margin_ratio: float = 0.08,
+    min_margin: float = 0.5,
+) -> tuple[float, float]:
+    x_min = min(x_tick_values)
+    x_max = max(x_tick_values)
+
+    if x_min == x_max:
+        return x_min - min_margin, x_max + min_margin
+
+    x_range = x_max - x_min
+    margin = max(x_range * margin_ratio, min_margin)
+
+    return x_min - margin, x_max + margin
 
 
 
@@ -188,3 +206,12 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+python scripts/analysis/plot_task_metrics.py \
+    --summary_csv ./analysis/revise/sensitivity/guidance_scale/summary_metrics.csv \
+    --out_dir ./analysis/revise/sensitivity/guidance_scale/figures_pdf \
+    --x_axis guidance_scale \
+    --format pdf
+'''

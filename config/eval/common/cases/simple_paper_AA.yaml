@@ -1,0 +1,32 @@
+name: simple_paper
+
+cases:
+  - name          : Object_A0
+    paper_label   : Object A
+    legacy_name   : Object_6
+    sample_id     : Boxy_0
+    dataset_format: boxy_generated_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_5_12900k/geom_test_1/Boxy_0
+    initial_global_action_range:
+      start: 0
+      stop : 4
+
+  - name          : Object_A1
+    paper_label   : Object A
+    legacy_name   : Object_6
+    sample_id     : Boxy_1
+    dataset_format: boxy_generated_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_5_12900k/geom_test_1/Boxy_1
+    initial_global_action_range:
+      start: 0
+      stop : 4
+
+  - name          : Object_A2
+    paper_label   : Object A
+    legacy_name   : Object_6
+    sample_id     : Boxy_2
+    dataset_format: boxy_generated_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_5_12900k/geom_test_1/Boxy_2
+    initial_global_action_range:
+      start: 0
+      stop : 4

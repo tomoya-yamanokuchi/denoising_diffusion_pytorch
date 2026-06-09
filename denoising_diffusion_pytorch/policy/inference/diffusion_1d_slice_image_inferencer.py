@@ -81,13 +81,13 @@ class Diffusion1DSliceImageInferencer(SliceImageInferencer):
             }
 
         with torch.inference_mode():
-            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                sampled_seq = self.trainer.ema.ema_model.sample(
-                    batch_size=self.sample_image_num,
-                    # return_all_timesteps=True,
-                    return_all_timesteps=False,
-                    cond=cond,
-                )
+            # with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+            sampled_seq = self.trainer.ema.ema_model.sample(
+                batch_size=self.sample_image_num,
+                # return_all_timesteps=True,
+                return_all_timesteps=False,
+                cond=cond,
+            )
 
             # # [B, T, C, N] -> last step [B, C, N]
             # last_seq = sampled_seq[:, -1, :, :]

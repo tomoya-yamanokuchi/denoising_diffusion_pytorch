@@ -1,0 +1,12 @@
+name: simple_paper
+
+cases:
+  - name          : Object_B
+    paper_label   : Object B
+    legacy_name   : Object_7
+    sample_id     : Boxy_0
+    dataset_format: boxy_generated_yaml
+    dataset_dir   : /home/dev/workspace/dataset/nedo_product_dataset/dataset_6_13900k/geom_test_1/Boxy_0
+    initial_global_action_range:
+      start: 0
+      stop : 4
