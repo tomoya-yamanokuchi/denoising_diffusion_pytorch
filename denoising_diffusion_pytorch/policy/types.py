@@ -1,3 +1,4 @@
+# denoising_diffusion_pytorch/policy/types.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -137,7 +138,8 @@ class SegmentationConfig:
 
 @dataclass
 class DecisionParamConfig:
-    ucb_lb: float = 0.5
+    ucb_lb              : float = 0.5
+    safety_margin_voxels: int   = 0
 
 @dataclass
 class DecisionConfig:

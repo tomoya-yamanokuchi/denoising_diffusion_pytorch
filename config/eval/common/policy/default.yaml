@@ -16,6 +16,10 @@ inference:
 decision:
   mode : clip_ucb_raw
   param:
+    # ------
     # ucb_lb: 0.0
     ucb_lb: 0.5
     # ucb_lb: 1.0
+
+    # ------
+    safety_margin_voxels: 2

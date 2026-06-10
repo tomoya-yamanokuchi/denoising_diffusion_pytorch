@@ -27,7 +27,14 @@ class DecisionAggregator:
         mode = self.decision_config.mode
 
         if mode == "clip_ucb_raw":
-            ucb_lb = self.decision_config.param.ucb_lb
-            return lambda axis_ensemble: clip_ucb_raw(axis_ensemble, ucb_lb=ucb_lb)
+            # ucb_lb = self.decision_config.param.ucb_lb
+            # return lambda axis_ensemble: clip_ucb_raw(axis_ensemble, ucb_lb=ucb_lb)
+
+            param = self.decision_config.param
+            return lambda axis_ensemble: clip_ucb_raw(
+                cost_ensemble        = axis_ensemble,
+                ucb_lb               = param.ucb_lb,
+                safety_margin_voxels = param.safety_margin_voxels,
+            )
 
         raise ValueError(f"Unknown decision mode: {mode}")

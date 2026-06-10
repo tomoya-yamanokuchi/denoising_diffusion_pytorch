@@ -59,6 +59,9 @@ def build_policy_config(
             mode=str(cfg_policy.decision.mode),
             param=DecisionParamConfig(
                 ucb_lb=float(cfg_policy.decision.param.ucb_lb),
+                safety_margin_voxels=int(
+                    getattr(cfg_policy.decision.param, "safety_margin_voxels", 0)
+                ),
             ),
         ),
         voxel_grid_side_length=voxel_grid_side_length,
