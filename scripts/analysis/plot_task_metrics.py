@@ -47,7 +47,7 @@ METRIC_SPECS = [
 ]
 
 AXIS_LABELS = {
-    "delta"             : "Maximum execution error Δ [voxels]",
+    "delta"             : "Maximum execution error [voxels]",
     "eta"               : "Cutting-risk threshold (η)",
     "guidance_scale"    : "CFG guidance scale (w)",
     "sample_image_num"  : "Number of generated samples (M)",
@@ -226,7 +226,16 @@ def plot_metric(
     ax.grid(True, alpha=0.3)
 
     if group_by is not None:
-        ax.legend(fontsize=12)
+        # ax.legend(fontsize=12)
+        # ax.legend(fontsize=4)
+        # ax.legend(
+        #     loc="lower center",
+        #     bbox_to_anchor=(0.45, 1.01),
+        #     ncol=1,
+        #     frameon=True,
+        #     fontsize=12,
+        # )
+        pass
 
     fig.tight_layout()
     fig.savefig(out_path, dpi=300)

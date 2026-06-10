@@ -3,9 +3,8 @@
 
 defaults:
   - base
-  - /eval/common/cases@cases  : simple_paper_AA # simple_paper
+  - /eval/common/cases@cases  : simple_paper_A # simple_paper
   - /eval/common/policy@policy: simple
-  # - /eval/policy/method@policy: conditional_diffusion
   - /eval/method/conditional_diffusion/policy@policy
   - _self_
 
