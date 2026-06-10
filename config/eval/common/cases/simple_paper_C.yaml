@@ -1,4 +1,4 @@
-name: simple_paper
+name: simple_paper_C
 
 cases:
   - name          : Object_C
