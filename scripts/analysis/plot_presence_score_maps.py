@@ -449,6 +449,40 @@ def crop_to_mask(
     return cropped_images, cropped_masks
 
 
+def pad_to_square(
+    image: np.ndarray,
+    mask: np.ndarray | None,
+) -> tuple[np.ndarray, np.ndarray | None]:
+    """Pad one 2D panel to a square canvas without changing voxel aspect."""
+    height, width = image.shape[:2]
+    size = max(height, width)
+    if height == size and width == size:
+        return image, mask
+
+    pad_top = (size - height) // 2
+    pad_bottom = size - height - pad_top
+    pad_left = (size - width) // 2
+    pad_right = size - width - pad_left
+
+    padded_image = np.pad(
+        image,
+        ((pad_top, pad_bottom), (pad_left, pad_right)),
+        mode="constant",
+        constant_values=0.0,
+    )
+
+    if mask is None:
+        return padded_image, None
+
+    padded_mask = np.pad(
+        mask,
+        ((pad_top, pad_bottom), (pad_left, pad_right)),
+        mode="constant",
+        constant_values=False,
+    )
+    return padded_image, padded_mask
+
+
 def render_score_panel(
     ax,
     score: np.ndarray,
@@ -461,6 +495,7 @@ def render_score_panel(
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_aspect("equal")
+    ax.set_box_aspect(1)
 
     if shape_mask is None:
         shape_mask = np.ones_like(score, dtype=bool)
@@ -530,6 +565,11 @@ def main() -> None:
             "and light_gray makes the masked-out region explicit."
         ),
     )
+    parser.add_argument(
+        "--no_square_panels",
+        action="store_true",
+        help="Disable square padding of each projected subfigure.",
+    )
     parser.add_argument("--crop_padding", type=int, default=2)
     parser.add_argument("--no_auto_crop", action="store_true")
     parser.add_argument("--dpi", type=int, default=300)
@@ -582,6 +622,9 @@ def main() -> None:
 
                 if not args.no_auto_crop:
                     [score], [mask] = crop_to_mask([score], [mask], args.crop_padding)
+
+                if not args.no_square_panels:
+                    score, mask = pad_to_square(score, mask)
 
                 row_idx = case_idx * len(view_specs) + view_idx
                 ax = axes[row_idx][col_idx]
