@@ -48,18 +48,48 @@ METRIC_SPECS = {
     "part_remaining_rate": {
         "mean": "part_remaining_rate_mean",
         "std": "part_remaining_rate_std",
-        "label": "Part Remaining Rate [%]",
+        # "label": "Part Remaining Rate [%]",
+        "label": "Part Remain. Rate [%]",
         "lower": 0.0,
         "upper": 100.0,
     },
     "part_occupancy_rate": {
         "mean": "part_occupancy_rate_mean",
         "std": "part_occupancy_rate_std",
-        "label": "Part Occupancy Rate [%]",
+        # "label": "Part Occupancy Rate [%]",
+        "label": "Part Occ. Rate [%]",
         "lower": 0.0,
         "upper": 100.0,
     },
 }
+
+
+DEFAULT_MAIN_METRICS = [
+    "part_remaining_rate",
+    "part_occupancy_rate",
+]
+
+
+def parse_metric_list(metric_text: str) -> list[str]:
+    metrics = [
+        metric.strip()
+        for metric in metric_text.split(",")
+        if metric.strip()
+    ]
+
+    unknown = [metric for metric in metrics if metric not in METRIC_SPECS]
+    if unknown:
+        raise ValueError(
+            f"Unknown metric(s): {unknown}. "
+            f"Available metrics: {list(METRIC_SPECS.keys())}"
+        )
+
+    return metrics
+
+
+def metric_to_filename(metric_name: str) -> str:
+    return metric_name
+
 
 
 def get_nested(
@@ -361,7 +391,8 @@ def get_padded_xlim(values: list[float] | np.ndarray) -> tuple[float, float]:
     if np.isclose(x_min, x_max):
         return x_min - 0.5, x_max + 0.5
 
-    margin = max((x_max - x_min) * 0.08, 0.25)
+    # margin = max((x_max - x_min) * 0.08, 0.25)
+    margin = max((x_max - x_min) * 0.04, 0.05)
     return x_min - margin, x_max + margin
 
 
@@ -483,31 +514,102 @@ def plot_metric_lines(
             },
         )
 
+
         x = group["delta"].to_numpy(dtype=float)
         y = group[mean_col].to_numpy(dtype=float)
+
         raw_yerr = (
             group[std_col].to_numpy(dtype=float)
             if std_col in group.columns
             else None
         )
-        yerr = build_bounded_yerr(
-            y=y,
-            yerr=raw_yerr,
-            lower=spec["lower"],
-            upper=spec["upper"],
-        )
 
-        ax.errorbar(
+        ax.plot(
             x,
             y,
-            yerr=yerr,
             marker=style["marker"],
             linestyle=style["linestyle"],
             color=style["color"],
-            ecolor=style["color"],
-            capsize=4,
             label=variant,
         )
+
+        if raw_yerr is not None:
+            y_lower = y - raw_yerr
+            y_upper = y + raw_yerr
+
+            if spec["lower"] is not None:
+                y_lower = np.maximum(y_lower, spec["lower"])
+
+            if spec["upper"] is not None:
+                y_upper = np.minimum(y_upper, spec["upper"])
+
+            ax.fill_between(
+                x,
+                y_lower,
+                y_upper,
+                color=style["color"],
+                alpha=0.18,
+                linewidth=0,
+            )
+
+
+        # x = group["delta"].to_numpy(dtype=float)
+        # y = group[mean_col].to_numpy(dtype=float)
+        # raw_yerr = (
+        #     group[std_col].to_numpy(dtype=float)
+        #     if std_col in group.columns
+        #     else None
+        # )
+        # yerr = build_bounded_yerr(
+        #     y=y,
+        #     yerr=raw_yerr,
+        #     lower=spec["lower"],
+        #     upper=spec["upper"],
+        # )
+
+        # # ax.errorbar(
+        # #     x,
+        # #     y,
+        # #     yerr=yerr,
+        # #     marker=style["marker"],
+        # #     linestyle=style["linestyle"],
+        # #     color=style["color"],
+        # #     ecolor=style["color"],
+        # #     capsize=4,
+        # #     label=variant,
+        # # )
+
+
+        # ax.plot(
+        #     x,
+        #     y,
+        #     marker=style["marker"],
+        #     linestyle=style["linestyle"],
+        #     color=style["color"],
+        #     label=variant,
+        # )
+
+        # if raw_yerr is not None:
+        #     y_lower = y - raw_yerr
+        #     y_upper = y + raw_yerr
+
+        #     if spec["lower"] is not None:
+        #         y_lower = np.maximum(y_lower, spec["lower"])
+
+        #     if spec["upper"] is not None:
+        #         y_upper = np.minimum(y_upper, spec["upper"])
+
+        #     ax.fill_between(
+        #         x,
+        #         y_lower,
+        #         y_upper,
+        #         color=style["color"],
+        #         alpha=0.18,
+        #         linewidth=0,
+        #     )
+
+
+
 
     ax.set_xlabel(
         "Maximum execution error $\\Delta$ [voxels]",
@@ -547,7 +649,7 @@ def plot_main_figure(
         axes[0],
         plot_df,
         "part_remaining_rate",
-        title="Target part preservation",
+        title="", # "Target part preservation",
         axis_label_fontsize=axis_label_fontsize,
         tick_fontsize=tick_fontsize,
     )
@@ -555,7 +657,7 @@ def plot_main_figure(
         axes[1],
         plot_df,
         "part_occupancy_rate",
-        title="Part occupancy",
+        title="", # "Part occupancy",
         axis_label_fontsize=axis_label_fontsize,
         tick_fontsize=tick_fontsize,
     )
@@ -573,6 +675,107 @@ def plot_main_figure(
     fig.tight_layout(rect=(0, 0, 1, 0.88))
     fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
+
+
+
+
+
+def plot_single_metric_figure(
+    overall_summary: pd.DataFrame,
+    metric_name: str,
+    out_path: Path,
+    *,
+    axis_label_fontsize: int,
+    tick_fontsize: int,
+    legend_fontsize: int,
+) -> None:
+    plot_df = add_zero_baseline_for_margin(overall_summary)
+
+    # fig, ax = plt.subplots(1, 1, figsize=(4.4, 3.5))
+    # fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+    fig, ax = plt.subplots(1, 1, figsize=(4., 2.4))
+
+    plot_metric_lines(
+        ax,
+        plot_df,
+        metric_name,
+        title=None,
+        axis_label_fontsize=axis_label_fontsize,
+        tick_fontsize=tick_fontsize,
+    )
+
+    # handles, labels = ax.get_legend_handles_labels()
+    # fig.legend(
+    #     handles,
+    #     labels,
+    #     loc="upper center",
+    #     ncol=2,
+    #     frameon=False,
+    #     fontsize=legend_fontsize,
+    # )
+
+    # fig.tight_layout(rect=(0, 0, 1, 0.88))
+    # fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.05)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+
+def plot_objectwise_metric_figure(
+    object_summary: pd.DataFrame,
+    metric_name: str,
+    out_path: Path,
+    *,
+    axis_label_fontsize: int,
+    tick_fontsize: int,
+    legend_fontsize: int,
+) -> None:
+    plot_df = add_zero_baseline_for_margin(object_summary)
+    cases = sorted(plot_df["case"].dropna().unique())
+
+    if len(cases) == 0:
+        raise ValueError("No case column was found for object-wise plotting.")
+
+    fig, axes = plt.subplots(
+        1,
+        len(cases),
+        figsize=(3.6 * len(cases), 3.5),
+        squeeze=False,
+        sharex=False,
+    )
+    axes = axes[0]
+
+    for col_idx, case in enumerate(cases):
+        ax = axes[col_idx]
+        case_df = plot_df[plot_df["case"] == case]
+
+        plot_metric_lines(
+            ax,
+            case_df,
+            metric_name,
+            title=str(case),
+            show_ylabel=(col_idx == 0),
+            axis_label_fontsize=axis_label_fontsize,
+            tick_fontsize=tick_fontsize,
+        )
+
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="upper center",
+        ncol=2,
+        frameon=False,
+        fontsize=legend_fontsize,
+    )
+
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.05)
+    plt.close(fig)
+
 
 
 def plot_objectwise_figure(
@@ -800,6 +1003,33 @@ def main() -> None:
     parser.add_argument("--tick_fontsize", type=int, default=11)
     parser.add_argument("--legend_fontsize", type=int, default=10)
 
+
+
+
+    parser.add_argument(
+        "--main_metrics",
+        type=str,
+        default=",".join(DEFAULT_MAIN_METRICS),
+        help=(
+            "Comma-separated metrics to save as independent main figures. "
+            "Default: part_remaining_rate,part_occupancy_rate"
+        ),
+    )
+
+    parser.add_argument(
+        "--plot_combined_main",
+        action="store_true",
+        help="Also save the old combined two-panel main figure.",
+    )
+
+    parser.add_argument(
+        "--plot_objectwise_combined",
+        action="store_true",
+        help="Also save the old combined object-wise figure.",
+    )
+
+
+
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -850,21 +1080,64 @@ def main() -> None:
     overall_summary.to_csv(overall_summary_path, index=False)
     object_summary.to_csv(object_summary_path, index=False)
 
-    main_fig_path = args.out_dir / f"safety_margin_effect_main.{args.format}"
-    plot_main_figure(
-        overall_summary,
-        main_fig_path,
-        axis_label_fontsize=args.axis_label_fontsize,
-        tick_fontsize=args.tick_fontsize,
-        legend_fontsize=args.legend_fontsize,
-    )
+    main_metrics = parse_metric_list(args.main_metrics)
+
+    main_fig_paths = []
+    for metric_name in main_metrics:
+        metric_fig_path = (
+            args.out_dir
+            / f"safety_margin_effect_{metric_to_filename(metric_name)}.{args.format}"
+        )
+        plot_single_metric_figure(
+            overall_summary,
+            metric_name,
+            metric_fig_path,
+            axis_label_fontsize=args.axis_label_fontsize,
+            tick_fontsize=args.tick_fontsize,
+            legend_fontsize=args.legend_fontsize,
+        )
+        main_fig_paths.append(metric_fig_path)
+
+    if args.plot_combined_main:
+        combined_main_fig_path = args.out_dir / f"safety_margin_effect_main.{args.format}"
+        plot_main_figure(
+            overall_summary,
+            combined_main_fig_path,
+            axis_label_fontsize=args.axis_label_fontsize,
+            tick_fontsize=args.tick_fontsize,
+            legend_fontsize=args.legend_fontsize,
+        )
+        main_fig_paths.append(combined_main_fig_path)
 
     print(f"\n[OK] Saved per-episode metrics: {per_episode_path}")
     print(f"[OK] Saved overall summary    : {overall_summary_path}")
     print(f"[OK] Saved object-wise summary: {object_summary_path}")
-    print(f"[OK] Saved main figure        : {main_fig_path}")
+    for path in main_fig_paths:
+        print(f"[OK] Saved main figure        : {path}")
 
     if args.plot_objectwise:
+        objectwise_metrics = [
+            "cutting_error_volume",
+            "part_remaining_rate",
+            "part_occupancy_rate",
+        ]
+
+        for metric_name in objectwise_metrics:
+            objectwise_fig_path = (
+                args.out_dir
+                / f"safety_margin_effect_objectwise_{metric_to_filename(metric_name)}.{args.format}"
+            )
+            plot_objectwise_metric_figure(
+                object_summary,
+                metric_name,
+                objectwise_fig_path,
+                axis_label_fontsize=args.axis_label_fontsize,
+                tick_fontsize=args.tick_fontsize,
+                legend_fontsize=args.legend_fontsize,
+            )
+            print(f"[OK] Saved object-wise figure : {objectwise_fig_path}")
+
+    if args.plot_objectwise_combined:
         objectwise_fig_path = args.out_dir / f"safety_margin_effect_objectwise.{args.format}"
         plot_objectwise_figure(
             object_summary,
@@ -873,7 +1146,7 @@ def main() -> None:
             tick_fontsize=args.tick_fontsize,
             legend_fontsize=args.legend_fontsize,
         )
-        print(f"[OK] Saved object-wise figure : {objectwise_fig_path}")
+        print(f"[OK] Saved combined object-wise figure : {objectwise_fig_path}")
 
     if args.plot_tradeoff:
         tradeoff_fig_path = args.out_dir / f"safety_margin_tradeoff.{args.format}"

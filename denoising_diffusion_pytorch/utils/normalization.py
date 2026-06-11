@@ -162,6 +162,7 @@ class LimitsNormalizer(Normalizer):
         x = (x - self.mins) / (self.maxs - self.mins)
         ## [ -1, 1 ]
         x = 2 * x - 1
+
         return x
 
     def unnormalize(self, x, eps=1e-4):

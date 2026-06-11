@@ -22,4 +22,4 @@ decision:
     # ucb_lb: 1.0
 
     # ------
-    safety_margin_voxels: 0
+    safety_margin_voxels: 2

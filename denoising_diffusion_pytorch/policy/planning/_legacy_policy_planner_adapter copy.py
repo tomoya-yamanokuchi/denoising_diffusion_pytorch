@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, TYPE_CHECKING
-import numpy as np
+
 from ..types import ActionArtifacts, ActionPlan
 from ..cutting_surface_planner import cutting_surface_planner
 
@@ -11,9 +11,6 @@ from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_nump
 from denoising_diffusion_pytorch.utils.arrays import to_torch
 from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
 from denoising_diffusion_pytorch.env.types import DismantlingObservation
-from .condition_normalization import (
-    normalize_condition_image_to_minus1_plus1,
-)
 
 
 if TYPE_CHECKING:
@@ -114,11 +111,11 @@ class LegacyPolicyPlannerAdapter:
     ):
         slice_img = planning_observation.axis_images.z # 学習とテストで固定させておく
 
-        normalized_cond = normalize_condition_image_to_minus1_plus1(slice_img).transpose(2, 0, 1)
+        normalizer = LimitsNormalizer(slice_img)
+        normalized_cond = normalizer.normalize(slice_img).transpose(2, 0, 1)
         normalized_cond = to_torch(normalized_cond)
 
         print(normalized_cond.max())
-        # import ipdb; ipdb.set_trace()
 
         return PlanningPolicyInput(
             normalized_cond = normalized_cond,
