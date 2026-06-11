@@ -24,6 +24,9 @@ watch_base:
   - key: eval.execution_error.max_abs_shift
     label: D
 
+  - key: eval.policy.decision.param.safety_margin_voxels
+    label: r
+
   - key: eval.policy.inference.guidance_scale
     label: w
     value_format: safe_float

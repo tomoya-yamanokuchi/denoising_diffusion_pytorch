@@ -87,7 +87,6 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
             normalized_cond[:] = -1.0
             mask_tmp        = torch.zeros_like(mask_tmp, dtype=torch.bool)
             mask            = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
-            import ipdb; ipdb.set_trace()
         else:
             cond = {
                 0: {
