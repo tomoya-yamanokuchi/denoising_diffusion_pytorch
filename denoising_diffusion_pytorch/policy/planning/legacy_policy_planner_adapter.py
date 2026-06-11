@@ -6,7 +6,6 @@ from ..types import ActionArtifacts, ActionPlan
 from ..cutting_surface_planner import cutting_surface_planner
 
 from denoising_diffusion_pytorch.utils.os_utils import create_folder
-from denoising_diffusion_pytorch.utils.normalization import LimitsNormalizer
 from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy
 from denoising_diffusion_pytorch.utils.arrays import to_torch
 from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
@@ -117,7 +116,7 @@ class LegacyPolicyPlannerAdapter:
         normalized_cond = normalize_condition_image_to_minus1_plus1(slice_img).transpose(2, 0, 1)
         normalized_cond = to_torch(normalized_cond)
 
-        print(normalized_cond.max())
+        # print(normalized_cond.max())
         # import ipdb; ipdb.set_trace()
 
         return PlanningPolicyInput(

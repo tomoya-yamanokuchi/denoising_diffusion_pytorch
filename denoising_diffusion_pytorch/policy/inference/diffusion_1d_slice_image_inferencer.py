@@ -8,7 +8,9 @@ from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
 from denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import (
     get_2d_image_to_1d,
 )
-from denoising_diffusion_pytorch.utils.normalization import LimitsNormalizer
+from ..planning.condition_normalization import (
+    normalize_condition_image_to_minus1_plus1,
+)
 from .slice_image_inferencer import SliceImageInferencer
 
 
@@ -54,8 +56,8 @@ class Diffusion1DSliceImageInferencer(SliceImageInferencer):
 
         cond_np = cond_image_1d.detach().cpu().numpy()
 
-        normalizer_values = LimitsNormalizer(cond_np[3:, :])
-        normalizer_indices = LimitsNormalizer(cond_np[:3, :])
+        normalizer_values  = normalize_condition_image_to_minus1_plus1(cond_np[3:, :])
+        normalizer_indices = normalize_condition_image_to_minus1_plus1(cond_np[:3, :])
 
         voxel_values = torch.as_tensor(
             normalizer_values.normalize(cond_np[3:, :]),

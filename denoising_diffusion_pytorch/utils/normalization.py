@@ -152,47 +152,47 @@ class GaussianNormalizer(Normalizer):
         return x * self.stds + self.means
 
 
-class LimitsNormalizer(Normalizer):
-    '''
-        maps [ xmin, xmax ] to [ -1, 1 ]
-    '''
+# # class LimitsNormalizer(Normalizer):
+# #     '''
+# #         maps [ xmin, xmax ] to [ -1, 1 ]
+# #     '''
 
-    def normalize(self, x):
-        ## [ 0, 1 ]
-        x = (x - self.mins) / (self.maxs - self.mins)
-        ## [ -1, 1 ]
-        x = 2 * x - 1
+# #     def normalize(self, x):
+# #         ## [ 0, 1 ]
+# #         x = (x - self.mins) / (self.maxs - self.mins)
+# #         ## [ -1, 1 ]
+# #         x = 2 * x - 1
 
-        return x
+# #         return x
 
-    def unnormalize(self, x, eps=1e-4):
-        '''
-            x : [ -1, 1 ]
-        '''
-        if x.max() > 1 + eps or x.min() < -1 - eps:
-            # print(f'[ datasets/mujoco ] Warning: sample out of range | ({x.min():.4f}, {x.max():.4f})')
-            x = np.clip(x, -1, 1)
+# #     def unnormalize(self, x, eps=1e-4):
+# #         '''
+# #             x : [ -1, 1 ]
+# #         '''
+# #         if x.max() > 1 + eps or x.min() < -1 - eps:
+# #             # print(f'[ datasets/mujoco ] Warning: sample out of range | ({x.min():.4f}, {x.max():.4f})')
+# #             x = np.clip(x, -1, 1)
 
-        ## [ -1, 1 ] --> [ 0, 1 ]
-        x = (x + 1) / 2.
+# #         ## [ -1, 1 ] --> [ 0, 1 ]
+# #         x = (x + 1) / 2.
 
-        return x * (self.maxs - self.mins) + self.mins
+# #         return x * (self.maxs - self.mins) + self.mins
 
-class SafeLimitsNormalizer(LimitsNormalizer):
-    '''
-        functions like LimitsNormalizer, but can handle data for which a dimension is constant
-    '''
+# class SafeLimitsNormalizer(LimitsNormalizer):
+#     '''
+#         functions like LimitsNormalizer, but can handle data for which a dimension is constant
+#     '''
 
-    def __init__(self, *args, eps=1, **kwargs):
-        super().__init__(*args, **kwargs)
-        for i in range(len(self.mins)):
-            if self.mins[i] == self.maxs[i]:
-                print(f'''
-                    [ utils/normalization ] Constant data in dimension {i} | '''
-                    f'''max = min = {self.maxs[i]}'''
-                )
-                self.mins -= eps
-                self.maxs += eps
+#     def __init__(self, *args, eps=1, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         for i in range(len(self.mins)):
+#             if self.mins[i] == self.maxs[i]:
+#                 print(f'''
+#                     [ utils/normalization ] Constant data in dimension {i} | '''
+#                     f'''max = min = {self.maxs[i]}'''
+#                 )
+#                 self.mins -= eps
+#                 self.maxs += eps
 
 #-----------------------------------------------------------------------------#
 #------------------------------- CDF normalizer ------------------------------#
