@@ -13,10 +13,17 @@ from PIL import Image
 
 
 DEFAULT_COLOR_RANGES = {
+    # Complex-shaped model colors. These correspond to config/eval/common/policy/complex.yaml.
     "blue": ((0, 0, 250), (5, 5, 255)),
     "red": ((250, 0, 0), (255, 5, 5)),
     "green": ((0, 250, 0), (5, 255, 5)),
     "yellow": ((250, 250, 0), (255, 255, 5)),
+
+    # Simple-shaped model colors. In config/eval/common/policy/simple.yaml,
+    # the target named blue is actually a cyan-like color [0.2, 0.8, 0.8].
+    "simple_blue": ((0, 140, 140), (115, 255, 255)),
+    "simple_red": ((179, 26, 26), (255, 102, 102)),
+    "simple_yellow": ((179, 179, 26), (255, 255, 204)),
 }
 
 # Complex-shaped sheet-sander defaults inherited from the old visualization script.
