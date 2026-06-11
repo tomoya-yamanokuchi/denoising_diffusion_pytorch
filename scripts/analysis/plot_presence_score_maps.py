@@ -199,7 +199,6 @@ def infer_side_length_from_image(image: np.ndarray) -> int:
             f"Got height={height}, width={width}."
         )
 
-    # For K in {16, 25, 36, 49, 64, ...}, the 2D tiled image side is K * sqrt(K).
     for side in range(2, height + 1):
         tile_grid = int(round(math.sqrt(side)))
         if tile_grid * tile_grid != side:
@@ -244,7 +243,6 @@ def tiled_image_to_cubic(image: np.ndarray, side_length: int | None = None) -> n
     for z in range(k):
         tile_y, tile_x = divmod(z, tile_grid_x)
         tile = image[tile_y * k : (tile_y + 1) * k, tile_x * k : (tile_x + 1) * k]
-        # Keep the orientation used by scripts/plotter/plot_internal_structure_heatmap.py.
         cubic[k - 1 :: -1, :, z] = tile
 
     return cubic
@@ -378,7 +376,6 @@ def resolve_episode_dir(root: Path, case: str, episode: int) -> Path:
 
     case_root = root / case
     if not case_root.exists():
-        # Allow a root that already points to the case directory.
         if root.name == case:
             case_root = root
         else:
@@ -459,6 +456,7 @@ def render_score_panel(
     *,
     ground_truth: bool,
     presence_cmap,
+    background_mode: str,
 ) -> None:
     ax.set_xticks([])
     ax.set_yticks([])
@@ -473,8 +471,17 @@ def render_score_panel(
         rgb[(score > 0.5) & shape_mask] = np.asarray([0.25, 0.25, 0.25])
         ax.imshow(rgb, interpolation="nearest")
     else:
-        rgb = np.ones((*score.shape, 3), dtype=float)
         colored = presence_cmap(np.clip(score, 0.0, 1.0))[..., :3]
+        if background_mode == "low_score":
+            low_color = np.asarray(presence_cmap(0.0)[:3], dtype=float)
+            rgb = np.broadcast_to(low_color, (*score.shape, 3)).copy()
+        elif background_mode == "light_gray":
+            rgb = np.ones((*score.shape, 3), dtype=float)
+            rgb[~shape_mask] = np.asarray([0.92, 0.92, 0.92])
+        elif background_mode == "white":
+            rgb = np.ones((*score.shape, 3), dtype=float)
+        else:
+            raise ValueError(f"Unknown background_mode={background_mode!r}")
         rgb[shape_mask] = colored[shape_mask]
         ax.imshow(rgb, interpolation="nearest")
 
@@ -510,6 +517,17 @@ def main() -> None:
             "Colormap for predicted presence scores. "
             "Use jet_bright for a Fig.10-like map with a brighter high-score red. "
             "Any Matplotlib colormap name such as turbo, plasma, inferno, or jet is also accepted."
+        ),
+    )
+    parser.add_argument(
+        "--background_mode",
+        type=str,
+        default="white",
+        choices=["white", "low_score", "light_gray"],
+        help=(
+            "How to render regions outside the oracle product shape in predicted panels. "
+            "white keeps the current masked style, low_score renders them as score=0 color, "
+            "and light_gray makes the masked-out region explicit."
         ),
     )
     parser.add_argument("--crop_padding", type=int, default=2)
@@ -573,6 +591,7 @@ def main() -> None:
                     mask,
                     ground_truth=is_ground_truth,
                     presence_cmap=presence_cmap,
+                    background_mode=args.background_mode,
                 )
 
                 if col_idx == 0:
