@@ -31,7 +31,6 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         self.sampling_timesteps = int(sampling_timesteps)
         self._apply_sampling_timesteps()
 
-
     def _apply_sampling_timesteps(self) -> None:
         model = self.inferencer.ema_model
 
@@ -50,13 +49,19 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         model.sampling_timesteps = self.sampling_timesteps
         print("model.sampling_timesteps = ", model.sampling_timesteps)
 
-
     def predict(self, planning_input: PlanningPolicyInput) -> np.ndarray:
         normalized_cond = planning_input.normalized_cond
         if normalized_cond is None:
             raise ValueError(
                 "normalized_cond must not be None for conditional diffusion inference."
             )
+
+        if not torch.isfinite(normalized_cond).all():
+            raise ValueError(
+                "normalized_cond contains NaN or Inf before diffusion sampling. "
+                "Check condition-image normalization."
+            )
+
         # --- prepare cond and mask ---
         model_size = int(self.inferencer.ema_model.image_size)
         normalized_cond, original_hw = _pad_cond_to_model_size(
@@ -64,14 +69,25 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
             model_size = model_size,
         )
 
-        if self.control_mode == "no_cond":
-            cond               = None
-            normalized_cond    = normalized_cond.clone()
+        if not torch.isfinite(normalized_cond).all():
+            raise ValueError(
+                "normalized_cond contains NaN or Inf after padding to model size."
+            )
+
+        # Pixels with all channels == -1 are unobserved.
+        mask_tmp = (normalized_cond != -1.0).any(dim=0)
+
+        # When the policy observation is empty, do genuine no-condition sampling.
+        # This can happen if an executed noisy cut does not reveal any voxel under
+        # the current policy-view visibility constraint. It should not corrupt the
+        # sampler with NaNs or an all-observed mask.
+        if self.control_mode == "no_cond" or not bool(mask_tmp.any().item()):
+            cond            = None
+            normalized_cond = normalized_cond.clone()
             normalized_cond[:] = -1.0
-            mask_tmp           = (normalized_cond != -1.0).any(dim=0)
-            mask               = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
+            mask_tmp        = torch.zeros_like(mask_tmp, dtype=torch.bool)
+            mask            = normalized_cond.repeat(self.sample_image_num, 1, 1, 1)
         else:
-            mask_tmp = (normalized_cond != -1.0).any(dim=0)
             cond = {
                 0: {
                     "idx": torch.where(mask_tmp),
@@ -103,8 +119,3 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
         last_step_images = batch_images[:, -1, :, :, :]
         last_step_images = _crop_images_to_hw(last_step_images, original_hw)
         return last_step_images
-
-
-
-
-
