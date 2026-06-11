@@ -31,6 +31,8 @@ class MethodSpec:
     root: Path
     source: str
     case: str | None = None
+    episode: int | None = None
+    step: int | None = None
 
 
 @dataclass(frozen=True)
@@ -47,6 +49,18 @@ class PanelData:
     is_ground_truth: bool
 
 
+def parse_optional_int(row: dict[str, str], key: str, *, row_no: int, manifest_path: Path) -> int | None:
+    text = (row.get(key) or "").strip()
+    if text == "":
+        return None
+    try:
+        return int(text)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid integer for {key!r} at manifest row {row_no}: {text!r} in {manifest_path}"
+        ) from exc
+
+
 def parse_manifest(path: Path) -> list[MethodSpec]:
     with path.open("r", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -57,19 +71,29 @@ def parse_manifest(path: Path) -> list[MethodSpec]:
 
     specs = []
     for idx, row in enumerate(rows):
+        row_no = idx + 2
         root_text = (row.get("rollout_root") or "").strip()
         if not root_text:
-            raise ValueError(f"Empty rollout_root at manifest row {idx + 2}: {path}")
+            raise ValueError(f"Empty rollout_root at manifest row {row_no}: {path}")
         label = str(row.get("method") or row.get("label") or row.get("name") or Path(root_text).name).strip()
         if not label:
-            raise ValueError(f"Empty method label at manifest row {idx + 2}: {path}")
+            raise ValueError(f"Empty method label at manifest row {row_no}: {path}")
         source = str(row.get("source") or "").strip().lower()
         if not source:
             lower = label.lower()
             source = "oracle" if ("ground" in lower or "gt" in lower or "oracle" in lower) else "raw_pred"
         if source not in {"raw_pred", "oracle"}:
-            raise ValueError(f"Unsupported source={source!r} at manifest row {idx + 2}. Use raw_pred or oracle.")
-        specs.append(MethodSpec(label=label, root=Path(root_text), source=source, case=(row.get("case") or "").strip() or None))
+            raise ValueError(f"Unsupported source={source!r} at manifest row {row_no}. Use raw_pred or oracle.")
+        specs.append(
+            MethodSpec(
+                label=label,
+                root=Path(root_text),
+                source=source,
+                case=(row.get("case") or "").strip() or None,
+                episode=parse_optional_int(row, "episode", row_no=row_no, manifest_path=path),
+                step=parse_optional_int(row, "step", row_no=row_no, manifest_path=path),
+            )
+        )
     return specs
 
 
@@ -371,8 +395,8 @@ def main() -> None:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--out_path", type=Path, required=True)
     parser.add_argument("--case_filter", type=str, default=None)
-    parser.add_argument("--episode", type=int, default=0)
-    parser.add_argument("--step", type=int, default=-1)
+    parser.add_argument("--episode", type=int, default=0, help="Fallback episode index used when a manifest row has no episode column/value.")
+    parser.add_argument("--step", type=int, default=-1, help="Fallback step index used when a manifest row has no step column/value. Negative means the last available step.")
     parser.add_argument("--target_color", type=str, default="blue", choices=sorted(DEFAULT_COLOR_RANGES))
     parser.add_argument("--side_length", type=int, default=None)
     parser.add_argument("--view_specs", type=str, default=None)
@@ -406,13 +430,15 @@ def main() -> None:
     for case_idx, case in enumerate(cases):
         for col_idx, label in enumerate(method_labels):
             spec = resolve_method_spec_for_case(method_specs, label=label, case=case)
-            episode_dir = resolve_episode_dir(spec.root, case, args.episode)
+            episode = spec.episode if spec.episode is not None else args.episode
+            step = spec.step if spec.step is not None else args.step
+            episode_dir = resolve_episode_dir(spec.root, case, episode)
             shape_mask = read_shape_mask(episode_dir, side_length=args.side_length)
             if spec.source == "oracle":
                 score_volume = read_oracle_score_map(episode_dir, target_color=args.target_color, side_length=args.side_length)
                 is_gt = True
             else:
-                score_volume = read_raw_pred_score_map(episode_dir, step=None if args.step < 0 else args.step, target_color=args.target_color, side_length=args.side_length)
+                score_volume = read_raw_pred_score_map(episode_dir, step=None if step < 0 else step, target_color=args.target_color, side_length=args.side_length)
                 is_gt = False
             for view_idx, view in enumerate(view_specs):
                 score = project_volume(score_volume, view.projection_axis, view.rot90)
