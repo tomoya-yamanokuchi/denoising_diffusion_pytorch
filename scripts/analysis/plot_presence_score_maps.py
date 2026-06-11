@@ -6,6 +6,7 @@ import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
@@ -30,6 +31,7 @@ class MethodSpec:
     label: str
     root: Path
     source: str
+    case: str | None = None
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,8 @@ def parse_manifest(path: Path) -> list[MethodSpec]:
             or Path(root_text).name
         )
         label = str(label).strip()
+        if not label:
+            raise ValueError(f"Empty method label at manifest row {idx + 2}: {path}")
 
         source = str(row.get("source") or "").strip().lower()
         if not source:
@@ -77,7 +81,8 @@ def parse_manifest(path: Path) -> list[MethodSpec]:
                 "Use source=raw_pred or source=oracle."
             )
 
-        specs.append(MethodSpec(label=label, root=Path(root_text), source=source))
+        case = str(row.get("case") or "").strip() or None
+        specs.append(MethodSpec(label=label, root=Path(root_text), source=source, case=case))
 
     return specs
 
@@ -111,6 +116,45 @@ def parse_view_specs(text: str | None) -> list[ViewSpec]:
     if not specs:
         raise ValueError("No valid view specs were parsed.")
     return specs
+
+
+def ordered_method_labels(method_specs: list[MethodSpec]) -> list[str]:
+    labels: list[str] = []
+    seen: set[str] = set()
+    for spec in method_specs:
+        if spec.label in seen:
+            continue
+        labels.append(spec.label)
+        seen.add(spec.label)
+    return labels
+
+
+def resolve_method_spec_for_case(
+    method_specs: list[MethodSpec],
+    *,
+    label: str,
+    case: str,
+) -> MethodSpec:
+    exact = [spec for spec in method_specs if spec.label == label and spec.case == case]
+    shared = [spec for spec in method_specs if spec.label == label and spec.case is None]
+
+    if len(exact) == 1:
+        return exact[0]
+    if len(exact) > 1:
+        raise ValueError(f"Multiple manifest rows found for method={label!r}, case={case!r}")
+
+    if len(shared) == 1:
+        return shared[0]
+    if len(shared) > 1:
+        raise ValueError(
+            f"Multiple shared manifest rows found for method={label!r}. "
+            "Use a case column to disambiguate."
+        )
+
+    raise ValueError(
+        f"No manifest row found for method={label!r}, case={case!r}. "
+        "Add either a case-specific row or a shared row with an empty case column."
+    )
 
 
 def load_rgb(path: Path) -> np.ndarray:
@@ -334,6 +378,10 @@ def discover_cases(method_specs: list[MethodSpec], case_filter: list[str] | None
     if case_filter is not None:
         return case_filter
 
+    explicit_cases = [spec.case for spec in method_specs if spec.case is not None]
+    if explicit_cases:
+        return sorted(set(explicit_cases))
+
     case_names: set[str] = set()
     for spec in method_specs:
         for child in spec.root.iterdir() if spec.root.exists() else []:
@@ -350,7 +398,11 @@ def discover_cases(method_specs: list[MethodSpec], case_filter: list[str] | None
     return sorted(case_names)
 
 
-def crop_to_mask(images: list[np.ndarray], masks: list[np.ndarray | None], padding: int) -> tuple[list[np.ndarray], list[np.ndarray | None]]:
+def crop_to_mask(
+    images: list[np.ndarray],
+    masks: list[np.ndarray | None],
+    padding: int,
+) -> tuple[list[np.ndarray], list[np.ndarray | None]]:
     valid_masks = [m for m in masks if m is not None and np.any(m)]
     if not valid_masks:
         return images, masks
@@ -434,22 +486,22 @@ def main() -> None:
     args = parser.parse_args()
 
     method_specs = parse_manifest(args.manifest)
+    method_labels = ordered_method_labels(method_specs)
     cases = discover_cases(method_specs, parse_case_filter(args.case_filter))
     view_specs = parse_view_specs(args.view_specs)
 
     n_rows = len(cases) * len(view_specs)
-    n_cols = len(method_specs)
+    n_cols = len(method_labels)
     fig_width = max(2.0 * n_cols, 5.5)
     fig_height = max(1.45 * n_rows, 3.0)
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_width, fig_height), squeeze=False)
 
-    for col_idx, spec in enumerate(method_specs):
-        axes[0][col_idx].set_title(spec.label, fontsize=args.title_fontsize, pad=4)
+    for col_idx, label in enumerate(method_labels):
+        axes[0][col_idx].set_title(label, fontsize=args.title_fontsize, pad=4)
 
     for case_idx, case in enumerate(cases):
-        cache: dict[tuple[int, str], tuple[np.ndarray, np.ndarray | None, bool]] = {}
-
-        for col_idx, spec in enumerate(method_specs):
+        for col_idx, label in enumerate(method_labels):
+            spec = resolve_method_spec_for_case(method_specs, label=label, case=case)
             episode_dir = resolve_episode_dir(spec.root, case, args.episode)
             shape_mask = read_shape_mask(episode_dir, side_length=args.side_length)
 
