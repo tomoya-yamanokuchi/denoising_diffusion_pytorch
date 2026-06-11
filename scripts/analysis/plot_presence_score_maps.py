@@ -265,11 +265,13 @@ def resolve_step_dir(raw_pred_root: Path, step: int | None) -> Path:
     step_dirs = [p for p in raw_pred_root.iterdir() if p.is_dir() and p.name.startswith("step_")]
     if not step_dirs:
         raise FileNotFoundError(f"No step_* directories were found in: {raw_pred_root}")
+
     def step_index(path: Path) -> int:
         match = re.search(r"step_(-?\d+)$", path.name)
         if match is None:
             return -10**9
         return int(match.group(1))
+
     step_dirs = sorted(step_dirs, key=step_index)
     if step is None or step < 0:
         return step_dirs[-1]
@@ -402,6 +404,7 @@ def render_score_panel(
     presence_cmap,
     background_mode: str,
     ground_truth_background_mode: str,
+    ground_truth_style: str,
     panel_frame: bool,
 ) -> None:
     ax.set_xticks([])
@@ -412,18 +415,28 @@ def render_score_panel(
         shape_mask = np.ones_like(score, dtype=bool)
 
     if ground_truth:
-        if ground_truth_background_mode == "low_score":
-            low_color = np.asarray(presence_cmap(0.0)[:3], dtype=float)
-            rgb = np.broadcast_to(low_color, (*score.shape, 3)).copy()
-        elif ground_truth_background_mode == "light_gray":
+        target = score > 0.5
+        if ground_truth_style == "target_only":
+            # Two-tone binary reference map: dark gray = target, light gray = non-target/background.
             rgb = np.ones((*score.shape, 3), dtype=float)
-            rgb[:] = np.asarray([0.92, 0.92, 0.92])
-        elif ground_truth_background_mode == "white":
-            rgb = np.ones((*score.shape, 3), dtype=float)
+            rgb[:] = np.asarray([0.88, 0.88, 0.88])
+            rgb[target] = np.asarray([0.25, 0.25, 0.25])
+        elif ground_truth_style == "structure":
+            # Legacy/reference style: background, non-target shape, and target are shown separately.
+            if ground_truth_background_mode == "low_score":
+                low_color = np.asarray(presence_cmap(0.0)[:3], dtype=float)
+                rgb = np.broadcast_to(low_color, (*score.shape, 3)).copy()
+            elif ground_truth_background_mode == "light_gray":
+                rgb = np.ones((*score.shape, 3), dtype=float)
+                rgb[:] = np.asarray([0.92, 0.92, 0.92])
+            elif ground_truth_background_mode == "white":
+                rgb = np.ones((*score.shape, 3), dtype=float)
+            else:
+                raise ValueError(f"Unknown ground_truth_background_mode={ground_truth_background_mode!r}")
+            rgb[shape_mask] = np.asarray([0.86, 0.86, 0.86])
+            rgb[target & shape_mask] = np.asarray([0.25, 0.25, 0.25])
         else:
-            raise ValueError(f"Unknown ground_truth_background_mode={ground_truth_background_mode!r}")
-        rgb[shape_mask] = np.asarray([0.86, 0.86, 0.86])
-        rgb[(score > 0.5) & shape_mask] = np.asarray([0.25, 0.25, 0.25])
+            raise ValueError(f"Unknown ground_truth_style={ground_truth_style!r}")
         ax.imshow(rgb, interpolation="nearest")
     else:
         colored = presence_cmap(np.clip(score, 0.0, 1.0))[..., :3]
@@ -460,6 +473,7 @@ def main() -> None:
     parser.add_argument("--presence_cmap", type=str, default="jet_bright")
     parser.add_argument("--background_mode", type=str, default="white", choices=["white", "low_score", "light_gray"])
     parser.add_argument("--ground_truth_background_mode", type=str, default="white", choices=["white", "low_score", "light_gray"])
+    parser.add_argument("--ground_truth_style", type=str, default="structure", choices=["structure", "target_only"])
     parser.add_argument("--crop_scope", type=str, default="case_view", choices=["case_view", "panel"])
     parser.add_argument("--no_square_panels", action="store_true")
     parser.add_argument("--panel_frame", action="store_true")
@@ -541,6 +555,7 @@ def main() -> None:
                     presence_cmap=presence_cmap,
                     background_mode=args.background_mode,
                     ground_truth_background_mode=args.ground_truth_background_mode,
+                    ground_truth_style=args.ground_truth_style,
                     panel_frame=args.panel_frame,
                 )
                 if col_idx == 0:
