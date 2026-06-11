@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 from PIL import Image
 
@@ -162,6 +163,24 @@ def resolve_method_spec_for_case(
         f"No manifest row found for method={label!r}, case={case!r}. "
         "Add either a case-specific row or a shared row with an empty case column."
     )
+
+
+def build_presence_colormap(name: str):
+    """
+    Build a presence-score colormap.
+
+    Matplotlib's standard 'jet' has a dark maroon endpoint at 1.0, which can
+    make high-confidence regions look visually heavy and less distinguishable
+    from low-confidence dark blue regions in small panels. 'jet_bright' keeps
+    the familiar blue-cyan-yellow-red ordering but truncates the dark upper end.
+    """
+    if name == "jet_bright":
+        base = plt.get_cmap("jet")
+        colors = base(np.linspace(0.0, 0.89, 256))
+        colors[-1, :3] = np.asarray([1.0, 0.0, 0.0])
+        return LinearSegmentedColormap.from_list("jet_bright", colors)
+
+    return plt.get_cmap(name)
 
 
 def load_rgb(path: Path) -> np.ndarray:
@@ -439,6 +458,7 @@ def render_score_panel(
     shape_mask: np.ndarray | None,
     *,
     ground_truth: bool,
+    presence_cmap,
 ) -> None:
     ax.set_xticks([])
     ax.set_yticks([])
@@ -453,9 +473,8 @@ def render_score_panel(
         rgb[(score > 0.5) & shape_mask] = np.asarray([0.25, 0.25, 0.25])
         ax.imshow(rgb, interpolation="nearest")
     else:
-        cmap = plt.get_cmap("jet")
         rgb = np.ones((*score.shape, 3), dtype=float)
-        colored = cmap(np.clip(score, 0.0, 1.0))[..., :3]
+        colored = presence_cmap(np.clip(score, 0.0, 1.0))[..., :3]
         rgb[shape_mask] = colored[shape_mask]
         ax.imshow(rgb, interpolation="nearest")
 
@@ -483,6 +502,16 @@ def main() -> None:
         default=None,
         help="Comma-separated 'label:projection_axis:rot90'. Default: Side view:x:-1,Top view:z:2.",
     )
+    parser.add_argument(
+        "--presence_cmap",
+        type=str,
+        default="jet_bright",
+        help=(
+            "Colormap for predicted presence scores. "
+            "Use jet_bright for a Fig.10-like map with a brighter high-score red. "
+            "Any Matplotlib colormap name such as turbo, plasma, inferno, or jet is also accepted."
+        ),
+    )
     parser.add_argument("--crop_padding", type=int, default=2)
     parser.add_argument("--no_auto_crop", action="store_true")
     parser.add_argument("--dpi", type=int, default=300)
@@ -496,6 +525,7 @@ def main() -> None:
     method_labels = ordered_method_labels(method_specs)
     cases = discover_cases(method_specs, parse_case_filter(args.case_filter))
     view_specs = parse_view_specs(args.view_specs)
+    presence_cmap = build_presence_colormap(args.presence_cmap)
 
     n_rows = len(cases) * len(view_specs)
     n_cols = len(method_labels)
@@ -537,14 +567,20 @@ def main() -> None:
 
                 row_idx = case_idx * len(view_specs) + view_idx
                 ax = axes[row_idx][col_idx]
-                render_score_panel(ax, score, mask, ground_truth=is_ground_truth)
+                render_score_panel(
+                    ax,
+                    score,
+                    mask,
+                    ground_truth=is_ground_truth,
+                    presence_cmap=presence_cmap,
+                )
 
                 if col_idx == 0:
                     ylabel = f"{case}\n{view.label}" if view_idx == 0 else view.label
                     ax.set_ylabel(ylabel, fontsize=args.label_fontsize, rotation=90, labelpad=8)
 
     if args.add_colorbar:
-        sm = plt.cm.ScalarMappable(cmap="jet", norm=plt.Normalize(0, 1))
+        sm = plt.cm.ScalarMappable(cmap=presence_cmap, norm=plt.Normalize(0, 1))
         sm.set_array([])
         cbar = fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02)
         cbar.set_label("Presence score", fontsize=args.label_fontsize)
