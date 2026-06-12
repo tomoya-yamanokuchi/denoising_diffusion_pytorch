@@ -491,13 +491,18 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 
+
+
+# simple
 '''
 python scripts/analysis/plot_presence_score_maps.py \
-  --manifest analysis/revise/presence_maps/manifest_complex.csv \
-  --out_path analysis/revise/presence_maps/complex_presence_maps.pdf \
-  --case_filter Object_1,Object_2,Object_3,Object_4,Object_5,Object_6 \
-  --target_color blue \
-  --side_length 32 \
+  --manifest analysis/revise/presence_frequency_maps/manifest_simple_ABC.csv \
+  --out_path analysis/revise/presence_frequency_maps/simple_presence_frequency_maps.pdf \
+  --case_filter Object_A,Object_B,Object_C \
+  --target_color simple_blue \
+  --side_length 16 \
+  --episode 0 \
+  --step 0 \
   --presence_cmap jet_bright \
   --background_mode low_score \
   --ground_truth_style target_only \

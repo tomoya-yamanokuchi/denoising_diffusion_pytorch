@@ -333,6 +333,7 @@ if __name__ == "__main__":
     main()
 
 
+# simple (A)
 '''
 python scripts/analysis/plot_safety_margin_decision_maps.py \
   --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
@@ -340,7 +341,31 @@ python scripts/analysis/plot_safety_margin_decision_maps.py \
   --ucb_lb 0.5 \
   --radii 0,1,2 \
   --score_mode ucb \
-  --out_path analysis/revise/presence_maps_safety_margin/safety_margin_decision_ucb_A.pdf \
+  --out_path analysis/revise/cutting_risk_maps/object_A/cutting_risk_map_A.pdf \
+  --show_colorbar
+'''
+
+# simple (B)
+'''
+python scripts/analysis/plot_safety_margin_decision_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_B/epsilon_greedy_00/Object_B/episode_0/0_cost_map_logs.pickle \
+  --target blue \
+  --ucb_lb 0.5 \
+  --radii 0,1,2 \
+  --score_mode ucb \
+  --out_path analysis/revise/cutting_risk_maps/object_B/cutting_risk_map_B.pdf \
+  --show_colorbar
+'''
+
+# simple (C)
+'''
+python scripts/analysis/plot_safety_margin_decision_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_C/epsilon_greedy_00/Object_C/episode_0/0_cost_map_logs.pickle \
+  --target blue \
+  --ucb_lb 0.5 \
+  --radii 0,1,2 \
+  --score_mode ucb \
+  --out_path analysis/revise/cutting_risk_maps/object_C/cutting_risk_map_C.pdf \
   --show_colorbar
 '''
 
