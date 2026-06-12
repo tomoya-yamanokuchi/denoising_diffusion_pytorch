@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import pickle
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
@@ -17,6 +18,23 @@ from denoising_diffusion_pytorch.policy.decision.decision_rules import (
 
 TargetColor = Literal["blue", "red", "yellow"]
 ViewName = Literal["side", "top"]
+
+
+@dataclass(frozen=True)
+class ViewSpec:
+    name: ViewName
+    label: str
+    projection_axis: str
+    rot90: int
+
+
+VIEW_SPECS: dict[ViewName, ViewSpec] = {
+    # Match the default Fig.10-style presence-frequency views:
+    #   Side view = project along x, then rot90=-1
+    #   Top  view = project along z, then rot90=2
+    "side": ViewSpec(name="side", label="Side view", projection_axis="x", rot90=-1),
+    "top": ViewSpec(name="top", label="Top view", projection_axis="z", rot90=2),
+}
 
 
 def parse_radii(text: str) -> list[int]:
@@ -62,30 +80,57 @@ def to_risk(scores: AxisCost, *, mode: str, decision: AxisDecisionCost | None = 
     raise ValueError(f"Unknown score_mode={mode!r}. Use 'ucb' or 'decision'.")
 
 
-def build_view_map(axis_scores: AxisCost, view: ViewName) -> np.ndarray:
+def project_volume(volume: np.ndarray, projection_axis: str, rot90: int) -> np.ndarray:
+    projected = np.max(volume, axis={"x": 0, "y": 1, "z": 2}[projection_axis])
+    return np.rot90(projected, rot90) if rot90 else projected
+
+
+def build_axis_risk_volume_for_view(axis_scores: AxisCost, view_spec: ViewSpec) -> np.ndarray:
     """
-    Convert axis-wise scores to a 2D risk map for visualization.
+    Build a virtual 3D risk volume whose projection is aligned with the
+    Fig.10-style presence-frequency projection for the requested view.
 
-    The policy uses 1D decision costs over x/y/z candidate slices. This function
-    displays those exact axis-wise risks as a 2D map by assigning each pixel the
-    maximum risk of the two axes visible in the requested view.
+    The policy stores risk as 1D scores over x/y/z candidate cutting slices.
+    For a 2D projected view, only the two axes visible in that view are drawn:
 
-      top  view: max(x_axis[x], y_axis[y])
-      side view: max(x_axis[x], z_axis[z])
+      Side view: project along x -> display max(y_axis[y], z_axis[z])
+      Top  view: project along z -> display max(x_axis[x], y_axis[y])
 
-    The map is therefore not a voxel occupancy/presence projection; it is a 2D
-    visualization of the actual axis-wise decision cost used by the policy.
+    This is intentionally different from the older display that always included
+    x_axis in both side and top views. Excluding the projection-axis score keeps
+    the displayed risk bands spatially aligned with the target-part presence
+    frequency maps produced by plot_presence_score_maps.py.
     """
     x = np.asarray(axis_scores.x_axis, dtype=float).reshape(-1)
     y = np.asarray(axis_scores.y_axis, dtype=float).reshape(-1)
     z = np.asarray(axis_scores.z_axis, dtype=float).reshape(-1)
 
-    if view == "top":
-        return np.maximum(y[:, None], x[None, :])
-    if view == "side":
-        # Vertical axis is z, horizontal axis is x.
-        return np.maximum(z[::-1, None], x[None, :])
-    raise ValueError(f"Unknown view={view!r}. Use 'side' or 'top'.")
+    if x.size == 0 or y.size == 0 or z.size == 0:
+        raise ValueError("Axis scores must be non-empty for x, y, and z.")
+
+    if view_spec.projection_axis == "x":
+        yz = np.maximum(y[None, :, None], z[None, None, :])
+        return np.broadcast_to(yz, (x.size, y.size, z.size))
+    if view_spec.projection_axis == "y":
+        xz = np.maximum(x[:, None, None], z[None, None, :])
+        return np.broadcast_to(xz, (x.size, y.size, z.size))
+    if view_spec.projection_axis == "z":
+        xy = np.maximum(x[:, None, None], y[None, :, None])
+        return np.broadcast_to(xy, (x.size, y.size, z.size))
+
+    raise ValueError(f"Unknown projection_axis={view_spec.projection_axis!r}.")
+
+
+def build_view_map(axis_scores: AxisCost, view_spec: ViewSpec) -> np.ndarray:
+    """
+    Convert axis-wise policy scores to a 2D map aligned with presence maps.
+
+    The output is not a voxel occupancy map. It is a 2D visualization of the
+    policy's axis-wise cutting risk on the same display coordinate system as the
+    Fig.10-style presence-frequency maps.
+    """
+    risk_volume = build_axis_risk_volume_for_view(axis_scores, view_spec)
+    return project_volume(risk_volume, view_spec.projection_axis, view_spec.rot90)
 
 
 def maybe_normalize_for_display(score_map: np.ndarray, *, mode: str) -> np.ndarray:
@@ -96,9 +141,9 @@ def maybe_normalize_for_display(score_map: np.ndarray, *, mode: str) -> np.ndarr
 
 def plot_maps(
     *,
-    maps: dict[tuple[int, str], np.ndarray],
+    maps: dict[tuple[int, ViewName], np.ndarray],
     radii: list[int],
-    views: list[str],
+    views: list[ViewSpec],
     out_path: Path,
     cmap_name: str,
     score_mode: str,
@@ -131,11 +176,10 @@ def plot_maps(
             ax.set_yticks([])
             ax.set_aspect("equal")
             ax.set_box_aspect(1)
-            image = maybe_normalize_for_display(maps[(radius, view)], mode=score_mode)
+            image = maybe_normalize_for_display(maps[(radius, view.name)], mode=score_mode)
             ax.imshow(image, cmap=cmap, vmin=0.0, vmax=1.0, interpolation="nearest")
             if col_idx == 0:
-                label = "Side view" if view == "side" else "Top view"
-                ax.set_ylabel(label, fontsize=label_fontsize, rotation=90, labelpad=8)
+                ax.set_ylabel(view.label, fontsize=label_fontsize, rotation=90, labelpad=8)
             for spine in ax.spines.values():
                 spine.set_visible(False)
 
@@ -188,11 +232,27 @@ def save_axis_arrays(
         )
 
 
+def parse_views(text: str) -> list[ViewSpec]:
+    views: list[ViewSpec] = []
+    for item in text.split(","):
+        name = item.strip().lower()
+        if not name:
+            continue
+        if name not in VIEW_SPECS:
+            raise ValueError(f"Unknown view={name!r}. Use side or top.")
+        views.append(VIEW_SPECS[name])
+    if not views:
+        raise ValueError("No valid views were parsed. Example: --views side,top")
+    return views
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Visualize the exact safety-margin-aware axis-wise decision costs "
-            "used by clip_ucb_raw from an existing *_cost_map_logs.pickle file."
+            "used by clip_ucb_raw from an existing *_cost_map_logs.pickle file. "
+            "The 2D views are aligned with the default presence-frequency map "
+            "coordinate system."
         )
     )
     parser.add_argument("--cost_map_log", type=Path, required=True)
@@ -215,10 +275,7 @@ def main() -> None:
     args = parser.parse_args()
 
     radii = parse_radii(args.radii)
-    views = [v.strip() for v in args.views.split(",") if v.strip()]
-    for view in views:
-        if view not in {"side", "top"}:
-            raise ValueError(f"Unknown view={view!r}. Use side or top.")
+    views = parse_views(args.views)
 
     logs = load_pickle(args.cost_map_log)
     if "cost_ensembles" not in logs:
@@ -227,7 +284,7 @@ def main() -> None:
 
     score_by_radius: dict[int, AxisCost] = {}
     decision_by_radius: dict[int, AxisDecisionCost] = {}
-    maps: dict[tuple[int, str], np.ndarray] = {}
+    maps: dict[tuple[int, ViewName], np.ndarray] = {}
 
     for radius in radii:
         scores = compute_clip_ucb_scores(
@@ -244,7 +301,7 @@ def main() -> None:
         score_by_radius[radius] = scores
         decision_by_radius[radius] = decision
         for view in views:
-            maps[(radius, view)] = build_view_map(risk, view)  # type: ignore[arg-type]
+            maps[(radius, view.name)] = build_view_map(risk, view)
 
     save_axis_arrays(
         out_dir=args.save_axis_arrays_dir,
@@ -298,4 +355,3 @@ python scripts/analysis/plot_safety_margin_decision_maps.py \
   --out_path analysis/revise/presence_maps_safety_margin/safety_margin_decision_binary_A.pdf \
   --show_colorbar
 '''
-
