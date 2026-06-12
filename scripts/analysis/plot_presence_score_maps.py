@@ -493,7 +493,7 @@ if __name__ == "__main__":
 
 
 
-# simple
+# simple (ABC)
 '''
 python scripts/analysis/plot_presence_score_maps.py \
   --manifest analysis/revise/presence_frequency_maps/manifest_simple_ABC.csv \
@@ -508,3 +508,5 @@ python scripts/analysis/plot_presence_score_maps.py \
   --ground_truth_style target_only \
   --show_colorbar
 '''
+
+

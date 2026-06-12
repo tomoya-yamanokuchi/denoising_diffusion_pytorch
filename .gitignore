@@ -10,6 +10,7 @@ results/
 *.pdf
 *.csv
 *.npy
+*.npz
 
 analysis/**/*.jpg
 analysis/**/*.png
