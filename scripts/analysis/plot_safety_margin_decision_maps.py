@@ -284,7 +284,7 @@ def main() -> None:
     parser.add_argument("--radii", type=str, default="0,1,2", help="Comma-separated safety margin radii, e.g. 0,1,2.")
     parser.add_argument("--score_mode", type=str, default="ucb", choices=["ucb", "decision"], help="Plot continuous UCB scores or thresholded binary decision risks.")
     parser.add_argument("--views", type=str, default="side,top", help="Comma-separated views: side,top.")
-    parser.add_argument("--cmap", type=str, default="jet")
+    parser.add_argument("--cmap", type=str, default="magma")
     parser.add_argument("--show_colorbar", action="store_true")
     parser.add_argument("--dpi", type=int, default=300)
     parser.add_argument("--title_fontsize", type=int, default=11)
@@ -292,7 +292,7 @@ def main() -> None:
     parser.add_argument("--colorbar_layout_right", type=float, default=0.86)
     parser.add_argument("--colorbar_pad", type=float, default=0.025)
     parser.add_argument("--colorbar_width", type=float, default=0.018)
-    parser.add_argument("--colorbar_shrink", type=float, default=0.45)
+    parser.add_argument("--colorbar_shrink", type=float, default=0.9)
     parser.add_argument("--save_axis_arrays_dir", type=Path, default=None)
     args = parser.parse_args()
 

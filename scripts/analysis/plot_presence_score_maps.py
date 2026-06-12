@@ -344,7 +344,7 @@ def render_score_panel(ax, score: np.ndarray, shape_mask: np.ndarray | None, *, 
             if ground_truth_background_mode == "low_score":
                 rgb = np.broadcast_to(np.asarray(presence_cmap(0.0)[:3], dtype=float), (*score.shape, 3)).copy()
             elif ground_truth_background_mode == "light_gray":
-                rgb = np.ones((*score.shape, 3), dtype=float) * 0.92
+                rgb = np.ones((*score.shape, 3), dtype=float) * 0.95
             elif ground_truth_background_mode == "white":
                 rgb = np.ones((*score.shape, 3), dtype=float)
             else:
@@ -417,7 +417,7 @@ def main() -> None:
     parser.add_argument("--colorbar_layout_right", type=float, default=0.86)
     parser.add_argument("--colorbar_pad", type=float, default=0.025)
     parser.add_argument("--colorbar_width", type=float, default=0.018)
-    parser.add_argument("--colorbar_shrink", type=float, default=0.45)
+    parser.add_argument("--colorbar_shrink", type=float, default=0.9)
     args = parser.parse_args()
 
     method_specs = parse_manifest(args.manifest)
@@ -509,4 +509,19 @@ python scripts/analysis/plot_presence_score_maps.py \
   --show_colorbar
 '''
 
-
+# simple: A
+'''
+python scripts/analysis/plot_presence_score_maps.py \
+  --manifest analysis/revise/presence_frequency_maps/object_A/manifest_simple_A.csv \
+  --out_path analysis/revise/presence_frequency_maps/object_A/simple_presence_frequency_maps_A.pdf \
+  --case_filter Object_A \
+  --target_color simple_blue \
+  --side_length 16 \
+  --episode 0 \
+  --step 0 \
+  --presence_cmap jet_bright \
+  --background_mode low_score \
+  --ground_truth_style structure \
+  --ground_truth_background_mode light_gray \
+  --show_colorbar
+'''
