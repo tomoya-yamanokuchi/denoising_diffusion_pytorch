@@ -80,6 +80,29 @@ def to_risk(scores: AxisCost, *, mode: str, decision: AxisDecisionCost | None = 
     raise ValueError(f"Unknown score_mode={mode!r}. Use 'ucb' or 'decision'.")
 
 
+def remap_axis_scores_to_presence_coords(axis_scores: AxisCost) -> AxisCost:
+    """
+    Convert cost_ensemble axis order to the presence-frequency coordinate system.
+
+    Empirical alignment checks on simple Object A/B/C showed the following
+    relationship between the axis-wise clip_ucb_raw scores and the 3D presence
+    volume produced from raw_pred_image:
+
+      clip_ucb x_axis -> presence y axis, same direction
+      clip_ucb y_axis -> presence x axis, reversed direction
+      clip_ucb z_axis -> presence z axis, same direction
+
+    This remapping is only for visualization. It does not change the policy
+    computation, the saved cost logs, or the arrays written by
+    --save_axis_arrays_dir.
+    """
+    return AxisCost(
+        x_axis=np.asarray(axis_scores.y_axis, dtype=float).reshape(-1)[::-1],
+        y_axis=np.asarray(axis_scores.x_axis, dtype=float).reshape(-1),
+        z_axis=np.asarray(axis_scores.z_axis, dtype=float).reshape(-1),
+    )
+
+
 def project_volume(volume: np.ndarray, projection_axis: str, rot90: int) -> np.ndarray:
     projected = np.max(volume, axis={"x": 0, "y": 1, "z": 2}[projection_axis])
     return np.rot90(projected, rot90) if rot90 else projected
@@ -90,16 +113,15 @@ def build_axis_risk_volume_for_view(axis_scores: AxisCost, view_spec: ViewSpec) 
     Build a virtual 3D risk volume whose projection is aligned with the
     Fig.10-style presence-frequency projection for the requested view.
 
-    The policy stores risk as 1D scores over x/y/z candidate cutting slices.
-    For a 2D projected view, only the two axes visible in that view are drawn:
+    `axis_scores` must already be remapped to the presence-frequency coordinate
+    system. For a 2D projected view, only the two axes visible in that view are
+    drawn:
 
       Side view: project along x -> display max(y_axis[y], z_axis[z])
       Top  view: project along z -> display max(x_axis[x], y_axis[y])
 
-    This is intentionally different from the older display that always included
-    x_axis in both side and top views. Excluding the projection-axis score keeps
-    the displayed risk bands spatially aligned with the target-part presence
-    frequency maps produced by plot_presence_score_maps.py.
+    The output is a view-aligned visualization of axis-wise policy scores, not a
+    voxel occupancy map.
     """
     x = np.asarray(axis_scores.x_axis, dtype=float).reshape(-1)
     y = np.asarray(axis_scores.y_axis, dtype=float).reshape(-1)
@@ -251,7 +273,7 @@ def main() -> None:
         description=(
             "Visualize the exact safety-margin-aware axis-wise decision costs "
             "used by clip_ucb_raw from an existing *_cost_map_logs.pickle file. "
-            "The 2D views are aligned with the default presence-frequency map "
+            "The 2D views are remapped to the default presence-frequency map "
             "coordinate system."
         )
     )
@@ -298,10 +320,11 @@ def main() -> None:
             safety_margin_voxels=radius,
         )
         risk = to_risk(scores, mode=args.score_mode, decision=decision)
+        display_risk = remap_axis_scores_to_presence_coords(risk)
         score_by_radius[radius] = scores
         decision_by_radius[radius] = decision
         for view in views:
-            maps[(radius, view.name)] = build_view_map(risk, view)
+            maps[(radius, view.name)] = build_view_map(display_risk, view)
 
     save_axis_arrays(
         out_dir=args.save_axis_arrays_dir,
