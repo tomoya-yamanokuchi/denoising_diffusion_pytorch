@@ -9,6 +9,7 @@ results/
 .serena/
 *.pdf
 *.csv
+*.npy
 
 analysis/**/*.jpg
 analysis/**/*.png

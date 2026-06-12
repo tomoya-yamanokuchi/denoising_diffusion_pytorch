@@ -226,3 +226,22 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+'''
+python scripts/analysis/plot_safety_margin_presence_maps.py \
+  --rollout_root /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00 \
+  --case Object_A \
+  --episode 0 \
+  --step 0 \
+  --target_color simple_blue \
+  --side_length 16 \
+  --radii 0,1,2 \
+  --oracle_root /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_ABC_GT/oracle_obs \
+  --out_path analysis/revise/presence_maps_safety_margin/object_A/safety_margin_presence_A.pdf \
+  --presence_cmap jet_bright \
+  --background_mode low_score \
+  --ground_truth_style target_only \
+  --show_colorbar
+'''

@@ -274,3 +274,28 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+python scripts/analysis/plot_safety_margin_decision_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
+  --target blue \
+  --ucb_lb 0.5 \
+  --radii 0,1,2 \
+  --score_mode ucb \
+  --out_path analysis/revise/presence_maps_safety_margin/safety_margin_decision_ucb_A.pdf \
+  --show_colorbar
+'''
+
+
+'''
+python scripts/analysis/plot_safety_margin_decision_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
+  --target blue \
+  --ucb_lb 0.5 \
+  --radii 0,1,2 \
+  --score_mode decision \
+  --out_path analysis/revise/presence_maps_safety_margin/safety_margin_decision_binary_A.pdf \
+  --show_colorbar
+'''
+

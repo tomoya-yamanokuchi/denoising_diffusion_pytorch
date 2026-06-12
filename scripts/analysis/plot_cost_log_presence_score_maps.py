@@ -212,3 +212,47 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+python scripts/analysis/plot_cost_log_presence_score_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
+  --out_path analysis/revise/presence_maps_safety_margin/object_A/cost_log_presence_safety_margin_A.pdf \
+  --target_color simple_blue \
+  --side_length 16 \
+  --radii 0 \
+  --presence_cmap jet_bright \
+  --background_mode low_score \
+  --ground_truth_style target_only \
+  --show_colorbar
+'''
+
+
+'''
+python scripts/analysis/plot_cost_log_presence_score_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
+  --out_path analysis/revise/presence_maps_safety_margin/object_A/cost_log_presence_safety_margin_A.pdf \
+  --target_color simple_blue \
+  --side_length 16 \
+  --radii 0,1,2 \
+  --presence_cmap jet_bright \
+  --background_mode low_score \
+  --ground_truth_style target_only \
+  --show_colorbar
+'''
+
+
+'''
+python scripts/analysis/plot_cost_log_presence_score_maps.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
+  --out_path analysis/revise/presence_maps_safety_margin/object_A/cost_log_presence_safety_margin_A.pdf \
+  --target_color simple_blue \
+  --side_length 16 \
+  --radii 0,1,2 \
+  --presence_cmap jet_bright \
+  --background_mode low_score \
+  --ground_truth_style target_only \
+  --show_colorbar \
+  --save_score_volumes_dir analysis/revise/presence_maps_safety_margin/object_A/volumes_A \
+  --save_projected_maps_dir analysis/revise/presence_maps_safety_margin/object_A/projected_A
+'''
