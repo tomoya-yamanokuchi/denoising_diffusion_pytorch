@@ -5,8 +5,7 @@ defaults:
   - base
   - /eval/common/cases@cases  : complex_paper
   - /eval/common/policy@policy: complex
-  # - /eval/policy/method@policy: diffusion_1d
   - /eval/method/diffusion_1d/policy@policy
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/pointnet1d_D128_T1000_S20_complex_1d_20260605_104825
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/pointnet1d_D128_T1000_S20_complex_1d_20260605_105814
