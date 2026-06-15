@@ -494,11 +494,31 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 
-
+# CFG guidance_scale
 '''
 python scripts/analysis/plot_task_metrics.py \
     --summary_csv ./analysis/revise/sensitivity/guidance_scale/summary_metrics.csv \
     --out_dir ./analysis/revise/sensitivity/guidance_scale/figures_pdf \
     --x_axis guidance_scale \
     --format pdf
+'''
+
+# DDIM sampling step
+'''
+python scripts/analysis/plot_task_metrics.py \
+ --summary_csv ./analysis/revise/sensitivity/DDIM_sampling_timesteps/summary_metrics.csv \
+ --out_dir ./analysis/revise/sensitivity/DDIM_sampling_timesteps/figures_pdf \
+ --x_axis sampling_timesteps \
+ --format pdf
+'''
+
+
+
+# number of sampling image
+'''
+python scripts/analysis/plot_task_metrics.py \
+  --summary_csv ./analysis/revise/sensitivity/number_of_generated_samples/summary_metrics.csv \
+  --out_dir ./analysis/revise/sensitivity/number_of_generated_samples/figures_pdf \
+  --x_axis sample_image_num \
+  --format pdf
 '''
