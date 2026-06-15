@@ -180,6 +180,7 @@ def plot_metric(
             x,
             y,
             **line_kwargs,
+            markersize = 6,
         )
 
         if error_band is not None:
