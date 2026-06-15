@@ -9,7 +9,7 @@ from denoising_diffusion_pytorch.policy.diffusion_1d_policy_utils import (
     get_2d_image_to_1d,
 )
 from ..planning.condition_normalization import (
-    normalize_condition_image_to_minus1_plus1,
+    normalize_01_array_to_minus1_plus1,
 )
 from .slice_image_inferencer import SliceImageInferencer
 
@@ -56,19 +56,26 @@ class Diffusion1DSliceImageInferencer(SliceImageInferencer):
 
         cond_np = cond_image_1d.detach().cpu().numpy()
 
-        normalizer_values  = normalize_condition_image_to_minus1_plus1(cond_np[3:, :])
-        normalizer_indices = normalize_condition_image_to_minus1_plus1(cond_np[:3, :])
+        voxel_values_np = normalize_01_array_to_minus1_plus1(cond_np[3:, :])
+        voxel_indices_np = normalize_01_array_to_minus1_plus1(cond_np[:3, :])
+
+        print("cond_np.shape:", cond_np.shape)
+        print("voxel_indices_np:", voxel_indices_np.shape, voxel_indices_np.min(), voxel_indices_np.max())
+        print("voxel_values_np :", voxel_values_np.shape, voxel_values_np.min(), voxel_values_np.max())
 
         voxel_values = torch.as_tensor(
-            normalizer_values.normalize(cond_np[3:, :]),
+            voxel_values_np,
             dtype=torch.float32,
             device=normalized_cond.device,
         )
+
         voxel_indices = torch.as_tensor(
-            normalizer_indices.normalize(cond_np[:3, :]),
+            voxel_indices_np,
             dtype=torch.float32,
             device=normalized_cond.device,
         )
+
+        # import ipdb; ipdb.set_trace()
 
         if self.control_mode == "no_cond":
             cond = None

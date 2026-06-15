@@ -34,3 +34,29 @@ def normalize_condition_image_to_minus1_plus1(slice_img: np.ndarray) -> np.ndarr
         raise ValueError("Condition image contains NaN or Inf after normalization.")
 
     return normalized.astype(np.float32)
+
+
+
+
+
+def normalize_01_array_to_minus1_plus1(x: np.ndarray) -> np.ndarray:
+    """
+    Convert arbitrary [0, 1] or [0, 255] array to [-1, 1].
+    This is for Diffusion1D sequence tensors such as [3, N] or [6, N],
+    not only RGB images with shape [H, W, 3].
+    """
+    arr = np.asarray(x, dtype=np.float32)
+
+    if not np.isfinite(arr).all():
+        raise ValueError("Condition array contains NaN or Inf before normalization.")
+
+    if arr.size > 0 and arr.max() > 1.0 + 1e-6:
+        arr = arr / 255.0
+
+    arr = np.clip(arr, 0.0, 1.0)
+    normalized = arr * 2.0 - 1.0
+
+    if not np.isfinite(normalized).all():
+        raise ValueError("Condition array contains NaN or Inf after normalization.")
+
+    return normalized.astype(np.float32)
