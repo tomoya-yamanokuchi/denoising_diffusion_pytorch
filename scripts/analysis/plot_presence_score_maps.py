@@ -159,6 +159,41 @@ def load_rgb(path: Path) -> np.ndarray:
     return np.asarray(Image.open(path).convert("RGB"), dtype=np.uint8)
 
 
+def load_external_shape_mask(path: Path) -> np.ndarray:
+    """Load a 2D silhouette mask image whose bright pixels denote the object body.
+
+    This matches the legacy complex-shape visualizer, which used pre-rendered
+    sheetsander_x_bin.png / sheetsander_z_bin.png images as clean external masks
+    instead of deriving the product silhouette from oracle_obs_cast_z*.png.
+    """
+    image = load_rgb(path)
+    gray = image.astype(np.float32).mean(axis=-1)
+    return gray >= 128.0
+
+
+def resize_mask_to_shape(mask: np.ndarray, shape: tuple[int, int]) -> np.ndarray:
+    if mask.shape == shape:
+        return mask.astype(bool)
+    resampling = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+    pil = Image.fromarray((mask.astype(np.uint8) * 255), mode="L")
+    pil = pil.resize((int(shape[1]), int(shape[0])), resample=resampling)
+    return np.asarray(pil, dtype=np.uint8) >= 128
+
+
+def select_external_shape_mask_for_view(
+    view: ViewSpec,
+    *,
+    side_mask: np.ndarray | None,
+    top_mask: np.ndarray | None,
+) -> np.ndarray | None:
+    label = view.label.lower()
+    if side_mask is not None and ("side" in label or view.projection_axis == "x"):
+        return side_mask
+    if top_mask is not None and ("top" in label or view.projection_axis == "z"):
+        return top_mask
+    return None
+
+
 def infer_side_length_from_image(image: np.ndarray) -> int:
     height, width = image.shape[:2]
     if height != width:
@@ -298,7 +333,7 @@ def discover_cases(method_specs: list[MethodSpec], case_filter: list[str] | None
 
 
 def crop_bounds_from_masks(masks: list[np.ndarray | None], padding: int) -> tuple[int, int, int, int] | None:
-    valid = [m for m in masks if m is not None and np.any(m)]
+    valid = [m for m in masks if m is not None and m.any()]
     if not valid:
         return None
     union = np.zeros_like(valid[0], dtype=bool)
@@ -406,6 +441,8 @@ def main() -> None:
     parser.add_argument("--background_mode", type=str, default="white", choices=["white", "low_score", "light_gray"])
     parser.add_argument("--ground_truth_background_mode", type=str, default="white", choices=["white", "low_score", "light_gray"])
     parser.add_argument("--ground_truth_style", type=str, default="structure", choices=["structure", "target_only"])
+    parser.add_argument("--shape_mask_side_image", type=Path, default=None, help="Optional 2D silhouette mask for the side view. Bright pixels are treated as the object body.")
+    parser.add_argument("--shape_mask_top_image", type=Path, default=None, help="Optional 2D silhouette mask for the top view. Bright pixels are treated as the object body.")
     parser.add_argument("--crop_scope", type=str, default="case_view", choices=["case_view", "panel"])
     parser.add_argument("--no_square_panels", action="store_true")
     parser.add_argument("--panel_frame", action="store_true")
@@ -427,6 +464,8 @@ def main() -> None:
     cases = discover_cases(method_specs, parse_case_filter(args.case_filter))
     view_specs = parse_view_specs(args.view_specs)
     presence_cmap = build_presence_colormap(args.presence_cmap)
+    external_side_mask = load_external_shape_mask(args.shape_mask_side_image) if args.shape_mask_side_image is not None else None
+    external_top_mask = load_external_shape_mask(args.shape_mask_top_image) if args.shape_mask_top_image is not None else None
 
     panel_data: dict[tuple[int, int, int], PanelData] = {}
     for case_idx, case in enumerate(cases):
@@ -444,7 +483,11 @@ def main() -> None:
                 is_gt = False
             for view_idx, view in enumerate(view_specs):
                 score = project_volume(score_volume, view.projection_axis, view.rot90)
-                mask = None if shape_mask is None else project_volume(shape_mask.astype(float), view.projection_axis, view.rot90) > 0
+                external_mask = select_external_shape_mask_for_view(view, side_mask=external_side_mask, top_mask=external_top_mask)
+                if external_mask is not None:
+                    mask = resize_mask_to_shape(external_mask, score.shape)
+                else:
+                    mask = None if shape_mask is None else project_volume(shape_mask.astype(float), view.projection_axis, view.rot90) > 0
                 panel_data[(case_idx, col_idx, view_idx)] = PanelData(score, mask, is_gt)
 
     if not args.no_auto_crop:
