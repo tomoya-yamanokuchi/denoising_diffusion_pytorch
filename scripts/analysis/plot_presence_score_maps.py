@@ -15,10 +15,10 @@ from PIL import Image
 
 DEFAULT_COLOR_RANGES = {
     # --- complex ---
-    "blue"         : ((0, 0, 250), (5, 5, 255)),
-    "red"          : ((250, 0, 0), (255, 5, 5)),
-    "green"        : ((0, 250, 0), (5, 255, 5)),
-    "yellow"       : ((250, 250, 0), (255, 255, 5)),
+    "complex_blue"  : ((0, 0, 250), (5, 5, 255)),
+    "complex_red"   : ((250, 0, 0), (255, 5, 5)),
+    "complex_green" : ((0, 250, 0), (5, 255, 5)),
+    "complex_yellow": ((250, 250, 0), (255, 255, 5)),
     # --- simple ---
     "simple_blue"  : ((0, 140, 140), (115, 255, 255)),
     "simple_red"   : ((179, 26, 26), (255, 102, 102)),
@@ -434,7 +434,7 @@ def main() -> None:
     parser.add_argument("--case_filter", type=str, default=None)
     parser.add_argument("--episode", type=int, default=0, help="Fallback episode index used when a manifest row has no episode column/value.")
     parser.add_argument("--step", type=int, default=-1, help="Fallback step index used when a manifest row has no step column/value. Negative means the last available step.")
-    parser.add_argument("--target_color", type=str, default="blue", choices=sorted(DEFAULT_COLOR_RANGES))
+    parser.add_argument("--target_color", type=str, default="complex_blue", choices=sorted(DEFAULT_COLOR_RANGES))
     parser.add_argument("--side_length", type=int, default=None)
     parser.add_argument("--view_specs", type=str, default=None)
     parser.add_argument("--presence_cmap", type=str, default="jet_bright")
