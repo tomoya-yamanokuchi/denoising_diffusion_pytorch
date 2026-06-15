@@ -214,8 +214,8 @@ if __name__ == "__main__":
     main()
 
 '''
-COST_LOG = /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle"
-OUT_DIR  = analysis/debug_axis_alignment/Object_A_ep0_step0
+COST_LOG="/home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D128_T1000_S20_real_sheetsander_z49_20260504_202728/complex_paper_T8_N6_eta0p5_D0_r0_w0p2_M32_S20_E100000_proposed_complex_DEF/epsilon_greedy_00/Object_D/episode_1/6_cost_map_logs.pickle"
+OUT_DIR="analysis/debug_axis_alignment/Object_D_ep1_step6"
 
 
 # simpel: A
