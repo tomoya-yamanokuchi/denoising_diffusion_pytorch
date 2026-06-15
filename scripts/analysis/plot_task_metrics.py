@@ -50,6 +50,15 @@ METRIC_BOUNDS = {
     },
 }
 
+# Fixed y-axis ranges extracted from the previous 3 x 3 sensitivity summary figure.
+# Use the same range for each task-performance metric regardless of the chosen x-axis
+# so that guidance_scale, sample_image_num, and sampling_timesteps plots remain comparable.
+FIXED_METRIC_YLIMS = {
+    "cutting_error_volume": (-2.5, 14.5),
+    "part_remaining_rate" : (45.0, 100.5),
+    "part_occupancy_rate" : (15.0, 100.5),
+}
+
 PERCENT_METRICS = {
     "part_remaining_rate",
     "part_occupancy_rate",
@@ -87,6 +96,10 @@ def get_metric_bounds(metric_name: str) -> tuple[float | None, float | None]:
     return bounds.get("lower"), bounds.get("upper")
 
 
+def get_fixed_metric_ylim(metric_name: str) -> tuple[float, float] | None:
+    return FIXED_METRIC_YLIMS.get(metric_name)
+
+
 def is_percent_metric(metric_name: str) -> bool:
     return metric_name in PERCENT_METRICS
 
@@ -109,6 +122,7 @@ def plot_metric(
     out_path: Path,
     x_axis: str,
     group_by: str | None,
+    ylim_mode: str,
 ) -> None:
     mean_col = f"{metric_name}_mean"
     std_col = f"{metric_name}_std"
@@ -179,18 +193,19 @@ def plot_metric(
                 linewidth=0,
             )
 
-        set_reasonable_ylim(
-            ax=ax,
-            summary_df=summary_df,
-            metric_name=metric_name,
-            mean_col=mean_col,
-            error_col=std_col,
-        )
-
         print(
             f"group_value = {group_value} | "
             f"x = {x} | y = {y} | error_band = {error_band}"
         )
+
+    set_metric_ylim(
+        ax=ax,
+        summary_df=summary_df,
+        metric_name=metric_name,
+        mean_col=mean_col,
+        error_col=std_col,
+        ylim_mode=ylim_mode,
+    )
 
     ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=12.5)
     ax.set_ylabel(ylabel, fontsize=12.5)
@@ -278,6 +293,53 @@ def build_error_band_for_plot(
         upper_band = np.minimum(upper_band, upper_bound)
 
     return lower_band, upper_band
+
+
+def set_metric_ylim(
+    ax,
+    summary_df: pd.DataFrame,
+    metric_name: str,
+    mean_col: str,
+    error_col: str,
+    ylim_mode: str,
+) -> None:
+    if ylim_mode == "fixed":
+        fixed_ylim = get_fixed_metric_ylim(metric_name)
+        if fixed_ylim is not None:
+            set_fixed_ylim(ax=ax, metric_name=metric_name, ylim=fixed_ylim)
+            return
+
+    set_reasonable_ylim(
+        ax=ax,
+        summary_df=summary_df,
+        metric_name=metric_name,
+        mean_col=mean_col,
+        error_col=error_col,
+    )
+
+
+def set_fixed_ylim(
+    ax,
+    metric_name: str,
+    ylim: tuple[float, float],
+) -> None:
+    lower, upper = ylim
+    ax.set_ylim(lower, upper)
+
+    # Percentage metrics may use a small drawing margin above 100.0 so markers and
+    # uncertainty bands at 100% are not clipped, but tick labels should stay <= 100%.
+    if not is_percent_metric(metric_name):
+        return
+
+    ticks = [
+        tick for tick in ax.get_yticks()
+        if lower <= tick <= min(upper, 100.0)
+    ]
+
+    if lower <= 100.0 <= upper and not any(np.isclose(tick, 100.0) for tick in ticks):
+        ticks.append(100.0)
+
+    ax.set_yticks(sorted(ticks))
 
 
 def set_reasonable_ylim(
@@ -385,6 +447,17 @@ def main() -> None:
             "Use eta for eta-delta sweep. Omit for one-parameter sensitivity."
         ),
     )
+    parser.add_argument(
+        "--ylim_mode",
+        type=str,
+        default="fixed",
+        choices=["fixed", "auto"],
+        help=(
+            "How to set y-axis limits. "
+            "fixed uses metric-wise limits shared across sensitivity x-axes; "
+            "auto restores per-summary CSV automatic scaling."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -412,6 +485,7 @@ def main() -> None:
             out_path=out_path,
             x_axis=args.x_axis,
             group_by=args.group_by,
+            ylim_mode=args.ylim_mode,
         )
 
         print(f"[OK] Saved figure: {out_path}")
