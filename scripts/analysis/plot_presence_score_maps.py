@@ -187,10 +187,19 @@ def select_external_shape_mask_for_view(
     top_mask: np.ndarray | None,
 ) -> np.ndarray | None:
     label = view.label.lower()
-    if side_mask is not None and ("side" in label or view.projection_axis == "x"):
-        return side_mask
-    if top_mask is not None and ("top" in label or view.projection_axis == "z"):
+
+    # Label has priority.
+    if "top" in label and top_mask is not None:
         return top_mask
+    if "side" in label and side_mask is not None:
+        return side_mask
+
+    # Fallback for custom labels.
+    if view.projection_axis == "z" and top_mask is not None:
+        return top_mask
+    if view.projection_axis == "x" and side_mask is not None:
+        return side_mask
+
     return None
 
 
