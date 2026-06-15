@@ -5,27 +5,8 @@ import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-
-
-# METRIC_SPECS = [
-#     {
-#         "name"     : "cutting_error_volume",
-#         "label"    : "Cutting Error Volume [voxels]",
-#         "direction": "lower is better",
-#     },
-#     {
-#         "name"     : "part_remaining_rate",
-#         "label"    : "Part Remaining Rate [%]",
-#         "direction": "higher is better",
-#     },
-#     {
-#         "name"     : "part_occupancy_rate",
-#         "label"    : "Part Occupancy Rate [%]",
-#         "direction": "higher is better",
-#     },
-# ]
+import pandas as pd
 
 
 METRIC_SPECS = [
@@ -69,27 +50,10 @@ METRIC_BOUNDS = {
     },
 }
 
-
-def get_metric_bounds(metric_name: str) -> tuple[float | None, float | None]:
-    bounds = METRIC_BOUNDS.get(metric_name, {})
-    return bounds.get("lower"), bounds.get("upper")
-
-
-def is_percent_metric(metric_name: str) -> bool:
-    return metric_name in {
-        "part_remaining_rate",
-        "part_occupancy_rate",
-    }
-
 PERCENT_METRICS = {
     "part_remaining_rate",
     "part_occupancy_rate",
 }
-
-
-def is_percent_metric(metric_name: str) -> bool:
-    return metric_name in PERCENT_METRICS
-
 
 AXIS_STYLE_SPECS = {
     "delta": {
@@ -113,6 +77,18 @@ AXIS_STYLE_SPECS = {
         "marker": "o",
     },
 }
+
+STD_BAND_ALPHA = 0.18
+LINE_WIDTH = 1.6
+
+
+def get_metric_bounds(metric_name: str) -> tuple[float | None, float | None]:
+    bounds = METRIC_BOUNDS.get(metric_name, {})
+    return bounds.get("lower"), bounds.get("upper")
+
+
+def is_percent_metric(metric_name: str) -> bool:
+    return metric_name in PERCENT_METRICS
 
 
 def get_axis_style(x_axis: str) -> dict[str, str]:
@@ -146,7 +122,9 @@ def plot_metric(
     if group_by is not None and group_by not in summary_df.columns:
         raise KeyError(f"Missing group_by column: {group_by}")
 
-    # fig, ax = plt.subplots(figsize=(5.0, 4.0))
+    # Kept for API compatibility with older call sites.
+    _ = title_suffix
+
     fig, ax = plt.subplots(figsize=(3.7, 2.7))
 
     axis_style = get_axis_style(x_axis)
@@ -158,14 +136,11 @@ def plot_metric(
 
     print(f"\nPlotting metric '{metric_name}' vs '{x_axis}'")
     for group_value, group in plot_groups:
-
         group = group.sort_values(x_axis)
 
         x = group[x_axis].to_numpy()
-        y = group[mean_col].to_numpy()
-
-        # yerr = group[std_col].to_numpy() if std_col in group.columns else None
-        yerr = build_yerr_for_plot(
+        y = group[mean_col].to_numpy(dtype=float)
+        error_band = build_error_band_for_plot(
             group=group,
             metric_name=metric_name,
             error_col=std_col,
@@ -174,26 +149,35 @@ def plot_metric(
 
         label = None
         if group_by is not None:
-            label = f"{AXIS_LABELS.get(group_by, group_by)} = {group_value:g}"
+            label = format_group_label(group_by=group_by, group_value=group_value)
 
-        errorbar_kwargs = {
-            "yerr": yerr,
+        line_kwargs = {
             "marker": axis_style["marker"],
-            "capsize": 4,
+            "linewidth": LINE_WIDTH,
             "label": label,
         }
 
         # For one-parameter sensitivity plots, use x-axis-specific color.
         # For grouped plots, keep Matplotlib's color cycle so each group remains distinguishable.
         if group_by is None:
-            errorbar_kwargs["color"] = axis_style["color"]
-            errorbar_kwargs["ecolor"] = axis_style["color"]
+            line_kwargs["color"] = axis_style["color"]
 
-        ax.errorbar(
+        (line,) = ax.plot(
             x,
             y,
-            **errorbar_kwargs,
+            **line_kwargs,
         )
+
+        if error_band is not None:
+            lower_band, upper_band = error_band
+            ax.fill_between(
+                x,
+                lower_band,
+                upper_band,
+                color=line.get_color(),
+                alpha=STD_BAND_ALPHA,
+                linewidth=0,
+            )
 
         set_reasonable_ylim(
             ax=ax,
@@ -203,13 +187,10 @@ def plot_metric(
             error_col=std_col,
         )
 
-
-        print(f"group_value = {group_value} | x = {x} | y = {y} | yerr = {yerr}")
-        # import ipdb; ipdb.set_trace()
-
-    # ax.set_xscale("log")
-    # ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=14)
-    # ax.set_ylabel(ylabel, fontsize=14)
+        print(
+            f"group_value = {group_value} | "
+            f"x = {x} | y = {y} | error_band = {error_band}"
+        )
 
     ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=12.5)
     ax.set_ylabel(ylabel, fontsize=12.5)
@@ -243,10 +224,23 @@ def plot_metric(
     plt.close(fig)
 
 
+def format_group_label(group_by: str, group_value: object) -> str:
+    group_label = AXIS_LABELS.get(group_by, group_by)
+
+    if isinstance(group_value, (int, float, np.integer, np.floating)):
+        if pd.isna(group_value):
+            value_label = "nan"
+        else:
+            value_label = f"{group_value:g}"
+    else:
+        value_label = str(group_value)
+
+    return f"{group_label} = {value_label}"
+
+
 def get_padded_xlim(
     x_tick_values: list[float],
     margin_ratio: float = 0.03,
-    # min_margin: float = 0.5,
     min_margin: float = 0.1,
 ) -> tuple[float, float]:
     x_min = min(x_tick_values)
@@ -261,24 +255,29 @@ def get_padded_xlim(
     return x_min - margin, x_max + margin
 
 
-def build_yerr_for_plot(
+def build_error_band_for_plot(
     group: pd.DataFrame,
     metric_name: str,
     error_col: str,
     y: np.ndarray,
-) -> np.ndarray | None:
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return lower/upper values for a semi-transparent ±std band."""
     if error_col not in group.columns:
         return None
 
     err = group[error_col].to_numpy(dtype=float)
+    err = np.maximum(err, 0.0)
 
-    if not is_percent_metric(metric_name):
-        return err
+    lower_band = y - err
+    upper_band = y + err
 
-    lower_err = np.minimum(err, np.maximum(y - 0.0, 0.0))
-    upper_err = np.minimum(err, np.maximum(100.0 - y, 0.0))
+    lower_bound, upper_bound = get_metric_bounds(metric_name)
+    if lower_bound is not None:
+        lower_band = np.maximum(lower_band, lower_bound)
+    if upper_bound is not None:
+        upper_band = np.minimum(upper_band, upper_bound)
 
-    return np.vstack([lower_err, upper_err])
+    return lower_band, upper_band
 
 
 def set_reasonable_ylim(
@@ -292,16 +291,23 @@ def set_reasonable_ylim(
 
     if error_col in summary_df.columns:
         err = summary_df[error_col].to_numpy(dtype=float)
+        err = np.maximum(err, 0.0)
     else:
         err = np.zeros_like(y)
 
+    lower_bound, upper_bound = get_metric_bounds(metric_name)
+    lower_values = y - err
+    upper_values = y + err
+
+    if lower_bound is not None:
+        lower_values = np.maximum(lower_values, lower_bound)
+    if upper_bound is not None:
+        upper_values = np.minimum(upper_values, upper_bound)
+
+    y_min = float(np.nanmin(lower_values))
+    y_max = float(np.nanmax(upper_values))
+
     if is_percent_metric(metric_name):
-        lower_values = np.maximum(y - err, 0.0)
-        upper_values = np.minimum(y + err, 100.0)
-
-        y_min = float(np.nanmin(lower_values))
-        y_max = float(np.nanmax(upper_values))
-
         y_range = max(y_max - y_min, 1.0)
         margin = max(y_range * 0.08, 1.0)
 
@@ -325,20 +331,20 @@ def set_reasonable_ylim(
         ax.set_yticks(sorted(ticks))
         return
 
-    # Non-percentage metrics: normal padding.
-    lower_values = y - err
-    upper_values = y + err
-
-    y_min = float(np.nanmin(lower_values))
-    y_max = float(np.nanmax(upper_values))
-
     if np.isclose(y_min, y_max):
         margin = max(abs(y_min) * 0.08, 1.0)
     else:
         margin = max((y_max - y_min) * 0.08, 1.0)
 
-    ax.set_ylim(y_min - margin, y_max + margin)
+    axis_lower = y_min - margin
+    axis_upper = y_max + margin
 
+    if lower_bound is not None:
+        axis_lower = max(lower_bound, axis_lower)
+    if upper_bound is not None:
+        axis_upper = min(upper_bound, axis_upper)
+
+    ax.set_ylim(axis_lower, axis_upper)
 
 
 def main() -> None:
@@ -380,13 +386,11 @@ def main() -> None:
         ),
     )
 
-
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     summary_df = pd.read_csv(args.summary_csv)
-
 
     required_cols = {args.x_axis}
     if args.group_by is not None:
@@ -396,10 +400,8 @@ def main() -> None:
     if missing:
         raise ValueError(f"summary_csv is missing columns: {missing}")
 
-
     for spec in METRIC_SPECS:
         metric_name = spec["name"]
-        # out_path = args.out_dir / f"{metric_name}_vs_execution_error.{args.format}"
         out_path = args.out_dir / f"{metric_name}_vs_{args.x_axis}.{args.format}"
 
         plot_metric(
