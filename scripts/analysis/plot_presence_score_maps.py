@@ -418,8 +418,19 @@ def render_score_panel(ax, score: np.ndarray, shape_mask: np.ndarray | None, *, 
             spine.set_edgecolor("0.5")
 
 
+def apply_subplot_spacing(fig, args) -> None:
+    kwargs = {}
+    if args.subplot_wspace is not None:
+        kwargs["wspace"] = args.subplot_wspace
+    if args.subplot_hspace is not None:
+        kwargs["hspace"] = args.subplot_hspace
+    if kwargs:
+        fig.subplots_adjust(**kwargs)
+
+
 def add_outside_colorbar(fig, axes, presence_cmap, args) -> None:
     fig.tight_layout(rect=[0.0, 0.0, args.colorbar_layout_right, 1.0])
+    apply_subplot_spacing(fig, args)
     positions = [ax.get_position() for ax in axes.ravel()]
     right_edge = max(pos.x1 for pos in positions)
     bottom_edge = min(pos.y0 for pos in positions)
@@ -460,6 +471,8 @@ def main() -> None:
     parser.add_argument("--dpi", type=int, default=300)
     parser.add_argument("--title_fontsize", type=int, default=11)
     parser.add_argument("--label_fontsize", type=int, default=10)
+    parser.add_argument("--subplot_wspace", type=float, default=None, help="Optional horizontal spacing between method columns passed to fig.subplots_adjust(wspace=...).")
+    parser.add_argument("--subplot_hspace", type=float, default=None, help="Optional vertical spacing between view/case rows passed to fig.subplots_adjust(hspace=...).")
     parser.add_argument("--add_colorbar", action="store_true", help="Show a colorbar. Kept for backward compatibility.")
     parser.add_argument("--show_colorbar", action="store_true", help="Show a colorbar outside the panel grid.")
     parser.add_argument("--colorbar_layout_right", type=float, default=0.86)
@@ -536,6 +549,7 @@ def main() -> None:
         add_outside_colorbar(fig, axes, presence_cmap, args)
     else:
         fig.tight_layout()
+        apply_subplot_spacing(fig, args)
     args.out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out_path, dpi=args.dpi, bbox_inches="tight", pad_inches=0.03)
     plt.close(fig)
