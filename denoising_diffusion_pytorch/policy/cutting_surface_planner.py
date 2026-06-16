@@ -134,10 +134,13 @@ class cutting_surface_planner():
         self.update_visibility_constraints(selected_candidates)
 
         # ---- decision-reliability metric logs ----
-        # This only evaluates and saves diagnostic metrics. It does not feed back
-        # into costs_decision, action candidate selection, or visibility updates.
+        # These metrics are diagnostic only. They do not feed back into
+        # costs_decision, action candidate selection, or visibility updates.
         cost_map_logs["brier_score"] = self._compute_target_surface_brier_score_logs(
             cost_ensembles=cost_ensembles,
+        )
+        cost_map_logs["false_safe_rate"] = self._compute_false_safe_rate_logs(
+            costs_decision=costs_decision,
         )
 
         # ---- log ----
@@ -245,6 +248,86 @@ class cutting_surface_planner():
         }
 
 
+    def _compute_false_safe_rate_logs(self, costs_decision) -> dict:
+        """
+        Evaluate the false-safe rate for planning diagnostics.
+
+        A false-safe surface is a cutting surface that the current UCB-threshold
+        decision regards as safe/feasible, while the oracle target part actually
+        intersects that surface. Therefore,
+
+            false_safe_rate = (# feasible surfaces with GT target presence)
+                              / (# feasible surfaces)
+
+        This reads the already-computed costs_decision and oracle labels only;
+        it does not modify the planner's UCB decision score or selected action.
+        """
+        if self.oracle_image_z is None:
+            return {
+                "metric": "false_safe_rate",
+                "target": "blue",
+                "available": False,
+                "reason": "oracle_image_z is None",
+            }
+
+        gt_presence = self._oracle_target_binary_presence(target="blue")
+        feasible_mask = AxisCost(
+            x_axis=(np.asarray(costs_decision.blue.x_axis) <= 0).astype(bool).reshape(-1),
+            y_axis=(np.asarray(costs_decision.blue.y_axis) <= 0).astype(bool).reshape(-1),
+            z_axis=(np.asarray(costs_decision.blue.z_axis) <= 0).astype(bool).reshape(-1),
+        )
+        gt_mask = AxisCost(
+            x_axis=(np.asarray(gt_presence.x_axis) > 0).astype(bool).reshape(-1),
+            y_axis=(np.asarray(gt_presence.y_axis) > 0).astype(bool).reshape(-1),
+            z_axis=(np.asarray(gt_presence.z_axis) > 0).astype(bool).reshape(-1),
+        )
+
+        axis_stats = {}
+        false_safe_mask = {}
+        for axis in ("x", "y", "z"):
+            feasible = getattr(feasible_mask, f"{axis}_axis")
+            gt = getattr(gt_mask, f"{axis}_axis")
+            if feasible.shape != gt.shape:
+                raise ValueError(
+                    "False-safe rate shape mismatch: "
+                    f"axis={axis}, feasible.shape={feasible.shape}, gt.shape={gt.shape}"
+                )
+            false_safe = np.logical_and(feasible, gt)
+            feasible_count = int(feasible.sum())
+            false_safe_count = int(false_safe.sum())
+            axis_stats[axis] = {
+                "rate": self._safe_divide(false_safe_count, feasible_count),
+                "false_safe_count": false_safe_count,
+                "feasible_count": feasible_count,
+            }
+            false_safe_mask[axis] = false_safe
+
+        total_false_safe_count = int(sum(axis_stats[axis]["false_safe_count"] for axis in axis_stats))
+        total_feasible_count = int(sum(axis_stats[axis]["feasible_count"] for axis in axis_stats))
+
+        return {
+            "metric": "false_safe_rate",
+            "target": "blue",
+            "available": True,
+            "overall": self._safe_divide(total_false_safe_count, total_feasible_count),
+            "false_safe_count": total_false_safe_count,
+            "feasible_count": total_feasible_count,
+            "per_axis": {axis: axis_stats[axis]["rate"] for axis in axis_stats},
+            "per_axis_counts": axis_stats,
+            "feasible_mask": {
+                "x": feasible_mask.x_axis,
+                "y": feasible_mask.y_axis,
+                "z": feasible_mask.z_axis,
+            },
+            "ground_truth_presence": {
+                "x": gt_mask.x_axis,
+                "y": gt_mask.y_axis,
+                "z": gt_mask.z_axis,
+            },
+            "false_safe_mask": false_safe_mask,
+        }
+
+
     def _mean_binary_presence_from_ensemble(self, axis_cost_ensemble) -> AxisCost:
         return AxisCost(
             x_axis=(np.asarray(axis_cost_ensemble.x_axis) > 0).astype(float).mean(axis=0),
@@ -278,6 +361,12 @@ class cutting_surface_planner():
                 f"probability.shape={probability.shape}, target.shape={target.shape}"
             )
         return (probability - target) ** 2
+
+
+    def _safe_divide(self, numerator: int | float, denominator: int | float) -> float:
+        if float(denominator) <= 0.0:
+            return float("nan")
+        return float(numerator) / float(denominator)
 
 
     def update_visibility_constraints(self, candidates: ActionCandidates):
