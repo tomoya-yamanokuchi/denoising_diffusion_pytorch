@@ -142,6 +142,9 @@ class cutting_surface_planner():
         cost_map_logs["false_safe_rate"] = self._compute_false_safe_rate_logs(
             costs_decision=costs_decision,
         )
+        cost_map_logs["risk_recall"] = self._compute_risk_recall_logs(
+            costs_decision=costs_decision,
+        )
 
         # ---- log ----
         cost_map_logs["slice_candidate"] = {
@@ -325,6 +328,86 @@ class cutting_surface_planner():
                 "z": gt_mask.z_axis,
             },
             "false_safe_mask": false_safe_mask,
+        }
+
+
+    def _compute_risk_recall_logs(self, costs_decision) -> dict:
+        """
+        Evaluate risk recall for planning diagnostics.
+
+        Risk recall measures how many truly dangerous cutting surfaces are
+        placed on the risky/unsafe side by the current UCB-threshold decision:
+
+            risk_recall = (# GT target-present surfaces judged unsafe)
+                          / (# GT target-present surfaces)
+
+        This is the safety-oriented complement to false-safe rate. It reads the
+        already-computed costs_decision and oracle labels only, and therefore
+        does not modify the planner's UCB decision score or selected action.
+        """
+        if self.oracle_image_z is None:
+            return {
+                "metric": "risk_recall",
+                "target": "blue",
+                "available": False,
+                "reason": "oracle_image_z is None",
+            }
+
+        gt_presence = self._oracle_target_binary_presence(target="blue")
+        unsafe_mask = AxisCost(
+            x_axis=(np.asarray(costs_decision.blue.x_axis) > 0).astype(bool).reshape(-1),
+            y_axis=(np.asarray(costs_decision.blue.y_axis) > 0).astype(bool).reshape(-1),
+            z_axis=(np.asarray(costs_decision.blue.z_axis) > 0).astype(bool).reshape(-1),
+        )
+        gt_mask = AxisCost(
+            x_axis=(np.asarray(gt_presence.x_axis) > 0).astype(bool).reshape(-1),
+            y_axis=(np.asarray(gt_presence.y_axis) > 0).astype(bool).reshape(-1),
+            z_axis=(np.asarray(gt_presence.z_axis) > 0).astype(bool).reshape(-1),
+        )
+
+        axis_stats = {}
+        recalled_risk_mask = {}
+        for axis in ("x", "y", "z"):
+            unsafe = getattr(unsafe_mask, f"{axis}_axis")
+            gt = getattr(gt_mask, f"{axis}_axis")
+            if unsafe.shape != gt.shape:
+                raise ValueError(
+                    "Risk recall shape mismatch: "
+                    f"axis={axis}, unsafe.shape={unsafe.shape}, gt.shape={gt.shape}"
+                )
+            recalled = np.logical_and(unsafe, gt)
+            risky_count = int(gt.sum())
+            recalled_count = int(recalled.sum())
+            axis_stats[axis] = {
+                "recall": self._safe_divide(recalled_count, risky_count),
+                "recalled_count": recalled_count,
+                "risky_count": risky_count,
+            }
+            recalled_risk_mask[axis] = recalled
+
+        total_recalled_count = int(sum(axis_stats[axis]["recalled_count"] for axis in axis_stats))
+        total_risky_count = int(sum(axis_stats[axis]["risky_count"] for axis in axis_stats))
+
+        return {
+            "metric": "risk_recall",
+            "target": "blue",
+            "available": True,
+            "overall": self._safe_divide(total_recalled_count, total_risky_count),
+            "recalled_count": total_recalled_count,
+            "risky_count": total_risky_count,
+            "per_axis": {axis: axis_stats[axis]["recall"] for axis in axis_stats},
+            "per_axis_counts": axis_stats,
+            "unsafe_mask": {
+                "x": unsafe_mask.x_axis,
+                "y": unsafe_mask.y_axis,
+                "z": unsafe_mask.z_axis,
+            },
+            "ground_truth_presence": {
+                "x": gt_mask.x_axis,
+                "y": gt_mask.y_axis,
+                "z": gt_mask.z_axis,
+            },
+            "recalled_risk_mask": recalled_risk_mask,
         }
 
 
