@@ -7,6 +7,7 @@ from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
 from denoising_diffusion_pytorch.cost.color_mask_cost_estimator import ColorMaskCostEstimator
 from denoising_diffusion_pytorch.cost.segmentation_cost_collector import SegmentationCostCollector
+from denoising_diffusion_pytorch.cost.types import AxisCost
 from denoising_diffusion_pytorch.policy.decision.decision_aggregator import DecisionAggregator
 from denoising_diffusion_pytorch.policy.inference.slice_image_inferencer import SliceImageInferencer
 from denoising_diffusion_pytorch.policy.planning.random_planning_service import (
@@ -132,6 +133,13 @@ class cutting_surface_planner():
         selected_candidates = selection.optimal_selected_slice_range
         self.update_visibility_constraints(selected_candidates)
 
+        # ---- decision-reliability metric logs ----
+        # This only evaluates and saves diagnostic metrics. It does not feed back
+        # into costs_decision, action candidate selection, or visibility updates.
+        cost_map_logs["brier_score"] = self._compute_target_surface_brier_score_logs(
+            cost_ensembles=cost_ensembles,
+        )
+
         # ---- log ----
         cost_map_logs["slice_candidate"] = {
             "candidate_x": None if selection.slice_range_candidates_across_axes.x is None else selection.slice_range_candidates_across_axes.x.to_list(),
@@ -174,6 +182,102 @@ class cutting_surface_planner():
             repeats=self.sample_image_num,
             axis=0,
         )
+
+
+    def _compute_target_surface_brier_score_logs(self, cost_ensembles) -> dict:
+        """
+        Evaluate the target-surface Brier score for planning diagnostics.
+
+        For each axis-wise cutting surface a, the probability p(a) is the
+        fraction of generated samples whose target-color slice cost is non-zero.
+        The ground-truth label y(a) is computed from the current oracle target
+        image and is one when the target part intersects that cutting surface.
+
+        This metric is intentionally separated from the UCB decision score used
+        by the planner: p(a)=mean(binary target presence), while planning still
+        uses costs_decision computed by DecisionAggregator.
+        """
+        if self.oracle_image_z is None:
+            return {
+                "metric": "target_surface_brier_score",
+                "target": "blue",
+                "available": False,
+                "reason": "oracle_image_z is None",
+            }
+
+        pred_presence = self._mean_binary_presence_from_ensemble(cost_ensembles.blue)
+        gt_presence = self._oracle_target_binary_presence(target="blue")
+
+        axis_values = {
+            "x": self._brier_vector(pred_presence.x_axis, gt_presence.x_axis),
+            "y": self._brier_vector(pred_presence.y_axis, gt_presence.y_axis),
+            "z": self._brier_vector(pred_presence.z_axis, gt_presence.z_axis),
+        }
+
+        concatenated = np.concatenate([
+            axis_values["x"],
+            axis_values["y"],
+            axis_values["z"],
+        ])
+
+        return {
+            "metric": "target_surface_brier_score",
+            "target": "blue",
+            "available": True,
+            "overall": float(np.mean(concatenated)),
+            "per_axis": {
+                axis: float(np.mean(values)) for axis, values in axis_values.items()
+            },
+            "num_surfaces": {
+                axis: int(values.size) for axis, values in axis_values.items()
+            },
+            "presence_probability": {
+                "x": pred_presence.x_axis,
+                "y": pred_presence.y_axis,
+                "z": pred_presence.z_axis,
+            },
+            "ground_truth_presence": {
+                "x": gt_presence.x_axis,
+                "y": gt_presence.y_axis,
+                "z": gt_presence.z_axis,
+            },
+            "per_surface_brier": axis_values,
+        }
+
+
+    def _mean_binary_presence_from_ensemble(self, axis_cost_ensemble) -> AxisCost:
+        return AxisCost(
+            x_axis=(np.asarray(axis_cost_ensemble.x_axis) > 0).astype(float).mean(axis=0),
+            y_axis=(np.asarray(axis_cost_ensemble.y_axis) > 0).astype(float).mean(axis=0),
+            z_axis=(np.asarray(axis_cost_ensemble.z_axis) > 0).astype(float).mean(axis=0),
+        )
+
+
+    def _oracle_target_binary_presence(self, target: str = "blue") -> AxisCost:
+        oracle_image = np.asarray(self.oracle_image_z, dtype=float)
+        if oracle_image.size == 0:
+            raise ValueError("oracle_image_z is empty; cannot compute Brier score.")
+        if np.nanmax(oracle_image) > 1.0:
+            oracle_image = oracle_image / 255.0
+
+        oracle_cost = self.color_mask_cost_estimator.estimate_all(image=oracle_image)
+        target_cost = getattr(oracle_cost, target)
+        return AxisCost(
+            x_axis=(np.asarray(target_cost.x_axis) > 0).astype(float).reshape(-1),
+            y_axis=(np.asarray(target_cost.y_axis) > 0).astype(float).reshape(-1),
+            z_axis=(np.asarray(target_cost.z_axis) > 0).astype(float).reshape(-1),
+        )
+
+
+    def _brier_vector(self, probability: np.ndarray, target: np.ndarray) -> np.ndarray:
+        probability = np.asarray(probability, dtype=float).reshape(-1)
+        target = np.asarray(target, dtype=float).reshape(-1)
+        if probability.shape != target.shape:
+            raise ValueError(
+                "Brier score shape mismatch: "
+                f"probability.shape={probability.shape}, target.shape={target.shape}"
+            )
+        return (probability - target) ** 2
 
 
     def update_visibility_constraints(self, candidates: ActionCandidates):
