@@ -249,13 +249,22 @@ def plot_bar(summary: list[dict[str, float | int | str]], path: Path, title: str
     x = np.arange(len(labels))
 
     fig, ax = plt.subplots(figsize=(4.8, 3.4))
-    ax.bar(x, means, yerr=stds, capsize=4)
+    for idx, label in enumerate(labels):
+        ax.bar(
+            x[idx],
+            means[idx],
+            yerr=stds[idx],
+            capsize=4,
+            label=label,
+        )
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=0)
     ax.set_ylabel(ylabel or "Episode-total oracle regret")
     ax.set_ylim(bottom=0.0)
     if title:
         ax.set_title(title)
+    if len(labels) > 1:
+        ax.legend(frameon=False)
     ax.grid(True, axis="y", linewidth=0.5, alpha=0.4)
     fig.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
