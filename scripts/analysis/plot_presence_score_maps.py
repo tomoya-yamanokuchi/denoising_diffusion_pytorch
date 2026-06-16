@@ -599,8 +599,8 @@ python scripts/analysis/plot_presence_score_maps.py \
 '''
 python scripts/analysis/plot_presence_score_maps.py \
  --manifest analysis/revise/presence_frequency_maps/object_DEF/manifest_complex_DEF.csv  \
- --out_path analysis/revise/presence_frequency_maps/object_DEF/complex_presence_frequency_maps_F.pdf \
- --case_filter Object_F \
+ --out_path analysis/revise/presence_frequency_maps/object_DEF/complex_presence_frequency_maps_D.pdf \
+ --case_filter Object_D \
  --target_color complex_blue \
  --side_length 49 \
  --episode 1 \
@@ -613,5 +613,6 @@ python scripts/analysis/plot_presence_score_maps.py \
  --shape_mask_side_image sheetsander_silhouette/sheetsander_side_silhouette.png \
  --shape_mask_top_image sheetsander_silhouette/sheetsander_top_silhouette.png \
  --subplot_wspace 0.01 \
- --subplot_hspace 0.01
+ --subplot_hspace 0.01 \
+ --show_colorbar
 '''

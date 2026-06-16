@@ -45,4 +45,8 @@ allow_existing: false
 # tag: "random_complex_DEF"
 
 # tag: "vaeac_complex_DEF"
-tag: "diffusion_1d_complex_DEF"
+# tag: "diffusion_1d_complex_DEF"
+
+
+# tag: "proposed_A_brier_score"
+tag: "proposed_Nocond_A_brier_score"
