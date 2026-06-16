@@ -1,0 +1,475 @@
+from __future__ import annotations
+
+import argparse
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from denoising_diffusion_pytorch.cost.types import AxisCost, AxisDecisionCost
+from denoising_diffusion_pytorch.policy.decision.decision_rules import (
+    clip_ucb_raw,
+    compute_clip_ucb_scores,
+)
+from plot_presence_score_maps import (
+    DEFAULT_COLOR_RANGES,
+    ViewSpec,
+    apply_crop,
+    build_presence_colormap,
+    crop_bounds_from_masks,
+    load_external_shape_mask,
+    parse_view_specs,
+    project_volume,
+    read_raw_pred_score_map,
+    resize_mask_to_shape,
+    select_external_shape_mask_for_view,
+)
+from plot_safety_margin_decision_maps import (
+    load_pickle,
+    parse_radii,
+    remap_axis_scores_to_presence_coords,
+    select_axis_cost_ensemble,
+    to_risk,
+)
+
+
+@dataclass
+class ViewPanel:
+    view: ViewSpec
+    score: np.ndarray
+    mask: np.ndarray | None
+    coords: dict[str, np.ndarray]
+
+
+def infer_step_from_cost_map_log(path: Path) -> int | None:
+    match = re.match(r"(-?\d+)_cost_map_logs\.pickle$", path.name)
+    return None if match is None else int(match.group(1))
+
+
+def visible_axis_coordinate_maps(
+    *,
+    volume_shape: tuple[int, int, int],
+    projection_axis: str,
+    rot90: int,
+) -> dict[str, np.ndarray]:
+    """Return displayed pixel-to-axis-index maps for a projected 3D volume.
+
+    The returned arrays have the same shape and orientation as the displayed
+    presence map produced by project_volume(...). They are used to align the
+    marginal 1D cutting-risk profiles with the horizontal and vertical axes of
+    the displayed heatmap.
+    """
+    x_len, y_len, z_len = volume_shape
+    if projection_axis == "x":
+        row_axis, col_axis = "y", "z"
+        row_len, col_len = y_len, z_len
+    elif projection_axis == "y":
+        row_axis, col_axis = "x", "z"
+        row_len, col_len = x_len, z_len
+    elif projection_axis == "z":
+        row_axis, col_axis = "x", "y"
+        row_len, col_len = x_len, y_len
+    else:
+        raise ValueError(f"Unknown projection_axis={projection_axis!r}.")
+
+    row_values = np.arange(row_len, dtype=int)[:, None]
+    col_values = np.arange(col_len, dtype=int)[None, :]
+    coords = {
+        row_axis: np.broadcast_to(row_values, (row_len, col_len)).copy(),
+        col_axis: np.broadcast_to(col_values, (row_len, col_len)).copy(),
+    }
+    if rot90:
+        coords = {name: np.rot90(values, rot90) for name, values in coords.items()}
+    return coords
+
+
+def apply_crop_to_coords(
+    coords: dict[str, np.ndarray],
+    bounds: tuple[int, int, int, int] | None,
+) -> dict[str, np.ndarray]:
+    if bounds is None:
+        return coords
+    y0, y1, x0, x1 = bounds
+    return {name: values[y0:y1, x0:x1] for name, values in coords.items()}
+
+
+def axis_values(axis_scores: AxisCost, axis_name: str) -> np.ndarray:
+    if axis_name == "x":
+        return np.asarray(axis_scores.x_axis, dtype=float).reshape(-1)
+    if axis_name == "y":
+        return np.asarray(axis_scores.y_axis, dtype=float).reshape(-1)
+    if axis_name == "z":
+        return np.asarray(axis_scores.z_axis, dtype=float).reshape(-1)
+    raise ValueError(f"Unknown axis_name={axis_name!r}.")
+
+
+def infer_display_axis_profiles(coords: dict[str, np.ndarray]) -> tuple[tuple[str, np.ndarray], tuple[str, np.ndarray]]:
+    """Find the axis/index sequence along heatmap columns and rows.
+
+    Returns:
+      (horizontal_axis_name, horizontal_indices),
+      (vertical_axis_name, vertical_indices)
+    """
+    if not coords:
+        raise ValueError("No coordinate maps were provided.")
+    first = next(iter(coords.values()))
+    height, width = first.shape
+
+    horizontal: tuple[str, np.ndarray] | None = None
+    vertical: tuple[str, np.ndarray] | None = None
+
+    for name, values in coords.items():
+        if values.shape != (height, width):
+            raise ValueError("All coordinate maps must have the same shape.")
+        if width > 1 and np.all(values == values[:1, :]) and np.unique(values[0, :]).size > 1:
+            horizontal = (name, values[0, :].astype(int))
+        if height > 1 and np.all(values == values[:, :1]) and np.unique(values[:, 0]).size > 1:
+            vertical = (name, values[:, 0].astype(int))
+
+    if horizontal is None or vertical is None:
+        raise ValueError(
+            "Could not infer horizontal/vertical display axes from the coordinate maps. "
+            "This can happen if the view was cropped to a single pixel along one axis."
+        )
+    return horizontal, vertical
+
+
+def make_presence_rgb(score: np.ndarray, mask: np.ndarray | None, *, presence_cmap, background_mode: str) -> np.ndarray:
+    shape_mask = np.ones_like(score, dtype=bool) if mask is None else mask.astype(bool)
+    colored = presence_cmap(np.clip(score, 0.0, 1.0))[..., :3]
+    if background_mode == "low_score":
+        rgb = np.broadcast_to(np.asarray(presence_cmap(0.0)[:3], dtype=float), (*score.shape, 3)).copy()
+    elif background_mode == "light_gray":
+        rgb = np.ones((*score.shape, 3), dtype=float)
+        rgb[~shape_mask] = np.asarray([0.92, 0.92, 0.92])
+    elif background_mode == "white":
+        rgb = np.ones((*score.shape, 3), dtype=float)
+    else:
+        raise ValueError(f"Unknown background_mode={background_mode!r}")
+    rgb[shape_mask] = colored[shape_mask]
+    return rgb
+
+
+def prepare_view_panels(
+    *,
+    score_volume: np.ndarray,
+    view_specs: list[ViewSpec],
+    shape_mask_side: np.ndarray | None,
+    shape_mask_top: np.ndarray | None,
+    auto_crop: bool,
+    crop_padding: int,
+    crop_score_threshold: float,
+) -> list[ViewPanel]:
+    panels: list[ViewPanel] = []
+    volume_shape = tuple(int(v) for v in score_volume.shape[:3])
+    if len(volume_shape) != 3:
+        raise ValueError(f"score_volume must be 3D. Got shape={score_volume.shape}.")
+
+    for view in view_specs:
+        score = project_volume(score_volume, view.projection_axis, view.rot90)
+        coords = visible_axis_coordinate_maps(
+            volume_shape=volume_shape,
+            projection_axis=view.projection_axis,
+            rot90=view.rot90,
+        )
+        external_mask = select_external_shape_mask_for_view(
+            view,
+            side_mask=shape_mask_side,
+            top_mask=shape_mask_top,
+        )
+        mask = resize_mask_to_shape(external_mask, score.shape) if external_mask is not None else None
+
+        bounds = None
+        if auto_crop:
+            crop_mask = mask if mask is not None else (score > crop_score_threshold)
+            bounds = crop_bounds_from_masks([crop_mask], crop_padding)
+            score, mask = apply_crop(score, mask, bounds)
+            coords = apply_crop_to_coords(coords, bounds)
+
+        panels.append(ViewPanel(view=view, score=score, mask=mask, coords=coords))
+    return panels
+
+
+def compute_risk_by_radius(
+    *,
+    cost_ensemble,
+    radii: list[int],
+    score_mode: str,
+    ucb_lb: float,
+) -> dict[int, AxisCost]:
+    risks: dict[int, AxisCost] = {}
+    for radius in radii:
+        scores = compute_clip_ucb_scores(
+            cost_ensemble=cost_ensemble,
+            safety_margin_voxels=radius,
+            ucb_beta=1.0,
+        )
+        decision: AxisDecisionCost | None = None
+        if score_mode == "decision":
+            decision = clip_ucb_raw(
+                cost_ensemble=cost_ensemble,
+                ucb_lb=ucb_lb,
+                safety_margin_voxels=radius,
+            )
+        risks[radius] = remap_axis_scores_to_presence_coords(
+            to_risk(scores, mode=score_mode, decision=decision),
+        )
+    return risks
+
+
+def clipped_profile(values: np.ndarray, *, clip: bool) -> np.ndarray:
+    values = np.asarray(values, dtype=float).reshape(-1)
+    return np.clip(values, 0.0, 1.0) if clip else values
+
+
+def plot_joint_profiles(
+    *,
+    panels: list[ViewPanel],
+    risks: dict[int, AxisCost],
+    radii: list[int],
+    out_path: Path,
+    presence_cmap,
+    background_mode: str,
+    risk_ylim: tuple[float, float],
+    clip_risk_for_display: bool,
+    risk_line_cmap: str,
+    show_legend: bool,
+    show_presence_colorbar: bool,
+    dpi: int,
+    title_fontsize: int,
+    label_fontsize: int,
+    profile_height_ratio: float,
+    profile_width_ratio: float,
+    view_hspace: float,
+    panel_wspace: float,
+) -> None:
+    n_views = len(panels)
+    if n_views == 0:
+        raise ValueError("No view panels to plot.")
+
+    fig_width = 5.2
+    fig_height = max(2.4 * n_views, 3.0)
+    fig = plt.figure(figsize=(fig_width, fig_height))
+    height_ratios: list[float] = []
+    for _ in panels:
+        height_ratios.extend([profile_height_ratio, 1.0])
+    grid = fig.add_gridspec(
+        nrows=2 * n_views,
+        ncols=2,
+        width_ratios=[1.0, profile_width_ratio],
+        height_ratios=height_ratios,
+        hspace=view_hspace,
+        wspace=panel_wspace,
+    )
+
+    line_cmap = plt.get_cmap(risk_line_cmap)
+    line_positions = np.linspace(0.15, 0.85, max(len(radii), 1))
+    line_colors = [line_cmap(pos) for pos in line_positions]
+
+    first_top_ax = None
+    first_main_ax = None
+    for view_idx, panel in enumerate(panels):
+        ax_top = fig.add_subplot(grid[2 * view_idx, 0])
+        ax_corner = fig.add_subplot(grid[2 * view_idx, 1])
+        ax_main = fig.add_subplot(grid[2 * view_idx + 1, 0])
+        ax_right = fig.add_subplot(grid[2 * view_idx + 1, 1])
+        ax_corner.axis("off")
+        if first_top_ax is None:
+            first_top_ax = ax_top
+        if first_main_ax is None:
+            first_main_ax = ax_main
+
+        height, width = panel.score.shape
+        rgb = make_presence_rgb(panel.score, panel.mask, presence_cmap=presence_cmap, background_mode=background_mode)
+        ax_main.imshow(rgb, interpolation="nearest", origin="upper")
+        ax_main.set_xlim(-0.5, width - 0.5)
+        ax_main.set_ylim(height - 0.5, -0.5)
+        ax_main.set_xticks([])
+        ax_main.set_yticks([])
+        ax_main.set_ylabel(panel.view.label, fontsize=label_fontsize, rotation=90, labelpad=8)
+        for spine in ax_main.spines.values():
+            spine.set_visible(False)
+
+        (h_axis_name, h_indices), (v_axis_name, v_indices) = infer_display_axis_profiles(panel.coords)
+        x_pixels = np.arange(width)
+        y_pixels = np.arange(height)
+
+        for color, radius in zip(line_colors, radii):
+            risk = risks[radius]
+            h_profile = clipped_profile(axis_values(risk, h_axis_name)[h_indices], clip=clip_risk_for_display)
+            v_profile = clipped_profile(axis_values(risk, v_axis_name)[v_indices], clip=clip_risk_for_display)
+            label = f"r={radius}"
+            ax_top.plot(x_pixels, h_profile, linewidth=1.4, color=color, label=label)
+            ax_right.plot(v_profile, y_pixels, linewidth=1.4, color=color, label=label)
+
+        ax_top.set_xlim(-0.5, width - 0.5)
+        ax_top.set_ylim(*risk_ylim)
+        ax_top.set_xticks([])
+        ax_top.tick_params(axis="y", labelsize=max(label_fontsize - 2, 6))
+        ax_top.set_ylabel(f"{h_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
+        if view_idx == 0:
+            ax_top.set_title("Marginal axis-wise cutting-risk profiles", fontsize=title_fontsize, pad=4)
+        for spine in ["top", "right"]:
+            ax_top.spines[spine].set_visible(False)
+
+        ax_right.set_xlim(*risk_ylim)
+        ax_right.set_ylim(height - 0.5, -0.5)
+        ax_right.set_yticks([])
+        ax_right.tick_params(axis="x", labelsize=max(label_fontsize - 2, 6), rotation=45)
+        ax_right.set_xlabel(f"{v_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
+        for spine in ["top", "right"]:
+            ax_right.spines[spine].set_visible(False)
+
+    if show_legend and first_top_ax is not None:
+        first_top_ax.legend(loc="upper right", fontsize=max(label_fontsize - 2, 6), frameon=False, ncol=len(radii))
+
+    if show_presence_colorbar and first_main_ax is not None:
+        sm = plt.cm.ScalarMappable(cmap=presence_cmap, norm=plt.Normalize(0, 1))
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=[fig.axes[i] for i in range(len(fig.axes)) if fig.axes[i].has_data()], fraction=0.025, pad=0.03)
+        cbar.set_label("Presence score", fontsize=label_fontsize)
+        cbar.ax.tick_params(labelsize=max(label_fontsize - 1, 6))
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=dpi, bbox_inches="tight", pad_inches=0.03)
+    plt.close(fig)
+
+
+def parse_ylim(text: str) -> tuple[float, float]:
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    if len(parts) != 2:
+        raise ValueError("--risk_ylim must be given as 'low,high', e.g. 0,1")
+    low, high = float(parts[0]), float(parts[1])
+    if high <= low:
+        raise ValueError(f"Invalid --risk_ylim={text!r}: high must be greater than low.")
+    return low, high
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Plot a voxel-wise presence heatmap with marginal axis-wise cutting-risk "
+            "profiles computed from clip_ucb_raw pre-threshold scores."
+        )
+    )
+    parser.add_argument("--cost_map_log", type=Path, required=True, help="Path to *_cost_map_logs.pickle. Used to infer episode directory and step.")
+    parser.add_argument("--out_path", type=Path, required=True)
+    parser.add_argument("--raw_pred_episode_dir", type=Path, default=None, help="Optional episode directory containing raw_pred_image. Defaults to cost_map_log.parent.")
+    parser.add_argument("--step", type=int, default=None, help="Optional raw prediction step. Defaults to the prefix of *_cost_map_logs.pickle.")
+    parser.add_argument("--target_color", type=str, default="simple_blue", choices=sorted(DEFAULT_COLOR_RANGES), help="Target color used to compute the voxel-wise presence heatmap from raw_pred_image samples.")
+    parser.add_argument("--target", type=str, default="blue", choices=["blue", "red", "yellow"], help="Target color key in cost_ensembles used for axis-wise cutting-risk profiles.")
+    parser.add_argument("--side_length", type=int, default=None)
+    parser.add_argument("--radii", type=str, default="0,1,2", help="Comma-separated safety margin radii, e.g. 0,1,2.")
+    parser.add_argument("--score_mode", type=str, default="ucb", choices=["ucb", "decision"], help="Plot continuous UCB scores or thresholded binary decision risks in the marginal profiles.")
+    parser.add_argument("--ucb_lb", type=float, default=0.5, help="Decision threshold used when --score_mode decision.")
+    parser.add_argument("--view_specs", type=str, default=None, help="View specs passed to the central presence heatmap, e.g. 'Top view:x:-1,Side view:z:2'.")
+    parser.add_argument("--presence_cmap", type=str, default="jet_bright")
+    parser.add_argument("--background_mode", type=str, default="low_score", choices=["white", "low_score", "light_gray"])
+    parser.add_argument("--shape_mask_side_image", type=Path, default=None, help="Optional 2D silhouette mask for side-view display/cropping.")
+    parser.add_argument("--shape_mask_top_image", type=Path, default=None, help="Optional 2D silhouette mask for top-view display/cropping.")
+    parser.add_argument("--auto_crop", action="store_true", help="Crop each view to the external silhouette mask or nonzero presence region before plotting.")
+    parser.add_argument("--crop_padding", type=int, default=2)
+    parser.add_argument("--crop_score_threshold", type=float, default=1e-6)
+    parser.add_argument("--risk_ylim", type=str, default="0,1", help="Y/x range for marginal risk profiles as 'low,high'.")
+    parser.add_argument("--no_clip_risk_for_display", action="store_true", help="Do not clip UCB risk profiles to [0, 1] before plotting.")
+    parser.add_argument("--risk_line_cmap", type=str, default="magma")
+    parser.add_argument("--show_legend", action="store_true")
+    parser.add_argument("--show_presence_colorbar", action="store_true")
+    parser.add_argument("--dpi", type=int, default=300)
+    parser.add_argument("--title_fontsize", type=int, default=10)
+    parser.add_argument("--label_fontsize", type=int, default=9)
+    parser.add_argument("--profile_height_ratio", type=float, default=0.32)
+    parser.add_argument("--profile_width_ratio", type=float, default=0.32)
+    parser.add_argument("--view_hspace", type=float, default=0.18)
+    parser.add_argument("--panel_wspace", type=float, default=0.08)
+    args = parser.parse_args()
+
+    episode_dir = args.raw_pred_episode_dir if args.raw_pred_episode_dir is not None else args.cost_map_log.parent
+    step = args.step if args.step is not None else infer_step_from_cost_map_log(args.cost_map_log)
+    if step is None:
+        raise ValueError(
+            "Could not infer step from cost_map_log filename. "
+            "Use a name like 0_cost_map_logs.pickle or pass --step explicitly."
+        )
+
+    radii = parse_radii(args.radii)
+    view_specs = parse_view_specs(args.view_specs)
+    presence_cmap = build_presence_colormap(args.presence_cmap)
+    risk_ylim = parse_ylim(args.risk_ylim)
+
+    score_volume = read_raw_pred_score_map(
+        episode_dir,
+        step=step,
+        target_color=args.target_color,
+        side_length=args.side_length,
+    )
+
+    side_mask = load_external_shape_mask(args.shape_mask_side_image) if args.shape_mask_side_image is not None else None
+    top_mask = load_external_shape_mask(args.shape_mask_top_image) if args.shape_mask_top_image is not None else None
+    panels = prepare_view_panels(
+        score_volume=score_volume,
+        view_specs=view_specs,
+        shape_mask_side=side_mask,
+        shape_mask_top=top_mask,
+        auto_crop=args.auto_crop,
+        crop_padding=args.crop_padding,
+        crop_score_threshold=args.crop_score_threshold,
+    )
+
+    logs = load_pickle(args.cost_map_log)
+    if "cost_ensembles" not in logs:
+        raise KeyError(f"cost_map_log does not contain 'cost_ensembles': {args.cost_map_log}")
+    cost_ensemble = select_axis_cost_ensemble(logs["cost_ensembles"], args.target)  # type: ignore[arg-type]
+    risks = compute_risk_by_radius(
+        cost_ensemble=cost_ensemble,
+        radii=radii,
+        score_mode=args.score_mode,
+        ucb_lb=args.ucb_lb,
+    )
+
+    plot_joint_profiles(
+        panels=panels,
+        risks=risks,
+        radii=radii,
+        out_path=args.out_path,
+        presence_cmap=presence_cmap,
+        background_mode=args.background_mode,
+        risk_ylim=risk_ylim,
+        clip_risk_for_display=not args.no_clip_risk_for_display,
+        risk_line_cmap=args.risk_line_cmap,
+        show_legend=args.show_legend,
+        show_presence_colorbar=args.show_presence_colorbar,
+        dpi=args.dpi,
+        title_fontsize=args.title_fontsize,
+        label_fontsize=args.label_fontsize,
+        profile_height_ratio=args.profile_height_ratio,
+        profile_width_ratio=args.profile_width_ratio,
+        view_hspace=args.view_hspace,
+        panel_wspace=args.panel_wspace,
+    )
+
+    print(f"[OK] Saved presence heatmap with marginal cutting-risk profiles: {args.out_path}")
+    print(f"[INFO] episode_dir={episode_dir}")
+    print(f"[INFO] raw_pred_step={step}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+'''
+# Simple Object A example:
+python scripts/analysis/plot_presence_with_cutting_risk_profiles.py \
+  --cost_map_log /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A/epsilon_greedy_00/Object_A/episode_0/0_cost_map_logs.pickle \
+  --out_path analysis/revise/cutting_risk_maps/object_A/presence_with_marginal_risk_profiles_A.pdf \
+  --target_color simple_blue \
+  --target blue \
+  --side_length 16 \
+  --radii 0,1,2 \
+  --score_mode ucb \
+  --view_specs "Side view:x:-1,Top view:z:2" \
+  --show_legend \
+  --show_presence_colorbar
+'''
