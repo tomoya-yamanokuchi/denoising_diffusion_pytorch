@@ -185,6 +185,7 @@ def plot_summary(
     ylabel: str | None,
     dpi: int,
     legend_outside_top: bool,
+    hide_legend: bool,
 ) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
@@ -204,7 +205,7 @@ def plot_summary(
     # ax.set_ylim(bottom=0.0, top=1.05)
     if title:
         ax.set_title(title)
-    if len(by_series) > 1:
+    if len(by_series) > 1 and not hide_legend:
         if legend_outside_top:
             ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=len(by_series), frameon=False)
         else:
@@ -233,6 +234,7 @@ def main() -> None:
     parser.add_argument("--figure_name", type=str, default="target_soft_iou_transition.pdf")
     parser.add_argument("--dpi", type=int, default=300)
     parser.add_argument("--legend_outside_top", action="store_true")
+    parser.add_argument("--hide_legend", action="store_true")
     args = parser.parse_args()
 
     if args.series:
@@ -259,6 +261,7 @@ def main() -> None:
         ylabel=args.ylabel,
         dpi=args.dpi,
         legend_outside_top=args.legend_outside_top,
+        hide_legend=args.hide_legend,
     )
 
     print(f"[OK] saved records: {records_csv}")
