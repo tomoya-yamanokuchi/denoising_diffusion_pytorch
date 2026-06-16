@@ -190,7 +190,7 @@ def plot_summary(
     for row in rows:
         by_series[str(row["series"])].append(row)
 
-    fig, ax = plt.subplots(figsize=(5.5, 3.4))
+    fig, ax = plt.subplots(figsize=(2, 3.4))
     for series, items in by_series.items():
         items = sorted(items, key=lambda item: int(item["step"]))
         steps = np.asarray([int(item["step"]) for item in items], dtype=int)
@@ -201,7 +201,7 @@ def plot_summary(
 
     ax.set_xlabel("Task step")
     ax.set_ylabel(ylabel or "Target soft IoU")
-    ax.set_ylim(bottom=0.0, top=1.05)
+    # ax.set_ylim(bottom=0.0, top=1.05)
     if title:
         ax.set_title(title)
     if len(by_series) > 1:

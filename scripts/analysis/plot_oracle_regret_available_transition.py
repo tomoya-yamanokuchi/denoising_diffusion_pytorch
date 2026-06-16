@@ -273,7 +273,8 @@ def plot(rows: list[dict[str, float | int | str]], path: Path, title: str | None
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
         by_series[str(row["series"])].append(row)
-    fig, ax = plt.subplots(figsize=(5.5, 3.4))
+    # fig, ax = plt.subplots(figsize=(5.5, 3.4))
+    fig, ax = plt.subplots(figsize=(4.5, 3.4))
     for series, items in by_series.items():
         items = sorted(items, key=lambda x: int(x["step"]))
         steps = np.asarray([int(x["step"]) for x in items], dtype=int)
@@ -282,7 +283,7 @@ def plot(rows: list[dict[str, float | int | str]], path: Path, title: str | None
         ax.plot(steps, means, marker="o", label=series)
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
     ax.set_xlabel("Task step")
-    ax.set_ylabel("Oracle regret of selected action (available)")
+    ax.set_ylabel("Oracle regret of selected action")
     ax.set_ylim(bottom=0.0)
     if title:
         ax.set_title(title)

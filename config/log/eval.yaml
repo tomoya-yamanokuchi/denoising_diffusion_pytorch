@@ -49,4 +49,19 @@ allow_existing: false
 
 
 # tag: "proposed_A_brier_score"
-tag: "proposed_Nocond_A_brier_score"
+# tag: "proposed_Nocond_A_brier_score"
+
+# tag: "proposed_A_false_safe"
+# tag: "proposed_Nocond_A_false_safe"
+
+# tag: "proposed_A_risk_recall"
+# tag: "proposed_Nocond_A_risk_recall"
+
+# tag: "proposed_A_target_soft_iou"
+# tag: "proposed_Nocond_A_target_soft_iou"
+
+# tag: "proposed_D_target_soft_iou"
+tag: "proposed_Nocond_D_target_soft_iou"
+
+# tag: "proposed_B_target_soft_iou"
+# tag: "proposed_Nocond_A_target_soft_iou"
