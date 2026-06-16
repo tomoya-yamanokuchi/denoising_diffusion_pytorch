@@ -98,6 +98,15 @@ def to_int(value: str, default: int = 0) -> int:
         return default
 
 
+def parse_bbox(text: str | None) -> tuple[float, float] | None:
+    if text is None or text.strip() == "":
+        return None
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    if len(parts) != 2:
+        raise ValueError("--legend_bbox_to_anchor must be formatted as x,y, e.g. 0.5,1.12")
+    return float(parts[0]), float(parts[1])
+
+
 def compute_episode_total_rows(
     step_records: list[dict[str, str]],
     metric: str,
@@ -242,7 +251,21 @@ def write_summary(rows: list[dict[str, float | int | str]], path: Path) -> None:
         writer.writerows(rows)
 
 
-def plot_bar(summary: list[dict[str, float | int | str]], path: Path, title: str | None, ylabel: str | None, dpi: int) -> None:
+def plot_bar(
+    summary: list[dict[str, float | int | str]],
+    path: Path,
+    title: str | None,
+    ylabel: str | None,
+    dpi: int,
+    bar_width: float,
+    bar_alpha: float,
+    hide_legend: bool,
+    legend_outside_top: bool,
+    legend_loc: str,
+    legend_bbox_to_anchor: tuple[float, float] | None,
+    legend_ncol: int | None,
+    legend_frameon: bool,
+) -> None:
     labels = [str(row["series"]) for row in summary]
     means = np.asarray([float(row["mean"]) for row in summary], dtype=float)
     stds = np.asarray([float(row["std"]) for row in summary], dtype=float)
@@ -253,8 +276,10 @@ def plot_bar(summary: list[dict[str, float | int | str]], path: Path, title: str
         ax.bar(
             x[idx],
             means[idx],
+            width=bar_width,
             yerr=stds[idx],
             capsize=4,
+            alpha=bar_alpha,
             label=label,
         )
     ax.set_xticks(x)
@@ -263,8 +288,23 @@ def plot_bar(summary: list[dict[str, float | int | str]], path: Path, title: str
     ax.set_ylim(bottom=0.0)
     if title:
         ax.set_title(title)
-    if len(labels) > 1:
-        ax.legend(frameon=False)
+    if len(labels) > 1 and not hide_legend:
+        if legend_outside_top:
+            loc = "lower center"
+            bbox = legend_bbox_to_anchor or (0.5, 1.02)
+            ncol = legend_ncol or len(labels)
+        else:
+            loc = legend_loc
+            bbox = legend_bbox_to_anchor
+            ncol = legend_ncol or 1
+        legend_kwargs = {
+            "loc": loc,
+            "ncol": ncol,
+            "frameon": legend_frameon,
+        }
+        if bbox is not None:
+            legend_kwargs["bbox_to_anchor"] = bbox
+        ax.legend(**legend_kwargs)
     ax.grid(True, axis="y", linewidth=0.5, alpha=0.4)
     fig.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -297,6 +337,14 @@ def main() -> None:
     )
     parser.add_argument("--hit_policy", type=str, default="one", choices=["one", "nan", "raw"])
     parser.add_argument("--initial_used_global_indices", type=str, default=None)
+    parser.add_argument("--bar_width", type=float, default=0.8)
+    parser.add_argument("--bar_alpha", type=float, default=0.85)
+    parser.add_argument("--hide_legend", action="store_true")
+    parser.add_argument("--legend_outside_top", action="store_true")
+    parser.add_argument("--legend_loc", type=str, default="best")
+    parser.add_argument("--legend_bbox_to_anchor", type=str, default=None, help="Legend anchor as x,y, e.g. 0.5,1.12")
+    parser.add_argument("--legend_ncol", type=int, default=None)
+    parser.add_argument("--legend_frameon", action="store_true")
     args = parser.parse_args()
 
     if args.records_csv:
@@ -324,7 +372,21 @@ def main() -> None:
 
     write_episode_rows(episode_rows, records_path)
     write_summary(summary, summary_path)
-    plot_bar(summary, figure_path, title=args.title, ylabel=args.ylabel, dpi=args.dpi)
+    plot_bar(
+        summary,
+        figure_path,
+        title=args.title,
+        ylabel=args.ylabel,
+        dpi=args.dpi,
+        bar_width=args.bar_width,
+        bar_alpha=args.bar_alpha,
+        hide_legend=args.hide_legend,
+        legend_outside_top=args.legend_outside_top,
+        legend_loc=args.legend_loc,
+        legend_bbox_to_anchor=parse_bbox(args.legend_bbox_to_anchor),
+        legend_ncol=args.legend_ncol,
+        legend_frameon=args.legend_frameon,
+    )
 
     print(f"[OK] saved records: {records_path}")
     print(f"[OK] saved summary: {summary_path}")
