@@ -1,7 +1,13 @@
 # denoising_diffusion_pytorch/policy/cutting_surface_planner.py
+from dataclasses import asdict
+
 import numpy as np
 
-from denoising_diffusion_pytorch.utils.pil_utils import pil_image_save_from_numpy, pil_image_load_to_numpy
+from denoising_diffusion_pytorch.utils.pil_utils import (
+    color_range_mask,
+    pil_image_save_from_numpy,
+    pil_image_load_to_numpy,
+)
 from denoising_diffusion_pytorch.utils.os_utils import create_folder,pickle_utils
 from denoising_diffusion_pytorch.policy.types import PlanningPolicyInput
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
@@ -133,9 +139,12 @@ class cutting_surface_planner():
         selected_candidates = selection.optimal_selected_slice_range
         self.update_visibility_constraints(selected_candidates)
 
-        # ---- decision-reliability metric logs ----
+        # ---- decision-reliability / belief-quality metric logs ----
         # These metrics are diagnostic only. They do not feed back into
         # costs_decision, action candidate selection, or visibility updates.
+        cost_map_logs["target_soft_iou"] = self._compute_target_image_soft_iou_logs(
+            last_step_images=last_step_images,
+        )
         cost_map_logs["brier_score"] = self._compute_target_surface_brier_score_logs(
             cost_ensembles=cost_ensembles,
         )
@@ -188,6 +197,88 @@ class cutting_surface_planner():
             repeats=self.sample_image_num,
             axis=0,
         )
+
+
+    def _compute_target_image_soft_iou_logs(self, last_step_images: np.ndarray) -> dict:
+        """
+        Evaluate the target-part belief map itself, before action selection.
+
+        The generated samples are converted to a target-color probability map on
+        the z-axis prediction image. The metric compares this probability map
+        with the oracle target mask using soft IoU:
+
+            soft_iou = sum(p * y) / (sum(p) + sum(y) - sum(p * y))
+
+        This measures whether the generated target-part probability is spatially
+        concentrated on the ground-truth target region. It is diagnostic only and
+        does not affect UCB decision scores or the selected cutting action.
+        """
+        if self.oracle_image_z is None:
+            return {
+                "metric": "target_image_soft_iou",
+                "target": "blue",
+                "available": False,
+                "reason": "oracle_image_z is None",
+            }
+
+        target_probability_map = self._target_probability_map_from_images(
+            images=last_step_images,
+            target="blue",
+        )
+        ground_truth_mask = self._target_image_mask(self.oracle_image_z, target="blue").astype(float)
+
+        if target_probability_map.shape != ground_truth_mask.shape:
+            raise ValueError(
+                "Target soft-IoU shape mismatch: "
+                f"target_probability_map.shape={target_probability_map.shape}, "
+                f"ground_truth_mask.shape={ground_truth_mask.shape}"
+            )
+
+        intersection = float(np.sum(target_probability_map * ground_truth_mask))
+        union = float(
+            np.sum(target_probability_map)
+            + np.sum(ground_truth_mask)
+            - intersection
+        )
+        soft_iou = self._safe_divide(intersection, union)
+
+        return {
+            "metric": "target_image_soft_iou",
+            "target": "blue",
+            "available": True,
+            "overall": soft_iou,
+            "soft_iou": soft_iou,
+            "intersection": intersection,
+            "union": union,
+            "predicted_target_mass": float(np.sum(target_probability_map)),
+            "ground_truth_target_area": float(np.sum(ground_truth_mask)),
+            "target_probability_map": target_probability_map,
+            "ground_truth_mask": ground_truth_mask,
+        }
+
+
+    def _target_probability_map_from_images(self, images: np.ndarray, target: str = "blue") -> np.ndarray:
+        masks = [
+            self._target_image_mask(image, target=target).astype(float)
+            for image in np.asarray(images)
+        ]
+        if len(masks) == 0:
+            raise ValueError("No images were provided for target probability map computation.")
+        return np.asarray(masks, dtype=float).mean(axis=0)
+
+
+    def _target_image_mask(self, image: np.ndarray, target: str = "blue") -> np.ndarray:
+        image = np.asarray(image, dtype=float)
+        if image.size == 0:
+            raise ValueError("image is empty; cannot compute target mask.")
+        if np.nanmax(image) > 1.0:
+            image = image / 255.0
+
+        mask_config = asdict(getattr(self.policy_config.segmentation, target))
+        mask = color_range_mask(image, mask_config)
+        if mask.ndim == 3:
+            mask = mask[..., 0]
+        return (np.asarray(mask) > 0).astype(bool)
 
 
     def _compute_target_surface_brier_score_logs(self, cost_ensembles) -> dict:
