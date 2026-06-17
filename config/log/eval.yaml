@@ -61,7 +61,10 @@ allow_existing: false
 # tag: "proposed_Nocond_A_target_soft_iou"
 
 # tag: "proposed_D_target_soft_iou"
-tag: "proposed_Nocond_D_target_soft_iou"
+# tag: "proposed_Nocond_D_target_soft_iou"
 
-# tag: "proposed_B_target_soft_iou"
-# tag: "proposed_Nocond_A_target_soft_iou"
+# tag: "proposed_E_target_soft_iou"
+# tag: "proposed_Nocond_E_target_soft_iou"
+
+# tag: "proposed_F_target_soft_iou"
+tag: "proposed_Nocond_F_target_soft_iou"

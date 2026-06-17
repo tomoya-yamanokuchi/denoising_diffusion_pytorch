@@ -1,0 +1,14 @@
+name: complex_paper_E
+
+cases:
+  - name            : Object_E
+    paper_label     : Object E
+    legacy_name     : Object_6
+    legacy_eval_data: eval_data6
+    sample_id       : samples_5
+    dataset_format  : product_parts_yaml
+    dataset_dir     : /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_test/samples/samples_5
+    model_config    : SheetSander_type5.yaml
+    initial_global_action_range:
+      start: 97
+      stop : 73
