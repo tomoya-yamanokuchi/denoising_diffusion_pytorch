@@ -257,6 +257,45 @@ def summarize(rows: list[Row]) -> list[dict[str, float | int | str]]:
     return out
 
 
+def summarize_episode_total(rows: list[Row]) -> list[dict[str, float | int | str]]:
+    grouped: dict[tuple[str, int], list[Row]] = defaultdict(list)
+    for row in rows:
+        grouped[(row.series, row.episode)].append(row)
+
+    episode_rows: list[dict[str, float | int | str]] = []
+    for (series, episode), items in sorted(grouped.items()):
+        items = sorted(items, key=lambda r: r.step)
+        regrets = np.asarray([r.regret for r in items], dtype=float)
+        oracle_lens = np.asarray([r.oracle_len for r in items], dtype=float)
+        valid = ~np.isnan(regrets)
+        if np.sum(valid) == 0 or float(np.sum(oracle_lens[valid])) <= 0.0:
+            weighted_total = float("nan")
+        else:
+            weighted_total = float(np.sum(regrets[valid] * oracle_lens[valid]) / np.sum(oracle_lens[valid]))
+        episode_rows.append({
+            "series": series,
+            "episode": int(episode),
+            "weighted_total_regret": weighted_total,
+            "num_steps": int(len(items)),
+        })
+
+    by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
+    for row in episode_rows:
+        by_series[str(row["series"])].append(row)
+
+    summary: list[dict[str, float | int | str]] = []
+    for series, items in sorted(by_series.items()):
+        values = np.asarray([float(item["weighted_total_regret"]) for item in items], dtype=float)
+        values = values[~np.isnan(values)]
+        summary.append({
+            "series": series,
+            "mean": float(np.mean(values)) if values.size else float("nan"),
+            "std": float(np.std(values, ddof=0)) if values.size else float("nan"),
+            "n_episodes": int(len(items)),
+        })
+    return summary
+
+
 def write_summary(rows: list[dict[str, float | int | str]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as f:
@@ -264,6 +303,15 @@ def write_summary(rows: list[dict[str, float | int | str]], path: Path) -> None:
             "series", "step", "mean", "std", "n_episodes", "target_hit_rate",
             "selected_len_mean", "oracle_len_mean", "unavailable_count_mean",
         ]
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_episode_total_summary(rows: list[dict[str, float | int | str]], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as f:
+        fields = ["series", "mean", "std", "n_episodes"]
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
@@ -279,10 +327,15 @@ def plot(
     x_step_offset: int,
     x_tick_interval: float | None,
     xlim_padding: float,
+    episode_total_summary: list[dict[str, float | int | str]],
+    episode_total_overlay: str,
+    hide_legend: bool,
 ) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
         by_series[str(row["series"])].append(row)
+
+    total_by_series = {str(row["series"]): row for row in episode_total_summary}
 
     # fig, ax = plt.subplots(figsize=(4.5, 3.4))
     fig, ax = plt.subplots(figsize=(3, 2.5))
@@ -294,8 +347,35 @@ def plot(
         plotted_steps.extend(steps.tolist())
         means = np.asarray([float(x["mean"]) for x in items], dtype=float)
         stds = np.asarray([float(x["std"]) for x in items], dtype=float)
-        ax.plot(steps, means, marker="o", label=series)
+        line_label = series
+        total = total_by_series.get(series)
+        if episode_total_overlay == "legend" and total is not None:
+            line_label = f"{series} (total={float(total['mean']):.2f})"
+        line, = ax.plot(steps, means, marker="o", label=line_label)
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
+        if episode_total_overlay == "hline" and total is not None:
+            ax.axhline(
+                float(total["mean"]),
+                color=line.get_color(),
+                linestyle="--",
+                linewidth=1.2,
+                alpha=0.8,
+            )
+
+    if episode_total_overlay == "textbox" and episode_total_summary:
+        text_lines = ["Episode total"]
+        for total in episode_total_summary:
+            text_lines.append(f"{total['series']}: {float(total['mean']):.2f}")
+        ax.text(
+            0.02,
+            0.98,
+            "\n".join(text_lines),
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            fontsize=8,
+            bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
+        )
 
     ax.set_xlabel(xlabel)
     # ax.set_ylabel("Oracle regret of selected action")
@@ -309,7 +389,7 @@ def plot(
             ax.set_xticks(np.arange(min_step, max_step + 0.5 * x_tick_interval, x_tick_interval))
     if title:
         ax.set_title(title)
-    if len(by_series) > 1:
+    if len(by_series) > 1 and not hide_legend:
         ax.legend(frameon=False)
     ax.grid(True, linewidth=0.5, alpha=0.4)
     fig.tight_layout()
@@ -333,6 +413,18 @@ def main() -> None:
     parser.add_argument("--x_step_offset", type=int, default=1)
     parser.add_argument("--x_tick_interval", type=float, default=1.0)
     parser.add_argument("--xlim_padding", type=float, default=0.0)
+    parser.add_argument(
+        "--episode_total_overlay",
+        type=str,
+        default="none",
+        choices=["none", "hline", "legend", "textbox"],
+        help=(
+            "Overlay episode-total oracle regret on the step-wise plot. "
+            "Use hline for dashed horizontal lines, legend for total values in "
+            "legend labels, or textbox for a small numeric box."
+        ),
+    )
+    parser.add_argument("--hide_legend", action="store_true")
     args = parser.parse_args()
 
     if args.series:
@@ -344,13 +436,16 @@ def main() -> None:
 
     rows = collect(series_roots, parse_int_set(args.initial_used_global_indices), args.hit_policy)
     summary = summarize(rows)
+    episode_total_summary = summarize_episode_total(rows)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     records_csv = args.out_dir / "oracle_regret_available_records.csv"
     summary_csv = args.out_dir / "oracle_regret_available_summary.csv"
+    episode_total_summary_csv = args.out_dir / "oracle_regret_available_episode_total_summary.csv"
     figure_path = args.out_dir / args.figure_name
     write_records(rows, records_csv)
     write_summary(summary, summary_csv)
+    write_episode_total_summary(episode_total_summary, episode_total_summary_csv)
     plot(
         summary,
         figure_path,
@@ -360,9 +455,13 @@ def main() -> None:
         x_step_offset=args.x_step_offset,
         x_tick_interval=args.x_tick_interval,
         xlim_padding=args.xlim_padding,
+        episode_total_summary=episode_total_summary,
+        episode_total_overlay=args.episode_total_overlay,
+        hide_legend=args.hide_legend,
     )
     print(f"[OK] saved records: {records_csv}")
     print(f"[OK] saved summary: {summary_csv}")
+    print(f"[OK] saved episode-total summary: {episode_total_summary_csv}")
     print(f"[OK] saved figure : {figure_path}")
 
 
