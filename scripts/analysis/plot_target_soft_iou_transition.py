@@ -189,6 +189,8 @@ def plot_summary(
     hide_legend: bool,
     y_tick_decimals: int | None,
     y_tick_interval: float | None,
+    xlabel: str,
+    x_step_offset: int,
 ) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
@@ -197,13 +199,13 @@ def plot_summary(
     fig, ax = plt.subplots(figsize=(3, 3.4))
     for series, items in by_series.items():
         items = sorted(items, key=lambda item: int(item["step"]))
-        steps = np.asarray([int(item["step"]) for item in items], dtype=int)
+        steps = np.asarray([int(item["step"]) + x_step_offset for item in items], dtype=int)
         means = np.asarray([float(item["mean"]) for item in items], dtype=float)
         stds = np.asarray([float(item["std"]) for item in items], dtype=float)
         ax.plot(steps, means, marker="o", label=series)
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
 
-    ax.set_xlabel("Task step", fontsize=12)
+    ax.set_xlabel(xlabel, fontsize=12)
     ax.set_ylabel(ylabel or "Target soft IoU", fontsize=12)
     if y_tick_interval is not None:
         ax.yaxis.set_major_locator(MultipleLocator(y_tick_interval))
@@ -244,6 +246,8 @@ def main() -> None:
     parser.add_argument("--hide_legend", action="store_true")
     parser.add_argument("--y_tick_decimals", type=int, default=None)
     parser.add_argument("--y_tick_interval", type=float, default=None)
+    parser.add_argument("--xlabel", type=str, default="Planning step")
+    parser.add_argument("--x_step_offset", type=int, default=1)
     args = parser.parse_args()
 
     if args.series:
@@ -273,6 +277,8 @@ def main() -> None:
         hide_legend=args.hide_legend,
         y_tick_decimals=args.y_tick_decimals,
         y_tick_interval=args.y_tick_interval,
+        xlabel=args.xlabel,
+        x_step_offset=args.x_step_offset,
     )
 
     print(f"[OK] saved records: {records_csv}")
