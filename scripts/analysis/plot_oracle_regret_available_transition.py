@@ -269,22 +269,41 @@ def write_summary(rows: list[dict[str, float | int | str]], path: Path) -> None:
         writer.writerows(rows)
 
 
-def plot(rows: list[dict[str, float | int | str]], path: Path, title: str | None, dpi: int) -> None:
+def plot(
+    rows: list[dict[str, float | int | str]],
+    path: Path,
+    title: str | None,
+    dpi: int,
+    *,
+    xlabel: str,
+    x_step_offset: int,
+    x_tick_interval: float | None,
+    xlim_padding: float,
+) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
         by_series[str(row["series"])].append(row)
-    # fig, ax = plt.subplots(figsize=(5.5, 3.4))
+
     fig, ax = plt.subplots(figsize=(4.5, 3.4))
+    plotted_steps: list[float] = []
     for series, items in by_series.items():
         items = sorted(items, key=lambda x: int(x["step"]))
-        steps = np.asarray([int(x["step"]) for x in items], dtype=int)
+        steps = np.asarray([int(x["step"]) + x_step_offset for x in items], dtype=float)
+        plotted_steps.extend(steps.tolist())
         means = np.asarray([float(x["mean"]) for x in items], dtype=float)
         stds = np.asarray([float(x["std"]) for x in items], dtype=float)
         ax.plot(steps, means, marker="o", label=series)
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
-    ax.set_xlabel("Planning step")
+
+    ax.set_xlabel(xlabel)
     ax.set_ylabel("Oracle regret of selected action")
     ax.set_ylim(bottom=0.0)
+    if plotted_steps:
+        min_step = float(np.nanmin(plotted_steps))
+        max_step = float(np.nanmax(plotted_steps))
+        ax.set_xlim(min_step - xlim_padding, max_step + xlim_padding)
+        if x_tick_interval is not None:
+            ax.set_xticks(np.arange(min_step, max_step + 0.5 * x_tick_interval, x_tick_interval))
     if title:
         ax.set_title(title)
     if len(by_series) > 1:
@@ -307,6 +326,10 @@ def main() -> None:
     parser.add_argument("--dpi", type=int, default=300)
     parser.add_argument("--hit_policy", type=str, default="one", choices=["one", "nan", "raw"])
     parser.add_argument("--initial_used_global_indices", type=str, default=None)
+    parser.add_argument("--xlabel", type=str, default="Planning step")
+    parser.add_argument("--x_step_offset", type=int, default=1)
+    parser.add_argument("--x_tick_interval", type=float, default=1.0)
+    parser.add_argument("--xlim_padding", type=float, default=0.0)
     args = parser.parse_args()
 
     if args.series:
@@ -325,7 +348,16 @@ def main() -> None:
     figure_path = args.out_dir / args.figure_name
     write_records(rows, records_csv)
     write_summary(summary, summary_csv)
-    plot(summary, figure_path, args.title, args.dpi)
+    plot(
+        summary,
+        figure_path,
+        args.title,
+        args.dpi,
+        xlabel=args.xlabel,
+        x_step_offset=args.x_step_offset,
+        x_tick_interval=args.x_tick_interval,
+        xlim_padding=args.xlim_padding,
+    )
     print(f"[OK] saved records: {records_csv}")
     print(f"[OK] saved summary: {summary_csv}")
     print(f"[OK] saved figure : {figure_path}")
