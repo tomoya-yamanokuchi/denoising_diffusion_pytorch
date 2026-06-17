@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from denoising_diffusion_pytorch.cost.types import AxisCost, AxisDecisionCost
 from denoising_diffusion_pytorch.policy.decision.decision_rules import (
@@ -251,35 +252,34 @@ def plot_joint_profiles(
 
     fig_width = 5.2
     fig_height = max(2.4 * n_views, 3.0)
-    fig = plt.figure(figsize=(fig_width, fig_height))
-    height_ratios: list[float] = []
-    for _ in panels:
-        height_ratios.extend([profile_height_ratio, 1.0])
-    grid = fig.add_gridspec(
-        nrows=2 * n_views,
-        ncols=2,
-        width_ratios=[1.0, profile_width_ratio],
-        height_ratios=height_ratios,
-        hspace=view_hspace,
-        wspace=panel_wspace,
-    )
+    fig, main_axes_array = plt.subplots(n_views, 1, figsize=(fig_width, fig_height), squeeze=False)
+    main_axes = [main_axes_array[i, 0] for i in range(n_views)]
+    if n_views > 1:
+        fig.subplots_adjust(hspace=view_hspace)
 
     line_cmap = plt.get_cmap(risk_line_cmap)
     line_positions = np.linspace(0.15, 0.85, max(len(radii), 1))
     line_colors = [line_cmap(pos) for pos in line_positions]
 
     first_top_ax = None
-    first_main_ax = None
-    for view_idx, panel in enumerate(panels):
-        ax_top = fig.add_subplot(grid[2 * view_idx, 0])
-        ax_corner = fig.add_subplot(grid[2 * view_idx, 1])
-        ax_main = fig.add_subplot(grid[2 * view_idx + 1, 0])
-        ax_right = fig.add_subplot(grid[2 * view_idx + 1, 1])
-        ax_corner.axis("off")
+    main_axes_for_colorbar = []
+    for view_idx, (panel, ax_main) in enumerate(zip(panels, main_axes)):
+        divider = make_axes_locatable(ax_main)
+        ax_top = divider.append_axes(
+            "top",
+            size=f"{100.0 * profile_height_ratio:.1f}%",
+            pad=panel_wspace,
+            sharex=ax_main,
+        )
+        ax_right = divider.append_axes(
+            "right",
+            size=f"{100.0 * profile_width_ratio:.1f}%",
+            pad=panel_wspace,
+            sharey=ax_main,
+        )
         if first_top_ax is None:
             first_top_ax = ax_top
-        if first_main_ax is None:
-            first_main_ax = ax_main
+        main_axes_for_colorbar.append(ax_main)
 
         height, width = panel.score.shape
         rgb = make_presence_rgb(panel.score, panel.mask, presence_cmap=presence_cmap, background_mode=background_mode)
@@ -325,10 +325,10 @@ def plot_joint_profiles(
     if show_legend and first_top_ax is not None:
         first_top_ax.legend(loc="upper right", fontsize=max(label_fontsize - 2, 6), frameon=False, ncol=len(radii))
 
-    if show_presence_colorbar and first_main_ax is not None:
+    if show_presence_colorbar and main_axes_for_colorbar:
         sm = plt.cm.ScalarMappable(cmap=presence_cmap, norm=plt.Normalize(0, 1))
         sm.set_array([])
-        cbar = fig.colorbar(sm, ax=[fig.axes[i] for i in range(len(fig.axes)) if fig.axes[i].has_data()], fraction=0.025, pad=0.03)
+        cbar = fig.colorbar(sm, ax=main_axes_for_colorbar, fraction=0.025, pad=0.12)
         cbar.set_label("Presence score", fontsize=label_fontsize)
         cbar.ax.tick_params(labelsize=max(label_fontsize - 1, 6))
 
