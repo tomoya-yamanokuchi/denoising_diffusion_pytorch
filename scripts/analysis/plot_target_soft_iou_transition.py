@@ -203,8 +203,8 @@ def plot_summary(
         ax.plot(steps, means, marker="o", label=series)
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
 
-    ax.set_xlabel("Task step")
-    ax.set_ylabel(ylabel or "Target soft IoU")
+    ax.set_xlabel("Task step", fontsize=12)
+    ax.set_ylabel(ylabel or "Target soft IoU", fontsize=12)
     if y_tick_interval is not None:
         ax.yaxis.set_major_locator(MultipleLocator(y_tick_interval))
     if y_tick_decimals is not None:
