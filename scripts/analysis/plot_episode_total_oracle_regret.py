@@ -271,7 +271,8 @@ def plot_bar(
     stds = np.asarray([float(row["std"]) for row in summary], dtype=float)
     x = np.arange(len(labels))
 
-    fig, ax = plt.subplots(figsize=(3, 3.4))
+    # fig, ax = plt.subplots(figsize=(3, 3.4))
+    fig, ax = plt.subplots(figsize=(3, 2.5))
     for idx, label in enumerate(labels):
         ax.bar(
             x[idx],

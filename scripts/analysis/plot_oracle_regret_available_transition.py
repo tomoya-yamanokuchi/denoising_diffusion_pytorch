@@ -284,7 +284,9 @@ def plot(
     for row in rows:
         by_series[str(row["series"])].append(row)
 
-    fig, ax = plt.subplots(figsize=(4.5, 3.4))
+    # fig, ax = plt.subplots(figsize=(4.5, 3.4))
+    fig, ax = plt.subplots(figsize=(3, 2.5))
+
     plotted_steps: list[float] = []
     for series, items in by_series.items():
         items = sorted(items, key=lambda x: int(x["step"]))
@@ -296,7 +298,8 @@ def plot(
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
 
     ax.set_xlabel(xlabel)
-    ax.set_ylabel("Oracle regret of selected action")
+    # ax.set_ylabel("Oracle regret of selected action")
+    ax.set_ylabel("Oracle regret")
     ax.set_ylim(bottom=0.0)
     if plotted_steps:
         min_step = float(np.nanmin(plotted_steps))
