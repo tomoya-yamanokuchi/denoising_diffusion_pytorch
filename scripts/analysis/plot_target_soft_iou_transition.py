@@ -191,15 +191,18 @@ def plot_summary(
     y_tick_interval: float | None,
     xlabel: str,
     x_step_offset: int,
+    x_tick_interval: float | None,
 ) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
         by_series[str(row["series"])].append(row)
 
     fig, ax = plt.subplots(figsize=(3, 3.4))
+    plotted_steps: list[float] = []
     for series, items in by_series.items():
         items = sorted(items, key=lambda item: int(item["step"]))
-        steps = np.asarray([int(item["step"]) + x_step_offset for item in items], dtype=int)
+        steps = np.asarray([int(item["step"]) + x_step_offset for item in items], dtype=float)
+        plotted_steps.extend(steps.tolist())
         means = np.asarray([float(item["mean"]) for item in items], dtype=float)
         stds = np.asarray([float(item["std"]) for item in items], dtype=float)
         ax.plot(steps, means, marker="o", label=series)
@@ -207,6 +210,10 @@ def plot_summary(
 
     ax.set_xlabel(xlabel, fontsize=12)
     ax.set_ylabel(ylabel or "Target soft IoU", fontsize=12)
+    if plotted_steps and x_tick_interval is not None:
+        min_step = float(np.nanmin(plotted_steps))
+        max_step = float(np.nanmax(plotted_steps))
+        ax.set_xticks(np.arange(min_step, max_step + 0.5 * x_tick_interval, x_tick_interval))
     if y_tick_interval is not None:
         ax.yaxis.set_major_locator(MultipleLocator(y_tick_interval))
     if y_tick_decimals is not None:
@@ -248,6 +255,7 @@ def main() -> None:
     parser.add_argument("--y_tick_interval", type=float, default=None)
     parser.add_argument("--xlabel", type=str, default="Planning step")
     parser.add_argument("--x_step_offset", type=int, default=1)
+    parser.add_argument("--x_tick_interval", type=float, default=1.0)
     args = parser.parse_args()
 
     if args.series:
@@ -279,6 +287,7 @@ def main() -> None:
         y_tick_interval=args.y_tick_interval,
         xlabel=args.xlabel,
         x_step_offset=args.x_step_offset,
+        x_tick_interval=args.x_tick_interval,
     )
 
     print(f"[OK] saved records: {records_csv}")
