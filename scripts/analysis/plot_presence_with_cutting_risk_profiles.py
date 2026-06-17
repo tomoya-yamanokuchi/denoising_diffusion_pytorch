@@ -24,6 +24,7 @@ from plot_presence_score_maps import (
     parse_view_specs,
     project_volume,
     read_raw_pred_score_map,
+    read_shape_mask,
     resize_mask_to_shape,
     select_external_shape_mask_for_view,
 )
@@ -157,6 +158,7 @@ def prepare_view_panels(
     *,
     score_volume: np.ndarray,
     view_specs: list[ViewSpec],
+    shape_mask_volume: np.ndarray | None,
     shape_mask_side: np.ndarray | None,
     shape_mask_top: np.ndarray | None,
     auto_crop: bool,
@@ -180,7 +182,12 @@ def prepare_view_panels(
             side_mask=shape_mask_side,
             top_mask=shape_mask_top,
         )
-        mask = resize_mask_to_shape(external_mask, score.shape) if external_mask is not None else None
+        if external_mask is not None:
+            mask = resize_mask_to_shape(external_mask, score.shape)
+        elif shape_mask_volume is not None:
+            mask = project_volume(shape_mask_volume.astype(float), view.projection_axis, view.rot90) > 0
+        else:
+            mask = None
 
         bounds = None
         if auto_crop:
@@ -465,7 +472,7 @@ def main() -> None:
     parser.add_argument("--background_mode", type=str, default="low_score", choices=["white", "low_score", "light_gray"])
     parser.add_argument("--shape_mask_side_image", type=Path, default=None, help="Optional 2D silhouette mask for side-view display/cropping.")
     parser.add_argument("--shape_mask_top_image", type=Path, default=None, help="Optional 2D silhouette mask for top-view display/cropping.")
-    parser.add_argument("--auto_crop", dest="auto_crop", action="store_true", default=True, help="Crop each view to the external silhouette mask or nonzero presence region before plotting. Enabled by default to match presence-map scripts.")
+    parser.add_argument("--auto_crop", dest="auto_crop", action="store_true", default=True, help="Crop each view to the external/oracle silhouette mask or nonzero presence region before plotting. Enabled by default to match presence-map scripts.")
     parser.add_argument("--no_auto_crop", dest="auto_crop", action="store_false", help="Disable automatic cropping and show the full voxel grid.")
     parser.add_argument("--crop_padding", type=int, default=2)
     parser.add_argument("--crop_score_threshold", type=float, default=1e-6)
@@ -514,12 +521,14 @@ def main() -> None:
         target_color=args.target_color,
         side_length=args.side_length,
     )
+    shape_mask_volume = read_shape_mask(episode_dir, side_length=args.side_length)
 
     side_mask = load_external_shape_mask(args.shape_mask_side_image) if args.shape_mask_side_image is not None else None
     top_mask = load_external_shape_mask(args.shape_mask_top_image) if args.shape_mask_top_image is not None else None
     panels = prepare_view_panels(
         score_volume=score_volume,
         view_specs=view_specs,
+        shape_mask_volume=shape_mask_volume,
         shape_mask_side=side_mask,
         shape_mask_top=top_mask,
         auto_crop=args.auto_crop,
