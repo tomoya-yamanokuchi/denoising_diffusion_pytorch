@@ -282,7 +282,7 @@ def plot(rows: list[dict[str, float | int | str]], path: Path, title: str | None
         stds = np.asarray([float(x["std"]) for x in items], dtype=float)
         ax.plot(steps, means, marker="o", label=series)
         ax.fill_between(steps, means - stds, means + stds, alpha=0.2)
-    ax.set_xlabel("Task step")
+    ax.set_xlabel("Planning step")
     ax.set_ylabel("Oracle regret of selected action")
     ax.set_ylim(bottom=0.0)
     if title:

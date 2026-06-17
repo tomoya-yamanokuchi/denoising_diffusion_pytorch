@@ -198,7 +198,7 @@ def plot_summary(
     for row in rows:
         by_series[str(row["series"])].append(row)
 
-    fig, ax = plt.subplots(figsize=(3, 3.4))
+    fig, ax = plt.subplots(figsize=(3, 2.5))
     plotted_steps: list[float] = []
     for series, items in by_series.items():
         items = sorted(items, key=lambda item: int(item["step"]))
