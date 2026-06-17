@@ -192,6 +192,7 @@ def plot_summary(
     xlabel: str,
     x_step_offset: int,
     x_tick_interval: float | None,
+    xlim_padding: float,
 ) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
@@ -210,10 +211,12 @@ def plot_summary(
 
     ax.set_xlabel(xlabel, fontsize=12)
     ax.set_ylabel(ylabel or "Target soft IoU", fontsize=12)
-    if plotted_steps and x_tick_interval is not None:
+    if plotted_steps:
         min_step = float(np.nanmin(plotted_steps))
         max_step = float(np.nanmax(plotted_steps))
-        ax.set_xticks(np.arange(min_step, max_step + 0.5 * x_tick_interval, x_tick_interval))
+        ax.set_xlim(min_step - xlim_padding, max_step + xlim_padding)
+        if x_tick_interval is not None:
+            ax.set_xticks(np.arange(min_step, max_step + 0.5 * x_tick_interval, x_tick_interval))
     if y_tick_interval is not None:
         ax.yaxis.set_major_locator(MultipleLocator(y_tick_interval))
     if y_tick_decimals is not None:
@@ -256,6 +259,7 @@ def main() -> None:
     parser.add_argument("--xlabel", type=str, default="Planning step")
     parser.add_argument("--x_step_offset", type=int, default=1)
     parser.add_argument("--x_tick_interval", type=float, default=1.0)
+    parser.add_argument("--xlim_padding", type=float, default=0.0)
     args = parser.parse_args()
 
     if args.series:
@@ -288,6 +292,7 @@ def main() -> None:
         xlabel=args.xlabel,
         x_step_offset=args.x_step_offset,
         x_tick_interval=args.x_tick_interval,
+        xlim_padding=args.xlim_padding,
     )
 
     print(f"[OK] saved records: {records_csv}")
