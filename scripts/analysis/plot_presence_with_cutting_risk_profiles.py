@@ -266,10 +266,14 @@ def plot_joint_profiles(
     show_profile_axis_labels: bool,
     show_profile_ticks: bool,
     profile_title: str,
+    legend_mode: str,
+    legend_y: float,
 ) -> None:
     n_views = len(panels)
     if n_views == 0:
         raise ValueError("No view panels to plot.")
+    if legend_mode not in {"figure", "axis", "none"}:
+        raise ValueError(f"Unknown legend_mode={legend_mode!r}. Use figure, axis, or none.")
 
     fig_width = 5.2
     fig_height = max(2.35 * n_views, 3.0)
@@ -351,16 +355,32 @@ def plot_joint_profiles(
             ax_right.set_xlabel(f"{v_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
         style_profile_axis(ax_right, show_ticks=show_profile_ticks, show_axis_labels=show_profile_axis_labels)
 
-    if show_legend and first_top_ax is not None:
-        first_top_ax.legend(
-            loc="upper center",
-            bbox_to_anchor=(0.5, 1.02),
-            fontsize=max(label_fontsize - 2, 6),
-            frameon=False,
-            ncol=len(radii),
-            handlelength=1.8,
-            columnspacing=1.0,
-        )
+    if show_legend and first_top_ax is not None and legend_mode != "none":
+        handles, labels = first_top_ax.get_legend_handles_labels()
+        if legend_mode == "figure":
+            fig.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, legend_y),
+                fontsize=max(label_fontsize - 2, 6),
+                frameon=False,
+                ncol=len(radii),
+                handlelength=1.8,
+                columnspacing=1.0,
+            )
+        else:
+            first_top_ax.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.02),
+                fontsize=max(label_fontsize - 2, 6),
+                frameon=False,
+                ncol=len(radii),
+                handlelength=1.8,
+                columnspacing=1.0,
+            )
 
     if show_presence_colorbar and main_axes_for_colorbar:
         sm = plt.cm.ScalarMappable(cmap=presence_cmap, norm=plt.Normalize(0, 1))
@@ -413,6 +433,8 @@ def main() -> None:
     parser.add_argument("--no_clip_risk_for_display", action="store_true", help="Do not clip UCB risk profiles to [0, 1] before plotting.")
     parser.add_argument("--risk_line_cmap", type=str, default="magma")
     parser.add_argument("--show_legend", action="store_true")
+    parser.add_argument("--legend_mode", type=str, default="figure", choices=["figure", "axis", "none"], help="Place the r legend outside the profiles, inside the top profile, or hide it.")
+    parser.add_argument("--legend_y", type=float, default=1.02, help="Figure-level legend y position when --legend_mode figure.")
     parser.add_argument("--show_presence_colorbar", action="store_true")
     parser.add_argument("--hide_threshold_line", action="store_true", help="Hide the decision-threshold guide line in the marginal profiles.")
     parser.add_argument("--risk_threshold", type=float, default=0.5, help="Risk threshold guide line shown in marginal profiles.")
@@ -499,6 +521,8 @@ def main() -> None:
         show_profile_axis_labels=args.show_profile_axis_labels,
         show_profile_ticks=args.show_profile_ticks,
         profile_title=args.profile_title,
+        legend_mode=args.legend_mode,
+        legend_y=args.legend_y,
     )
 
     print(f"[OK] Saved presence heatmap with marginal cutting-risk profiles: {args.out_path}")
