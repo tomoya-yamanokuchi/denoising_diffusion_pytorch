@@ -239,6 +239,14 @@ def style_profile_axis(ax, *, show_ticks: bool, show_axis_labels: bool) -> None:
         ax.set_ylabel("")
 
 
+def fill_base_for_profile(*, risk_ylim: tuple[float, float], risk_threshold: float, mode: str) -> float:
+    if mode == "from_zero":
+        return risk_ylim[0]
+    if mode == "above_threshold":
+        return risk_threshold
+    raise ValueError(f"Unknown profile_fill_mode={mode!r}. Use above_threshold or from_zero.")
+
+
 def plot_joint_profiles(
     *,
     panels: list[ViewPanel],
@@ -268,12 +276,20 @@ def plot_joint_profiles(
     profile_title: str,
     legend_mode: str,
     legend_y: float,
+    fill_profile_area: bool,
+    profile_fill_alpha: float,
+    profile_fill_mode: str,
 ) -> None:
     n_views = len(panels)
     if n_views == 0:
         raise ValueError("No view panels to plot.")
     if legend_mode not in {"figure", "axis", "none"}:
         raise ValueError(f"Unknown legend_mode={legend_mode!r}. Use figure, axis, or none.")
+    fill_base = fill_base_for_profile(
+        risk_ylim=risk_ylim,
+        risk_threshold=risk_threshold,
+        mode=profile_fill_mode,
+    )
 
     fig_width = 5.2
     fig_height = max(2.35 * n_views, 3.0)
@@ -330,6 +346,29 @@ def plot_joint_profiles(
             h_profile = clipped_profile(axis_values(risk, h_axis_name)[h_indices], clip=clip_risk_for_display)
             v_profile = clipped_profile(axis_values(risk, v_axis_name)[v_indices], clip=clip_risk_for_display)
             label = f"r={radius}"
+            if fill_profile_area:
+                h_where = h_profile >= fill_base if profile_fill_mode == "above_threshold" else np.ones_like(h_profile, dtype=bool)
+                v_where = v_profile >= fill_base if profile_fill_mode == "above_threshold" else np.ones_like(v_profile, dtype=bool)
+                ax_top.fill_between(
+                    x_pixels,
+                    fill_base,
+                    h_profile,
+                    where=h_where,
+                    color=color,
+                    alpha=profile_fill_alpha,
+                    linewidth=0,
+                    zorder=2,
+                )
+                ax_right.fill_betweenx(
+                    y_pixels,
+                    fill_base,
+                    v_profile,
+                    where=v_where,
+                    color=color,
+                    alpha=profile_fill_alpha,
+                    linewidth=0,
+                    zorder=2,
+                )
             ax_top.plot(x_pixels, h_profile, linewidth=profile_linewidth, alpha=profile_alpha, color=color, label=label, zorder=3)
             ax_right.plot(v_profile, y_pixels, linewidth=profile_linewidth, alpha=profile_alpha, color=color, label=label, zorder=3)
 
@@ -440,6 +479,9 @@ def main() -> None:
     parser.add_argument("--risk_threshold", type=float, default=0.5, help="Risk threshold guide line shown in marginal profiles.")
     parser.add_argument("--profile_linewidth", type=float, default=1.15)
     parser.add_argument("--profile_alpha", type=float, default=0.92)
+    parser.add_argument("--fill_profile_area", action="store_true", help="Fill the marginal cutting-risk profile area with a translucent color.")
+    parser.add_argument("--profile_fill_alpha", type=float, default=0.18)
+    parser.add_argument("--profile_fill_mode", type=str, default="above_threshold", choices=["above_threshold", "from_zero"], help="Fill only risk above the threshold or fill from the lower y/x limit.")
     parser.add_argument("--show_profile_axis_labels", action="store_true", help="Show marginal axis labels such as x-risk and y-risk.")
     parser.add_argument("--show_profile_ticks", action="store_true", help="Show compact ticks on marginal profile axes.")
     parser.add_argument("--profile_title", type=str, default="Axis-wise cutting risk")
@@ -523,6 +565,9 @@ def main() -> None:
         profile_title=args.profile_title,
         legend_mode=args.legend_mode,
         legend_y=args.legend_y,
+        fill_profile_area=args.fill_profile_area,
+        profile_fill_alpha=args.profile_fill_alpha,
+        profile_fill_mode=args.profile_fill_mode,
     )
 
     print(f"[OK] Saved presence heatmap with marginal cutting-risk profiles: {args.out_path}")
@@ -545,6 +590,7 @@ python scripts/analysis/plot_presence_with_cutting_risk_profiles.py \
   --radii 0,1,2 \
   --score_mode ucb \
   --view_specs "Side view:x:-1,Top view:z:2" \
+  --fill_profile_area \
   --show_legend \
   --show_presence_colorbar
 '''
