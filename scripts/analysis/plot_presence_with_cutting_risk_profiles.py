@@ -225,6 +225,20 @@ def clipped_profile(values: np.ndarray, *, clip: bool) -> np.ndarray:
     return np.clip(values, 0.0, 1.0) if clip else values
 
 
+def style_profile_axis(ax, *, show_ticks: bool, show_axis_labels: bool) -> None:
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+    for spine in ["left", "bottom"]:
+        ax.spines[spine].set_linewidth(0.6)
+        ax.spines[spine].set_color("0.25")
+    if not show_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    if not show_axis_labels:
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+
+
 def plot_joint_profiles(
     *,
     panels: list[ViewPanel],
@@ -245,20 +259,27 @@ def plot_joint_profiles(
     profile_width_ratio: float,
     view_hspace: float,
     panel_wspace: float,
+    profile_linewidth: float,
+    profile_alpha: float,
+    show_threshold_line: bool,
+    risk_threshold: float,
+    show_profile_axis_labels: bool,
+    show_profile_ticks: bool,
+    profile_title: str,
 ) -> None:
     n_views = len(panels)
     if n_views == 0:
         raise ValueError("No view panels to plot.")
 
     fig_width = 5.2
-    fig_height = max(2.4 * n_views, 3.0)
+    fig_height = max(2.35 * n_views, 3.0)
     fig, main_axes_array = plt.subplots(n_views, 1, figsize=(fig_width, fig_height), squeeze=False)
     main_axes = [main_axes_array[i, 0] for i in range(n_views)]
     if n_views > 1:
         fig.subplots_adjust(hspace=view_hspace)
 
     line_cmap = plt.get_cmap(risk_line_cmap)
-    line_positions = np.linspace(0.15, 0.85, max(len(radii), 1))
+    line_positions = np.linspace(0.18, 0.82, max(len(radii), 1))
     line_colors = [line_cmap(pos) for pos in line_positions]
 
     first_top_ax = None
@@ -296,34 +317,50 @@ def plot_joint_profiles(
         x_pixels = np.arange(width)
         y_pixels = np.arange(height)
 
+        if show_threshold_line:
+            ax_top.axhline(risk_threshold, color="0.55", linewidth=0.7, linestyle=(0, (3, 2)), zorder=1)
+            ax_right.axvline(risk_threshold, color="0.55", linewidth=0.7, linestyle=(0, (3, 2)), zorder=1)
+
         for color, radius in zip(line_colors, radii):
             risk = risks[radius]
             h_profile = clipped_profile(axis_values(risk, h_axis_name)[h_indices], clip=clip_risk_for_display)
             v_profile = clipped_profile(axis_values(risk, v_axis_name)[v_indices], clip=clip_risk_for_display)
             label = f"r={radius}"
-            ax_top.plot(x_pixels, h_profile, linewidth=1.4, color=color, label=label)
-            ax_right.plot(v_profile, y_pixels, linewidth=1.4, color=color, label=label)
+            ax_top.plot(x_pixels, h_profile, linewidth=profile_linewidth, alpha=profile_alpha, color=color, label=label, zorder=3)
+            ax_right.plot(v_profile, y_pixels, linewidth=profile_linewidth, alpha=profile_alpha, color=color, label=label, zorder=3)
 
         ax_top.set_xlim(-0.5, width - 0.5)
         ax_top.set_ylim(*risk_ylim)
         ax_top.set_xticks([])
-        ax_top.tick_params(axis="y", labelsize=max(label_fontsize - 2, 6))
-        ax_top.set_ylabel(f"{h_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
-        if view_idx == 0:
-            ax_top.set_title("Marginal axis-wise cutting-risk profiles", fontsize=title_fontsize, pad=4)
-        for spine in ["top", "right"]:
-            ax_top.spines[spine].set_visible(False)
+        if show_profile_ticks:
+            ax_top.set_yticks([risk_ylim[0], risk_threshold, risk_ylim[1]])
+        ax_top.tick_params(axis="y", labelsize=max(label_fontsize - 2, 6), length=2.0, width=0.6)
+        if show_profile_axis_labels:
+            ax_top.set_ylabel(f"{h_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
+        if view_idx == 0 and profile_title:
+            ax_top.set_title(profile_title, fontsize=title_fontsize, pad=4)
+        style_profile_axis(ax_top, show_ticks=show_profile_ticks, show_axis_labels=show_profile_axis_labels)
 
         ax_right.set_xlim(*risk_ylim)
         ax_right.set_ylim(height - 0.5, -0.5)
         ax_right.set_yticks([])
-        ax_right.tick_params(axis="x", labelsize=max(label_fontsize - 2, 6), rotation=45)
-        ax_right.set_xlabel(f"{v_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
-        for spine in ["top", "right"]:
-            ax_right.spines[spine].set_visible(False)
+        if show_profile_ticks:
+            ax_right.set_xticks([risk_ylim[0], risk_threshold, risk_ylim[1]])
+            ax_right.tick_params(axis="x", labelsize=max(label_fontsize - 2, 6), length=2.0, width=0.6)
+        if show_profile_axis_labels:
+            ax_right.set_xlabel(f"{v_axis_name}-risk", fontsize=max(label_fontsize - 2, 6))
+        style_profile_axis(ax_right, show_ticks=show_profile_ticks, show_axis_labels=show_profile_axis_labels)
 
     if show_legend and first_top_ax is not None:
-        first_top_ax.legend(loc="upper right", fontsize=max(label_fontsize - 2, 6), frameon=False, ncol=len(radii))
+        first_top_ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.02),
+            fontsize=max(label_fontsize - 2, 6),
+            frameon=False,
+            ncol=len(radii),
+            handlelength=1.8,
+            columnspacing=1.0,
+        )
 
     if show_presence_colorbar and main_axes_for_colorbar:
         sm = plt.cm.ScalarMappable(cmap=presence_cmap, norm=plt.Normalize(0, 1))
@@ -377,13 +414,20 @@ def main() -> None:
     parser.add_argument("--risk_line_cmap", type=str, default="magma")
     parser.add_argument("--show_legend", action="store_true")
     parser.add_argument("--show_presence_colorbar", action="store_true")
+    parser.add_argument("--hide_threshold_line", action="store_true", help="Hide the decision-threshold guide line in the marginal profiles.")
+    parser.add_argument("--risk_threshold", type=float, default=0.5, help="Risk threshold guide line shown in marginal profiles.")
+    parser.add_argument("--profile_linewidth", type=float, default=1.15)
+    parser.add_argument("--profile_alpha", type=float, default=0.92)
+    parser.add_argument("--show_profile_axis_labels", action="store_true", help="Show marginal axis labels such as x-risk and y-risk.")
+    parser.add_argument("--show_profile_ticks", action="store_true", help="Show compact ticks on marginal profile axes.")
+    parser.add_argument("--profile_title", type=str, default="Axis-wise cutting risk")
     parser.add_argument("--dpi", type=int, default=300)
-    parser.add_argument("--title_fontsize", type=int, default=10)
+    parser.add_argument("--title_fontsize", type=int, default=9)
     parser.add_argument("--label_fontsize", type=int, default=9)
-    parser.add_argument("--profile_height_ratio", type=float, default=0.32)
-    parser.add_argument("--profile_width_ratio", type=float, default=0.32)
+    parser.add_argument("--profile_height_ratio", type=float, default=0.22)
+    parser.add_argument("--profile_width_ratio", type=float, default=0.22)
     parser.add_argument("--view_hspace", type=float, default=0.18)
-    parser.add_argument("--panel_wspace", type=float, default=0.08)
+    parser.add_argument("--panel_wspace", type=float, default=0.04)
     args = parser.parse_args()
 
     episode_dir = args.raw_pred_episode_dir if args.raw_pred_episode_dir is not None else args.cost_map_log.parent
@@ -448,6 +492,13 @@ def main() -> None:
         profile_width_ratio=args.profile_width_ratio,
         view_hspace=args.view_hspace,
         panel_wspace=args.panel_wspace,
+        profile_linewidth=args.profile_linewidth,
+        profile_alpha=args.profile_alpha,
+        show_threshold_line=not args.hide_threshold_line,
+        risk_threshold=args.risk_threshold,
+        show_profile_axis_labels=args.show_profile_axis_labels,
+        show_profile_ticks=args.show_profile_ticks,
+        profile_title=args.profile_title,
     )
 
     print(f"[OK] Saved presence heatmap with marginal cutting-risk profiles: {args.out_path}")
