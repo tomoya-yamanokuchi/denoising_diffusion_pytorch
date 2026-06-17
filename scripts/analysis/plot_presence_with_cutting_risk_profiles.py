@@ -97,6 +97,38 @@ def apply_crop_to_coords(
     return {name: values[y0:y1, x0:x1] for name, values in coords.items()}
 
 
+def pad_panel_to_square(
+    score: np.ndarray,
+    mask: np.ndarray | None,
+    coords: dict[str, np.ndarray],
+) -> tuple[np.ndarray, np.ndarray | None, dict[str, np.ndarray]]:
+    """Pad a cropped panel and its coordinate maps to a square display panel.
+
+    This mirrors plot_presence_score_maps.py's square panel behavior, but also
+    pads the coordinate maps used by the marginal profiles. Artificial padding
+    pixels receive coordinate index -1, and the profile extractor displays zero
+    risk over those padded margins.
+    """
+    h, w = score.shape[:2]
+    size = max(h, w)
+    if h == size and w == size:
+        return score, mask, coords
+
+    pad_top = (size - h) // 2
+    pad_bottom = size - h - pad_top
+    pad_left = (size - w) // 2
+    pad_right = size - w - pad_left
+    pad_2d = ((pad_top, pad_bottom), (pad_left, pad_right))
+
+    padded_score = np.pad(score, pad_2d, mode="constant", constant_values=0.0)
+    padded_mask = None if mask is None else np.pad(mask, pad_2d, mode="constant", constant_values=False)
+    padded_coords = {
+        name: np.pad(values, pad_2d, mode="constant", constant_values=-1)
+        for name, values in coords.items()
+    }
+    return padded_score, padded_mask, padded_coords
+
+
 def axis_values(axis_scores: AxisCost, axis_name: str) -> np.ndarray:
     if axis_name == "x":
         return np.asarray(axis_scores.x_axis, dtype=float).reshape(-1)
@@ -107,12 +139,47 @@ def axis_values(axis_scores: AxisCost, axis_name: str) -> np.ndarray:
     raise ValueError(f"Unknown axis_name={axis_name!r}.")
 
 
+def _constant_valid_indices_per_column(values: np.ndarray) -> np.ndarray | None:
+    indices: list[int] = []
+    for col in range(values.shape[1]):
+        valid = np.unique(values[:, col])
+        valid = valid[valid >= 0]
+        if valid.size == 0:
+            indices.append(-1)
+        elif valid.size == 1:
+            indices.append(int(valid[0]))
+        else:
+            return None
+    if np.unique([idx for idx in indices if idx >= 0]).size <= 1:
+        return None
+    return np.asarray(indices, dtype=int)
+
+
+def _constant_valid_indices_per_row(values: np.ndarray) -> np.ndarray | None:
+    indices: list[int] = []
+    for row in range(values.shape[0]):
+        valid = np.unique(values[row, :])
+        valid = valid[valid >= 0]
+        if valid.size == 0:
+            indices.append(-1)
+        elif valid.size == 1:
+            indices.append(int(valid[0]))
+        else:
+            return None
+    if np.unique([idx for idx in indices if idx >= 0]).size <= 1:
+        return None
+    return np.asarray(indices, dtype=int)
+
+
 def infer_display_axis_profiles(coords: dict[str, np.ndarray]) -> tuple[tuple[str, np.ndarray], tuple[str, np.ndarray]]:
     """Find the axis/index sequence along heatmap columns and rows.
 
     Returns:
       (horizontal_axis_name, horizontal_indices),
       (vertical_axis_name, vertical_indices)
+
+    Coordinate index -1 denotes artificial square-padding pixels. Those indices
+    are preserved here and later rendered as zero-risk margins.
     """
     if not coords:
         raise ValueError("No coordinate maps were provided.")
@@ -125,10 +192,12 @@ def infer_display_axis_profiles(coords: dict[str, np.ndarray]) -> tuple[tuple[st
     for name, values in coords.items():
         if values.shape != (height, width):
             raise ValueError("All coordinate maps must have the same shape.")
-        if width > 1 and np.all(values == values[:1, :]) and np.unique(values[0, :]).size > 1:
-            horizontal = (name, values[0, :].astype(int))
-        if height > 1 and np.all(values == values[:, :1]) and np.unique(values[:, 0]).size > 1:
-            vertical = (name, values[:, 0].astype(int))
+        col_indices = _constant_valid_indices_per_column(values)
+        if col_indices is not None:
+            horizontal = (name, col_indices)
+        row_indices = _constant_valid_indices_per_row(values)
+        if row_indices is not None:
+            vertical = (name, row_indices)
 
     if horizontal is None or vertical is None:
         raise ValueError(
@@ -136,6 +205,14 @@ def infer_display_axis_profiles(coords: dict[str, np.ndarray]) -> tuple[tuple[st
             "This can happen if the view was cropped to a single pixel along one axis."
         )
     return horizontal, vertical
+
+
+def profile_values(axis_profile: np.ndarray, display_indices: np.ndarray, *, clip: bool) -> np.ndarray:
+    axis_profile = clipped_profile(axis_profile, clip=clip)
+    out = np.zeros_like(display_indices, dtype=float)
+    valid = (display_indices >= 0) & (display_indices < axis_profile.size)
+    out[valid] = axis_profile[display_indices[valid]]
+    return out
 
 
 def make_presence_rgb(score: np.ndarray, mask: np.ndarray | None, *, presence_cmap, background_mode: str) -> np.ndarray:
@@ -162,6 +239,7 @@ def prepare_view_panels(
     shape_mask_side: np.ndarray | None,
     shape_mask_top: np.ndarray | None,
     auto_crop: bool,
+    square_panels: bool,
     crop_padding: int,
     crop_score_threshold: float,
 ) -> list[ViewPanel]:
@@ -195,6 +273,8 @@ def prepare_view_panels(
             bounds = crop_bounds_from_masks([crop_mask], crop_padding)
             score, mask = apply_crop(score, mask, bounds)
             coords = apply_crop_to_coords(coords, bounds)
+        if square_panels:
+            score, mask, coords = pad_panel_to_square(score, mask, coords)
 
         panels.append(ViewPanel(view=view, score=score, mask=mask, coords=coords))
     return panels
@@ -336,6 +416,8 @@ def plot_joint_profiles(
         ax_main.set_ylim(height - 0.5, -0.5)
         ax_main.set_xticks([])
         ax_main.set_yticks([])
+        ax_main.set_aspect("equal")
+        ax_main.set_box_aspect(1)
         ax_main.set_ylabel(panel.view.label, fontsize=label_fontsize, rotation=90, labelpad=8)
         for spine in ax_main.spines.values():
             spine.set_visible(False)
@@ -350,8 +432,8 @@ def plot_joint_profiles(
 
         for color, radius in zip(line_colors, radii):
             risk = risks[radius]
-            h_profile = clipped_profile(axis_values(risk, h_axis_name)[h_indices], clip=clip_risk_for_display)
-            v_profile = clipped_profile(axis_values(risk, v_axis_name)[v_indices], clip=clip_risk_for_display)
+            h_profile = profile_values(axis_values(risk, h_axis_name), h_indices, clip=clip_risk_for_display)
+            v_profile = profile_values(axis_values(risk, v_axis_name), v_indices, clip=clip_risk_for_display)
             label = f"r={radius}"
             if fill_profile_area:
                 h_where = h_profile >= fill_base if profile_fill_mode == "above_threshold" else np.ones_like(h_profile, dtype=bool)
@@ -474,6 +556,7 @@ def main() -> None:
     parser.add_argument("--shape_mask_top_image", type=Path, default=None, help="Optional 2D silhouette mask for top-view display/cropping.")
     parser.add_argument("--auto_crop", dest="auto_crop", action="store_true", default=True, help="Crop each view to the external/oracle silhouette mask or nonzero presence region before plotting. Enabled by default to match presence-map scripts.")
     parser.add_argument("--no_auto_crop", dest="auto_crop", action="store_false", help="Disable automatic cropping and show the full voxel grid.")
+    parser.add_argument("--no_square_panels", dest="square_panels", action="store_false", default=True, help="Disable square padding after cropping. Enabled by default to match presence-map scripts.")
     parser.add_argument("--crop_padding", type=int, default=2)
     parser.add_argument("--crop_score_threshold", type=float, default=1e-6)
     parser.add_argument("--risk_ylim", type=str, default="0,1", help="Y/x range for marginal risk profiles as 'low,high'.")
@@ -532,6 +615,7 @@ def main() -> None:
         shape_mask_side=side_mask,
         shape_mask_top=top_mask,
         auto_crop=args.auto_crop,
+        square_panels=args.square_panels,
         crop_padding=args.crop_padding,
         crop_score_threshold=args.crop_score_threshold,
     )
