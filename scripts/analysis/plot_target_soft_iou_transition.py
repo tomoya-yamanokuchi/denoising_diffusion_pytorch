@@ -11,6 +11,7 @@ from typing import Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import FormatStrFormatter
 
 
 @dataclass(frozen=True)
@@ -186,6 +187,7 @@ def plot_summary(
     dpi: int,
     legend_outside_top: bool,
     hide_legend: bool,
+    y_tick_decimals: int | None,
 ) -> None:
     by_series: dict[str, list[dict[str, float | int | str]]] = defaultdict(list)
     for row in rows:
@@ -202,6 +204,8 @@ def plot_summary(
 
     ax.set_xlabel("Task step")
     ax.set_ylabel(ylabel or "Target soft IoU")
+    if y_tick_decimals is not None:
+        ax.yaxis.set_major_formatter(FormatStrFormatter(f"%.{y_tick_decimals}f"))
     # ax.set_ylim(bottom=0.0, top=1.05)
     if title:
         ax.set_title(title)
@@ -235,6 +239,7 @@ def main() -> None:
     parser.add_argument("--dpi", type=int, default=300)
     parser.add_argument("--legend_outside_top", action="store_true")
     parser.add_argument("--hide_legend", action="store_true")
+    parser.add_argument("--y_tick_decimals", type=int, default=None)
     args = parser.parse_args()
 
     if args.series:
@@ -262,6 +267,7 @@ def main() -> None:
         dpi=args.dpi,
         legend_outside_top=args.legend_outside_top,
         hide_legend=args.hide_legend,
+        y_tick_decimals=args.y_tick_decimals,
     )
 
     print(f"[OK] saved records: {records_csv}")
