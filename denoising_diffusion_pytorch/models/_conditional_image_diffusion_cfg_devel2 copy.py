@@ -260,17 +260,9 @@ class GaussianDiffusion(nn.Module):
         return ret
 
     @torch.inference_mode()
-    # def ddim_sample(self, shape, return_all_timesteps = False , cond = None, mask = None , omega = 0.2):
-    def ddim_sample(
-        self,
-        shape,
-        return_all_timesteps=False,
-        cond=None,
-        mask=None,
-        guidance_scale=1.2,
-    ):
-        import ipdb; ipdb.set_trace()
+    def ddim_sample(self, shape, return_all_timesteps = False , cond = None, mask = None , omega = 0.2):
         batch, device, total_timesteps, sampling_timesteps, eta, objective = shape[0], self.device, self.num_timesteps, self.sampling_timesteps, self.ddim_sampling_eta, self.objective
+        # batch, device, total_timesteps, sampling_timesteps, eta, objective = shape[0], self.device, self.num_timesteps, 20, self.ddim_sampling_eta, self.objective
 
         times = torch.linspace(-1, total_timesteps - 1, steps = sampling_timesteps + 1)   # [-1, 0, 1, 2, ..., T-1] when sampling_timesteps == total_timesteps
         times = list(reversed(times.int().tolist()))
@@ -285,11 +277,7 @@ class GaussianDiffusion(nn.Module):
             x_0_org = cond[0]["val"]
 
 
-        # for time, time_next in tqdm(time_pairs, desc = f'sampling with omega {omega}'):
-        for time, time_next in tqdm(
-            time_pairs,
-            desc=f"sampling with guidance_scale {guidance_scale}",
-        ):
+        for time, time_next in tqdm(time_pairs, desc = f'sampling with omega {omega}'):
             time_cond = torch.full((batch,), time, device = device, dtype = torch.long)
             self_cond = x_start if self.self_condition else None
 
@@ -306,20 +294,11 @@ class GaussianDiffusion(nn.Module):
             pred_noise_no_cond, x_start_no_cond, *_ = self.model_predictions(img, time_cond, self_cond, mask_cond, binary_mask)
 
 
-            ''' (Old implementation)
-            # self.omega = omega #default 0.2
-            # if time_next < 0:
-                # img = x_start
-                # img = (1+self.omega)*x_start-self.omega*(x_start_no_cond)
-            '''
 
+            self.omega = omega #default 0.2
             if time_next < 0:
-                # Standard CFG parameterization:
-                # guidance_scale = 0: unconditional sampling
-                # guidance_scale = 1: ordinary conditional sampling
-                # guidance_scale > 1: amplified conditional guidance
-                img = guidance_scale * x_start + (1.0 - guidance_scale) * x_start_no_cond
-
+                # img = x_start
+                img = (1+self.omega)*x_start-self.omega*(x_start_no_cond)
                 if cond is not None:
                     cond[0]["val"] = x_0_org
                     img = apply_conditioning(x = img ,cond=cond)
@@ -344,11 +323,7 @@ class GaussianDiffusion(nn.Module):
                   c * pred_noise_no_cond + \
                   sigma * noise
 
-            ''' (Old implementation)
-            # img = (1+self.omega)*img_cond-self.omega*(img_non_cond)
-            '''
-            img = guidance_scale * img_cond + (1.0 - guidance_scale) * img_non_cond
-
+            img = (1+self.omega)*img_cond-self.omega*(img_non_cond)
 
             # import ipdb;ipdb.set_trace()
             if cond is not None:
@@ -369,33 +344,11 @@ class GaussianDiffusion(nn.Module):
         ret = self.unnormalize(ret)
         return ret
 
-    '''
-    # @torch.inference_mode()
-    # def sample(self, batch_size = 16, return_all_timesteps = False , cond = None, mask = None, omega = 0.2):
-    #     image_size, channels = self.image_size, self.channels
-    #     sample_fn = self.p_sample_loop if not self.is_ddim_sampling else self.ddim_sample
-    #     return sample_fn((batch_size, channels, image_size, image_size), return_all_timesteps = return_all_timesteps , cond  = cond, mask = mask, omega=omega)
-    '''
-
     @torch.inference_mode()
-    def sample(
-        self,
-        batch_size=16,
-        return_all_timesteps=False,
-        cond=None,
-        mask=None,
-        guidance_scale=1.2,
-    ):
+    def sample(self, batch_size = 16, return_all_timesteps = False , cond = None, mask = None, omega = 0.2):
         image_size, channels = self.image_size, self.channels
         sample_fn = self.p_sample_loop if not self.is_ddim_sampling else self.ddim_sample
-        return sample_fn(
-            (batch_size, channels, image_size, image_size),
-            return_all_timesteps=return_all_timesteps,
-            cond=cond,
-            mask=mask,
-            guidance_scale=guidance_scale,
-        )
-
+        return sample_fn((batch_size, channels, image_size, image_size), return_all_timesteps = return_all_timesteps , cond  = cond, mask = mask, omega=omega)
 
     @torch.inference_mode()
     def interpolate(self, x1, x2, t = None, lam = 0.5):

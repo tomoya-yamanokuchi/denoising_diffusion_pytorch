@@ -109,7 +109,8 @@ class ConditionalDiffusionSliceImageInferencer(SliceImageInferencer):
                 return_all_timesteps = True,
                 cond                 = cond,
                 mask                 = mask,
-                omega                = self.guidance_scale,
+                # omega                = self.guidance_scale,
+                guidance_scale       = self.guidance_scale,
             ).detach().cpu()
 
         batch_images = (

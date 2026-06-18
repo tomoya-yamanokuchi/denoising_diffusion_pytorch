@@ -6,5 +6,7 @@ infer_model: conditional_diffusion
 inference:
   model: conditional_diffusion
 
-  guidance_scale    : 0.2
+  # guidance_scale    : 0.2
   sampling_timesteps: 20
+
+  guidance_scale    : 1.2

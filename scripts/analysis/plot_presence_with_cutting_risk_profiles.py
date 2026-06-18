@@ -210,6 +210,7 @@ def infer_display_axis_profiles(coords: dict[str, np.ndarray]) -> tuple[tuple[st
 def profile_values(axis_profile: np.ndarray, display_indices: np.ndarray, *, clip: bool) -> np.ndarray:
     axis_profile = clipped_profile(axis_profile, clip=clip)
     out = np.zeros_like(display_indices, dtype=float)
+    # import ipdb; ipdb.set_trace()
     valid = (display_indices >= 0) & (display_indices < axis_profile.size)
     out[valid] = axis_profile[display_indices[valid]]
     return out
