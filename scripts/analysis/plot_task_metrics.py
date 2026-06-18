@@ -234,8 +234,8 @@ def plot_metric(
     if x_axis in ["delta", "eta", "guidance_scale", "sample_image_num", "sampling_timesteps"]:
         ax.set_xlim(*get_padded_xlim(x_tick_values))
 
-    ax.tick_params(axis="x", labelsize=12)
-    ax.tick_params(axis="y", labelsize=12)
+    ax.tick_params(axis="x", labelsize=10.5)
+    ax.tick_params(axis="y", labelsize=10.5)
     apply_x_tick_rotation(ax=ax, rotation=x_tick_rotation)
 
     ax.grid(True, alpha=0.3)
@@ -495,7 +495,7 @@ def main() -> None:
     parser.add_argument(
         "--ylim_mode",
         type=str,
-        default="fixed",
+        default="auto",
         choices=["fixed", "auto"],
         help=(
             "How to set y-axis limits. "
