@@ -89,6 +89,9 @@ AXIS_STYLE_SPECS = {
 
 STD_BAND_ALPHA = 0.18
 LINE_WIDTH = 1.6
+DEFAULT_HIGHLIGHT_SIZE = 95
+DEFAULT_HIGHLIGHT_LINEWIDTH = 1.8
+DEFAULT_HIGHLIGHT_COLOR = "black"
 
 
 def get_metric_bounds(metric_name: str) -> tuple[float | None, float | None]:
@@ -123,6 +126,8 @@ def plot_metric(
     x_axis: str,
     group_by: str | None,
     ylim_mode: str,
+    x_tick_rotation: float,
+    highlight_x_value: float | None,
 ) -> None:
     mean_col = f"{metric_name}_mean"
     std_col = f"{metric_name}_std"
@@ -194,6 +199,18 @@ def plot_metric(
                 linewidth=0,
             )
 
+        highlight_mask = build_highlight_mask(x, highlight_x_value)
+        if highlight_mask is not None and np.any(highlight_mask):
+            ax.scatter(
+                np.asarray(x)[highlight_mask],
+                y[highlight_mask],
+                s=DEFAULT_HIGHLIGHT_SIZE,
+                facecolors="none",
+                edgecolors=DEFAULT_HIGHLIGHT_COLOR,
+                linewidths=DEFAULT_HIGHLIGHT_LINEWIDTH,
+                zorder=5,
+            )
+
         print(
             f"group_value = {group_value} | "
             f"x = {x} | y = {y} | error_band = {error_band}"
@@ -219,6 +236,7 @@ def plot_metric(
 
     ax.tick_params(axis="x", labelsize=12)
     ax.tick_params(axis="y", labelsize=12)
+    apply_x_tick_rotation(ax=ax, rotation=x_tick_rotation)
 
     ax.grid(True, alpha=0.3)
 
@@ -238,6 +256,32 @@ def plot_metric(
     fig.savefig(out_path, dpi=300)
     # fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
+
+
+def build_highlight_mask(
+    x: np.ndarray,
+    highlight_x_value: float | None,
+    atol: float = 1e-8,
+) -> np.ndarray | None:
+    if highlight_x_value is None:
+        return None
+
+    x_numeric = pd.to_numeric(pd.Series(x), errors="coerce").to_numpy(dtype=float)
+    if np.all(np.isnan(x_numeric)):
+        return None
+
+    return np.isclose(x_numeric, float(highlight_x_value), rtol=0.0, atol=atol)
+
+
+def apply_x_tick_rotation(ax, rotation: float) -> None:
+    ax.tick_params(axis="x", labelrotation=rotation)
+
+    if np.isclose(rotation, 0.0):
+        return
+
+    for label in ax.get_xticklabels():
+        label.set_ha("right")
+        label.set_rotation_mode("anchor")
 
 
 def format_group_label(group_by: str, group_value: object) -> str:
@@ -277,7 +321,7 @@ def build_error_band_for_plot(
     error_col: str,
     y: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray] | None:
-    """Return lower/upper values for a semi-transparent ±std band."""
+    """Return lower/upper values for a semi-transparent +/-std band."""
     if error_col not in group.columns:
         return None
 
@@ -459,6 +503,23 @@ def main() -> None:
             "auto restores per-summary CSV automatic scaling."
         ),
     )
+    parser.add_argument(
+        "--x_tick_rotation",
+        type=float,
+        default=0.0,
+        help="Rotation angle in degrees for x-axis tick labels, e.g. 45.",
+    )
+    parser.add_argument(
+        "--highlight_x_value",
+        "--default_x_value",
+        dest="highlight_x_value",
+        type=float,
+        default=None,
+        help=(
+            "Optional x-axis value to emphasize with a black outline marker. "
+            "Use this to mark a default parameter value such as w=1.2, M=32, or S=20."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -487,6 +548,8 @@ def main() -> None:
             x_axis=args.x_axis,
             group_by=args.group_by,
             ylim_mode=args.ylim_mode,
+            x_tick_rotation=args.x_tick_rotation,
+            highlight_x_value=args.highlight_x_value,
         )
 
         print(f"[OK] Saved figure: {out_path}")
@@ -501,7 +564,9 @@ python scripts/analysis/plot_task_metrics.py \
     --summary_csv ./analysis/revise/sensitivity/guidance_scale/summary_metrics.csv \
     --out_dir ./analysis/revise/sensitivity/guidance_scale/figures_pdf \
     --x_axis guidance_scale \
-    --format pdf
+    --format pdf \
+    --x_tick_rotation 45 \
+    --highlight_x_value 1.2
 '''
 
 # DDIM sampling step
@@ -510,7 +575,8 @@ python scripts/analysis/plot_task_metrics.py \
  --summary_csv ./analysis/revise/sensitivity/DDIM_sampling_timesteps/summary_metrics.csv \
  --out_dir ./analysis/revise/sensitivity/DDIM_sampling_timesteps/figures_pdf \
  --x_axis sampling_timesteps \
- --format pdf
+ --format pdf \
+ --highlight_x_value 20
 '''
 
 
@@ -521,5 +587,6 @@ python scripts/analysis/plot_task_metrics.py \
   --summary_csv ./analysis/revise/sensitivity/number_of_generated_samples/summary_metrics.csv \
   --out_dir ./analysis/revise/sensitivity/number_of_generated_samples/figures_pdf \
   --x_axis sample_image_num \
-  --format pdf
+  --format pdf \
+  --highlight_x_value 32
 '''
