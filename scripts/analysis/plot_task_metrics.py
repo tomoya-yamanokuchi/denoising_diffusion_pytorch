@@ -92,6 +92,10 @@ LINE_WIDTH = 1.6
 DEFAULT_HIGHLIGHT_SIZE = 95
 DEFAULT_HIGHLIGHT_LINEWIDTH = 1.8
 DEFAULT_HIGHLIGHT_COLOR = "black"
+DEFAULT_HIGHLIGHT_VLINE_COLOR = "tab:red"
+DEFAULT_HIGHLIGHT_VLINE_LINESTYLE = "--"
+DEFAULT_HIGHLIGHT_VLINE_LINEWIDTH = 1.3
+DEFAULT_HIGHLIGHT_VLINE_ALPHA = 0.85
 
 
 def get_metric_bounds(metric_name: str) -> tuple[float | None, float | None]:
@@ -128,6 +132,8 @@ def plot_metric(
     ylim_mode: str,
     x_tick_rotation: float,
     highlight_x_value: float | None,
+    highlight_style: str,
+    highlight_label: str | None,
 ) -> None:
     mean_col = f"{metric_name}_mean"
     std_col = f"{metric_name}_std"
@@ -199,17 +205,13 @@ def plot_metric(
                 linewidth=0,
             )
 
-        highlight_mask = build_highlight_mask(x, highlight_x_value)
-        if highlight_mask is not None and np.any(highlight_mask):
-            ax.scatter(
-                np.asarray(x)[highlight_mask],
-                y[highlight_mask],
-                s=DEFAULT_HIGHLIGHT_SIZE,
-                facecolors="none",
-                edgecolors=DEFAULT_HIGHLIGHT_COLOR,
-                linewidths=DEFAULT_HIGHLIGHT_LINEWIDTH,
-                zorder=5,
-            )
+        draw_highlight_marker(
+            ax=ax,
+            x=x,
+            y=y,
+            highlight_x_value=highlight_x_value,
+            highlight_style=highlight_style,
+        )
 
         print(
             f"group_value = {group_value} | "
@@ -223,6 +225,13 @@ def plot_metric(
         mean_col=mean_col,
         error_col=std_col,
         ylim_mode=ylim_mode,
+    )
+
+    draw_highlight_vline(
+        ax=ax,
+        highlight_x_value=highlight_x_value,
+        highlight_style=highlight_style,
+        highlight_label=highlight_label,
     )
 
     ax.set_xlabel(AXIS_LABELS.get(x_axis, x_axis), fontsize=12.5)
@@ -256,6 +265,66 @@ def plot_metric(
     fig.savefig(out_path, dpi=300)
     # fig.savefig(out_path, dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
+
+
+def draw_highlight_marker(
+    ax,
+    x: np.ndarray,
+    y: np.ndarray,
+    highlight_x_value: float | None,
+    highlight_style: str,
+) -> None:
+    if highlight_style not in {"marker", "both"}:
+        return
+
+    highlight_mask = build_highlight_mask(x, highlight_x_value)
+    if highlight_mask is None or not np.any(highlight_mask):
+        return
+
+    ax.scatter(
+        np.asarray(x)[highlight_mask],
+        y[highlight_mask],
+        s=DEFAULT_HIGHLIGHT_SIZE,
+        facecolors="none",
+        edgecolors=DEFAULT_HIGHLIGHT_COLOR,
+        linewidths=DEFAULT_HIGHLIGHT_LINEWIDTH,
+        zorder=5,
+    )
+
+
+def draw_highlight_vline(
+    ax,
+    highlight_x_value: float | None,
+    highlight_style: str,
+    highlight_label: str | None,
+) -> None:
+    if highlight_x_value is None or highlight_style not in {"vline", "both"}:
+        return
+
+    ax.axvline(
+        float(highlight_x_value),
+        color=DEFAULT_HIGHLIGHT_VLINE_COLOR,
+        linestyle=DEFAULT_HIGHLIGHT_VLINE_LINESTYLE,
+        linewidth=DEFAULT_HIGHLIGHT_VLINE_LINEWIDTH,
+        alpha=DEFAULT_HIGHLIGHT_VLINE_ALPHA,
+        zorder=1,
+    )
+
+    if highlight_label is None or highlight_label == "":
+        return
+
+    ax.text(
+        float(highlight_x_value),
+        0.98,
+        highlight_label,
+        transform=ax.get_xaxis_transform(),
+        color=DEFAULT_HIGHLIGHT_VLINE_COLOR,
+        fontsize=10.5,
+        ha="right",
+        va="top",
+        rotation=90,
+        rotation_mode="anchor",
+    )
 
 
 def build_highlight_mask(
@@ -516,8 +585,27 @@ def main() -> None:
         type=float,
         default=None,
         help=(
-            "Optional x-axis value to emphasize with a black outline marker. "
-            "Use this to mark a default parameter value such as w=1.2, M=32, or S=20."
+            "Optional x-axis value to emphasize as the default parameter value, "
+            "such as w=1.2, M=32, or S=20."
+        ),
+    )
+    parser.add_argument(
+        "--highlight_style",
+        type=str,
+        default="vline",
+        choices=["none", "vline", "marker", "both"],
+        help=(
+            "How to emphasize --highlight_x_value. "
+            "Use vline for a red dashed vertical line, marker for a point outline, or both."
+        ),
+    )
+    parser.add_argument(
+        "--highlight_label",
+        type=str,
+        default="default",
+        help=(
+            "Text label for vline highlighting. "
+            "Use an empty string to hide the label."
         ),
     )
 
@@ -550,6 +638,8 @@ def main() -> None:
             ylim_mode=args.ylim_mode,
             x_tick_rotation=args.x_tick_rotation,
             highlight_x_value=args.highlight_x_value,
+            highlight_style=args.highlight_style,
+            highlight_label=args.highlight_label,
         )
 
         print(f"[OK] Saved figure: {out_path}")
@@ -566,7 +656,9 @@ python scripts/analysis/plot_task_metrics.py \
     --x_axis guidance_scale \
     --format pdf \
     --x_tick_rotation 45 \
-    --highlight_x_value 1.2
+    --highlight_x_value 1.2 \
+    --highlight_style vline \
+    --highlight_label default
 '''
 
 # DDIM sampling step
@@ -576,7 +668,9 @@ python scripts/analysis/plot_task_metrics.py \
  --out_dir ./analysis/revise/sensitivity/DDIM_sampling_timesteps/figures_pdf \
  --x_axis sampling_timesteps \
  --format pdf \
- --highlight_x_value 20
+ --highlight_x_value 20 \
+ --highlight_style vline \
+ --highlight_label default
 '''
 
 
@@ -588,5 +682,7 @@ python scripts/analysis/plot_task_metrics.py \
   --out_dir ./analysis/revise/sensitivity/number_of_generated_samples/figures_pdf \
   --x_axis sample_image_num \
   --format pdf \
-  --highlight_x_value 32
+  --highlight_x_value 32 \
+  --highlight_style vline \
+  --highlight_label default
 '''
