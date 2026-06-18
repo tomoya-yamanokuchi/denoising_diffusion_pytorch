@@ -269,7 +269,6 @@ class GaussianDiffusion(nn.Module):
         mask=None,
         guidance_scale=1.2,
     ):
-        import ipdb; ipdb.set_trace()
         batch, device, total_timesteps, sampling_timesteps, eta, objective = shape[0], self.device, self.num_timesteps, self.sampling_timesteps, self.ddim_sampling_eta, self.objective
 
         times = torch.linspace(-1, total_timesteps - 1, steps = sampling_timesteps + 1)   # [-1, 0, 1, 2, ..., T-1] when sampling_timesteps == total_timesteps
