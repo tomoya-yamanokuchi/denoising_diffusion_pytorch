@@ -94,7 +94,7 @@ DEFAULT_HIGHLIGHT_LINEWIDTH = 1.8
 DEFAULT_HIGHLIGHT_COLOR = "black"
 DEFAULT_HIGHLIGHT_VLINE_COLOR = "tab:red"
 DEFAULT_HIGHLIGHT_VLINE_LINESTYLE = "--"
-DEFAULT_HIGHLIGHT_VLINE_LINEWIDTH = 1.3
+DEFAULT_HIGHLIGHT_VLINE_LINEWIDTH = 2.0
 DEFAULT_HIGHLIGHT_VLINE_ALPHA = 0.85
 
 
@@ -150,7 +150,8 @@ def plot_metric(
     # Kept for API compatibility with older call sites.
     _ = title_suffix
 
-    fig, ax = plt.subplots(figsize=(3.7, 2.7))
+    # fig, ax = plt.subplots(figsize=(3.7, 2.7))
+    fig, ax = plt.subplots(figsize=(3.7, 2.4))
 
     axis_style = get_axis_style(x_axis)
 
@@ -602,7 +603,7 @@ def main() -> None:
     parser.add_argument(
         "--highlight_label",
         type=str,
-        default="default",
+        default="",
         help=(
             "Text label for vline highlighting. "
             "Use an empty string to hide the label."
