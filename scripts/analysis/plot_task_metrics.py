@@ -134,6 +134,7 @@ def plot_metric(
     highlight_x_value: float | None,
     highlight_style: str,
     highlight_label: str | None,
+    x_margin_mode: str,
 ) -> None:
     mean_col = f"{metric_name}_mean"
     std_col = f"{metric_name}_std"
@@ -242,7 +243,7 @@ def plot_metric(
     ax.set_xticks(x_tick_values)
 
     if x_axis in ["delta", "eta", "guidance_scale", "sample_image_num", "sampling_timesteps"]:
-        ax.set_xlim(*get_padded_xlim(x_tick_values))
+        ax.set_xlim(*get_x_axis_limits(x_tick_values, x_margin_mode=x_margin_mode))
 
     ax.tick_params(axis="x", labelsize=10.5)
     ax.tick_params(axis="y", labelsize=10.5)
@@ -366,6 +367,16 @@ def format_group_label(group_by: str, group_value: object) -> str:
         value_label = str(group_value)
 
     return f"{group_label} = {value_label}"
+
+
+def get_x_axis_limits(
+    x_tick_values: list[float],
+    x_margin_mode: str,
+) -> tuple[float, float]:
+    if x_margin_mode == "none" and len(x_tick_values) >= 2:
+        return float(min(x_tick_values)), float(max(x_tick_values))
+
+    return get_padded_xlim(x_tick_values)
 
 
 def get_padded_xlim(
@@ -580,6 +591,16 @@ def main() -> None:
         help="Rotation angle in degrees for x-axis tick labels, e.g. 45.",
     )
     parser.add_argument(
+        "--x_margin_mode",
+        type=str,
+        default="auto",
+        choices=["auto", "none"],
+        help=(
+            "How to set x-axis side margins. "
+            "auto keeps the default padded limits; none uses the first and last x values exactly."
+        ),
+    )
+    parser.add_argument(
         "--highlight_x_value",
         "--default_x_value",
         dest="highlight_x_value",
@@ -641,6 +662,7 @@ def main() -> None:
             highlight_x_value=args.highlight_x_value,
             highlight_style=args.highlight_style,
             highlight_label=args.highlight_label,
+            x_margin_mode=args.x_margin_mode,
         )
 
         print(f"[OK] Saved figure: {out_path}")
@@ -657,6 +679,7 @@ python scripts/analysis/plot_task_metrics.py \
     --x_axis guidance_scale \
     --format pdf \
     --x_tick_rotation 45 \
+    --x_margin_mode none \
     --highlight_x_value 1.2 \
     --highlight_style vline \
     --highlight_label default
@@ -669,6 +692,7 @@ python scripts/analysis/plot_task_metrics.py \
  --out_dir ./analysis/revise/sensitivity/DDIM_sampling_timesteps/figures_pdf \
  --x_axis sampling_timesteps \
  --format pdf \
+ --x_margin_mode none \
  --highlight_x_value 20 \
  --highlight_style vline \
  --highlight_label default
@@ -683,6 +707,7 @@ python scripts/analysis/plot_task_metrics.py \
   --out_dir ./analysis/revise/sensitivity/number_of_generated_samples/figures_pdf \
   --x_axis sample_image_num \
   --format pdf \
+  --x_margin_mode none \
   --highlight_x_value 32 \
   --highlight_style vline \
   --highlight_label default
