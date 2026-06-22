@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing import Dict, Literal, Tuple, TypedDict
 
 
 AxisName = Literal["z", "x", "y"]
@@ -11,15 +11,15 @@ class ActionInfo(TypedDict):
     loc: int
 
 
-ActionTable = dict[int, ActionInfo]
+ActionTable = Dict[int, ActionInfo]
 
 
-DEFAULT_AXIS_ORDER: tuple[AxisName, ...] = ("z", "x", "y")
+DEFAULT_AXIS_ORDER: Tuple[AxisName, ...] = ("z", "x", "y")
 
 
 def build_action_table(
     side_length: int,
-    axis_order: tuple[AxisName, ...] = DEFAULT_AXIS_ORDER,
+    axis_order: Tuple[AxisName, ...] = DEFAULT_AXIS_ORDER,
 ) -> ActionTable:
     """Build the cutting-action index table used by the visualizer.
 
