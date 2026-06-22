@@ -37,7 +37,7 @@ AXIS_LABELS = {
 
 METRIC_BOUNDS = {
     "cutting_error_volume": {
-        "lower": 0.0,
+        "lower": -0.3,
         "upper": None,
     },
     "part_remaining_rate": {
@@ -94,8 +94,8 @@ DEFAULT_HIGHLIGHT_LINEWIDTH = 1.8
 DEFAULT_HIGHLIGHT_COLOR = "black"
 DEFAULT_HIGHLIGHT_VLINE_COLOR = "tab:red"
 DEFAULT_HIGHLIGHT_VLINE_LINESTYLE = "--"
-DEFAULT_HIGHLIGHT_VLINE_LINEWIDTH = 2.0
-DEFAULT_HIGHLIGHT_VLINE_ALPHA = 0.85
+DEFAULT_HIGHLIGHT_VLINE_LINEWIDTH = 2.3 # 2.0
+DEFAULT_HIGHLIGHT_VLINE_ALPHA = 0.85 # 0.85
 
 
 def get_metric_bounds(metric_name: str) -> tuple[float | None, float | None]:
@@ -593,7 +593,7 @@ def main() -> None:
     parser.add_argument(
         "--x_margin_mode",
         type=str,
-        default="auto",
+        default="none",
         choices=["auto", "none"],
         help=(
             "How to set x-axis side margins. "

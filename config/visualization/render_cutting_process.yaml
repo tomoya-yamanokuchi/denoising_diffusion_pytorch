@@ -1,6 +1,6 @@
 # 評価結果のルートディレクトリ。
 # tags が指定されている場合は root_folder / tag を読む。
-root_folder: /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_20260504_160530/simple_T8_N6_E60000
+root_folder: /home/dev/workspace/dataset/nedo_dismantling_log/eval/unet_D64_T1000_S20_simple_2d_20260605_133339/simple_paper_A_T8_N6_eta0p5_D0_w0p2_M32_S20_E100000_proposed_A
 
 # 文字列でもリストでもOKにする。
 # tags: epsilon_greedy_00
