@@ -1,26 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, Literal, Tuple, TypedDict
+
+DEFAULT_AXIS_ORDER = ("z", "x", "y")
 
 
-AxisName = Literal["z", "x", "y"]
-
-
-class ActionInfo(TypedDict):
-    axis: AxisName
-    loc: int
-
-
-ActionTable = Dict[int, ActionInfo]
-
-
-DEFAULT_AXIS_ORDER: Tuple[AxisName, ...] = ("z", "x", "y")
-
-
-def build_action_table(
-    side_length: int,
-    axis_order: Tuple[AxisName, ...] = DEFAULT_AXIS_ORDER,
-) -> ActionTable:
+def build_action_table(side_length: int, axis_order=DEFAULT_AXIS_ORDER) -> dict:
     """Build the cutting-action index table used by the visualizer.
 
     This is the standalone equivalent of ``dismantling_env.get_action_table``.
@@ -34,12 +18,6 @@ def build_action_table(
 
     Returns:
         Mapping from action index to ``{"axis": axis_name, "loc": slice_index}``.
-
-    Example:
-        >>> build_action_table(2)
-        {0: {'axis': 'z', 'loc': 0}, 1: {'axis': 'z', 'loc': 1},
-         2: {'axis': 'x', 'loc': 0}, 3: {'axis': 'x', 'loc': 1},
-         4: {'axis': 'y', 'loc': 0}, 5: {'axis': 'y', 'loc': 1}}
     """
     side_length = int(side_length)
     if side_length <= 0:
@@ -53,7 +31,7 @@ def build_action_table(
     if invalid_axes:
         raise ValueError(f"axis_order contains unsupported axes: {invalid_axes}")
 
-    action_table: ActionTable = {}
+    action_table = {}
     action_idx = 0
 
     for axis in axis_order:
@@ -64,7 +42,7 @@ def build_action_table(
     return action_table
 
 
-def get_action_table(grid_config: dict) -> ActionTable:
+def get_action_table(grid_config: dict) -> dict:
     """Compatibility wrapper for code that passes a grid_config dict."""
     if "side_length" not in grid_config:
         raise KeyError("grid_config must contain 'side_length'")
