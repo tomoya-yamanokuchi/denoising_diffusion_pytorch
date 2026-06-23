@@ -68,6 +68,12 @@ class EpisodeResult:
     executed_intermediate_actions: Any = None
     execution_error_infos        : Any = None
 
+    # ---- optional voxel masks for post-hoc visualization ----
+    oracle_target_mask              : Any = None
+    step_cutting_error_masks        : Any = None
+    cumulative_cutting_error_masks  : Any = None
+    final_cutting_error_mask        : Any = None
+
 
 
 @dataclass(frozen=True)
