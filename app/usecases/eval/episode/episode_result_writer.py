@@ -44,6 +44,12 @@ class EpisodeResultWriter:
 
             "execution_error_infos" : episode_result.execution_error_infos,
         }
+
+        self._add_mask_data_if_available(
+            rollout_data=rollout_data,
+            episode_result=episode_result,
+        )
+
         pickle_utils().save(
             dataset=rollout_data,
             save_path=f"{save_root}/rollout_data.pickle",
@@ -64,3 +70,34 @@ class EpisodeResultWriter:
             dataset   = visualization_data,
             save_path = f"{save_root}/visualization_data.pickle",
         )
+
+
+    def _add_mask_data_if_available(
+        self,
+        rollout_data: dict,
+        episode_result: EpisodeResult,
+    ) -> None:
+        """Append optional voxel masks for post-hoc overcut visualization."""
+        if episode_result.oracle_target_mask is not None:
+            rollout_data["oracle_target_mask"] = np.asarray(
+                episode_result.oracle_target_mask,
+                dtype=bool,
+            )
+
+        if episode_result.step_cutting_error_masks is not None:
+            rollout_data["step_cutting_error_masks"] = np.asarray(
+                episode_result.step_cutting_error_masks,
+                dtype=bool,
+            )
+
+        if episode_result.cumulative_cutting_error_masks is not None:
+            rollout_data["cumulative_cutting_error_masks"] = np.asarray(
+                episode_result.cumulative_cutting_error_masks,
+                dtype=bool,
+            )
+
+        if episode_result.final_cutting_error_mask is not None:
+            rollout_data["final_cutting_error_mask"] = np.asarray(
+                episode_result.final_cutting_error_mask,
+                dtype=bool,
+            )
