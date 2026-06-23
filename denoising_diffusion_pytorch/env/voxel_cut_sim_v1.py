@@ -53,6 +53,7 @@ class dismantling_env():
 
         oracle_slice_image_z         = self.oracle_obs_model.init_imgs_z
         self.oracle_target_shape_vol = self.calculate_cutting_error_volume(oracle_slice_image_z)
+        self.oracle_target_mask      = self._build_oracle_target_mask()
 
 
     def get_action_table(self,grid_config):
@@ -103,6 +104,29 @@ class dismantling_env():
 
     def calculate_cutting_error_volume(self, mini_batch_image):
         return self.metric_calculator.calculate_cutting_error_volume(mini_batch_image)
+
+
+    def _build_oracle_target_mask(self) -> np.ndarray:
+        """Build the static 3D target mask from the oracle voxel colors."""
+        target_mask_flat = self.metric_calculator.target_segmenter.build_bool_mask(
+            np.asarray(self.oracle_obs_model.colors)
+        )
+
+        box_arrays_data = self.oracle_obs_model.voxel_hander.get_box_array_data()
+        grid_3dim = int(box_arrays_data.grid_3dim_size[0])
+
+        return target_mask_flat.reshape(grid_3dim, grid_3dim, grid_3dim)
+
+
+    def _build_cutting_error_mask(self, mini_batch_image, action) -> np.ndarray:
+        """Build a 3D target-colored mask for the current cut surface."""
+        target_mask_2d = self.metric_calculator.target_segmenter.build_bool_mask(
+            np.asarray(mini_batch_image)
+        )
+        return self.seq_obs_model.cast_slice_mask_to_box_mask(
+            mask_2d=target_mask_2d,
+            config=action,
+        )
 
 
     def step(self, action_idx, partial_obs=None) -> DismantlingStepResult:
@@ -235,6 +259,15 @@ class dismantling_env():
                 #   +------------+
 
 
+        cutting_error_mask = self._build_cutting_error_mask(
+            mini_batch_image=mini_batch_image,
+            action=action,
+        )
+
+        cutting_error_volume = self.calculate_cutting_error_volume(
+            mini_batch_image=mini_batch_image
+        )
+
         if update_flag == 1:
             self.seq_obs_model.update_color(mini_batch_image=mini_batch_image,config=action)
         elif update_flag == 0:
@@ -246,9 +279,11 @@ class dismantling_env():
 
         return DismantlingStepResult(
             observation          = self.get_obs(),
-            cutting_error_volume = self.calculate_cutting_error_volume(mini_batch_image=mini_batch_image),
+            cutting_error_volume = cutting_error_volume,
             done                 = False,
             info                 = self.get_info(),
+            cutting_error_mask   = cutting_error_mask,
+            oracle_target_mask   = self.oracle_target_mask,
         )
 
 
@@ -299,5 +334,5 @@ class dismantling_env():
             cutting_error_volume = 0.0,
             done                 = False,
             info                 = self.get_info(),
+            oracle_target_mask   = self.oracle_target_mask,
         )
-
