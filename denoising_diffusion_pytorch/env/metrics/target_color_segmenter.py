@@ -35,7 +35,7 @@ class TargetColorRange:
 @dataclass(frozen=True)
 class TargetColorSegmenter:
     """
-    Segment target-colored pixels/voxels from a 2D slice image.
+    Segment target-colored pixels/voxels from RGB-like arrays.
 
     In the current dismantling task, the blue component is treated as
     the target part. This class centralizes the color thresholding logic
@@ -88,6 +88,31 @@ class TargetColorSegmenter:
             self.color_range.to_legacy_config(),
         )
 
+    def build_bool_mask(self, image: np.ndarray) -> np.ndarray:
+        """
+        Build a boolean target mask from an RGB-like array.
+
+        This method is intended for downstream volume visualization/logging where
+        a true boolean mask is easier to store and compose than the legacy
+        3-channel mask returned by color_range_mask(). It accepts any array whose
+        last dimension is RGB, for example:
+
+            - 2D slice image:        (H, W, 3)
+            - 3D voxel color grid:   (D, H, W, 3)
+            - flattened voxel color: (N, 3)
+
+        Returns:
+            np.ndarray:
+                Boolean mask with shape image.shape[:-1].
+        """
+        self._validate_rgb_array(image)
+
+        rgb = np.asarray(image, dtype=float)
+        lb = np.asarray(self.color_range.target_mask_lb, dtype=float)
+        ub = np.asarray(self.color_range.target_mask_ub, dtype=float)
+
+        return np.all((rgb >= lb) & (rgb <= ub), axis=-1)
+
     def count_target_pixels(self, image: np.ndarray) -> float:
         """
         Count target-colored pixels/voxels in the given slice image.
@@ -134,5 +159,24 @@ class TargetColorSegmenter:
         if image.shape[2] != 3:
             raise ValueError(
                 "image must have 3 channels, "
+                f"but got shape: {image.shape}"
+            )
+
+    def _validate_rgb_array(self, image: np.ndarray) -> None:
+        if not isinstance(image, np.ndarray):
+            raise TypeError(
+                "image must be a numpy.ndarray, "
+                f"but got {type(image)}"
+            )
+
+        if image.ndim < 2:
+            raise ValueError(
+                "image must have at least 2 dimensions with RGB channels on the last axis, "
+                f"but got shape: {image.shape}"
+            )
+
+        if image.shape[-1] != 3:
+            raise ValueError(
+                "image must have 3 RGB channels on the last axis, "
                 f"but got shape: {image.shape}"
             )
