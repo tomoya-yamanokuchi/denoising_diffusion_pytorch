@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
+
 from ...env.types import DismantlingStepResult
 from ...env.voxel_cut_sim_v1 import dismantling_env
 from ..types import ActionCandidates
@@ -36,12 +38,27 @@ class ActionExecutor:
         step_result = None
 
         macro_cutting_error_volume = 0.0
+        macro_cutting_error_mask = None
+        oracle_target_mask = None
 
         for action_index in executed_candidates:
             step_result = env.step(
                 action_idx=action_index.global_index
             )
             macro_cutting_error_volume += step_result.cutting_error_volume
+
+            if step_result.cutting_error_mask is not None:
+                step_mask = np.asarray(step_result.cutting_error_mask, dtype=bool)
+                if macro_cutting_error_mask is None:
+                    macro_cutting_error_mask = step_mask.copy()
+                else:
+                    macro_cutting_error_mask = np.logical_or(
+                        macro_cutting_error_mask,
+                        step_mask,
+                    )
+
+            if step_result.oracle_target_mask is not None:
+                oracle_target_mask = step_result.oracle_target_mask
 
 
         if step_result is None:
@@ -56,5 +73,7 @@ class ActionExecutor:
                 cutting_error_volume = macro_cutting_error_volume,
                 done                 = step_result.done,
                 info                 = step_result.info,
+                cutting_error_mask   = macro_cutting_error_mask,
+                oracle_target_mask   = oracle_target_mask,
             )
         )
