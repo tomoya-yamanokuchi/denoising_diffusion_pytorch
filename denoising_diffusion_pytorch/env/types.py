@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 import numpy as np
 
 
@@ -46,3 +46,7 @@ class DismantlingStepResult:
     done                 : bool
     info                 : DismantlingInfo
 
+    # Optional voxel masks for post-hoc visualization/logging.
+    # These are kept optional so existing reset paths and legacy callers remain valid.
+    cutting_error_mask   : Optional[np.ndarray] = None
+    oracle_target_mask   : Optional[np.ndarray] = None
