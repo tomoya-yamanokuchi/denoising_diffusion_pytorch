@@ -38,7 +38,6 @@ class EpisodeRunner:
         action_plan = action_planner.initialize(context)
 
         collector = EpisodeCollector()
-
         for step_idx in range(int(context.task_step)):
             step_outcome = self.action_executor.execute(
                 env               = context.case.envs.eval,
@@ -85,4 +84,8 @@ class EpisodeRunner:
             planned_intermediate_actions        = collector.planned_intermediate_actions,
             executed_intermediate_actions       = collector.executed_intermediate_actions,
             execution_error_infos               = collector.execution_error_infos,
+            oracle_target_mask                  = collector.oracle_target_mask,
+            step_cutting_error_masks            = collector.step_cutting_error_masks,
+            cumulative_cutting_error_masks      = collector.cumulative_cutting_error_masks,
+            final_cutting_error_mask            = collector.final_cutting_error_mask,
         )
