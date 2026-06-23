@@ -3,9 +3,8 @@
 
 defaults:
   - base
-  - /eval/common/cases@cases  : complex_paper
+  - /eval/common/cases@cases  : complex_paper_E
   - /eval/common/policy@policy: complex
-  # - /eval/policy/method@policy: vaeac
   - /eval/method/vaeac/policy@policy
   - _self_
 
