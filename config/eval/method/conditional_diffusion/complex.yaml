@@ -3,7 +3,7 @@
 
 defaults:
   - base
-  - /eval/common/cases@cases  : complex_paper_F # complex_paper
+  - /eval/common/cases@cases  : complex_paper
   - /eval/common/policy@policy: complex
   - /eval/method/conditional_diffusion/policy@policy
   - _self_

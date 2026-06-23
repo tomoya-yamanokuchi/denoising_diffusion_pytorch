@@ -72,4 +72,4 @@ allow_existing: false
 
 # tag : "proposed_A_guidance_scale_analysis"
 
-tag: "vaeac_complex_E_error_mask"
+tag: "proposed_GT_complex_DEF_error_mask"

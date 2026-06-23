@@ -1,8 +1,8 @@
 # config/eval/policy/default.yaml
 
 control:
-  mode: epsilon_greedy_00
-  # mode: oracle_obs
+  # mode: epsilon_greedy_00
+  mode: oracle_obs
   # mode: no_cond
   # mode: random
   # ---
