@@ -24,6 +24,12 @@ class EpisodeCollector:
     _step_normalized_cutting_error_rates: list[float] = field(default_factory=list)
     _oracle_target_shape_vols: list[float]            = field(default_factory=list)
 
+    # ---- voxel mask logging for post-hoc overcut visualization ----
+    _oracle_target_mask              : np.ndarray | None = None
+    _step_cutting_error_masks        : list[np.ndarray] = field(default_factory=list)
+    _cumulative_cutting_error_masks  : list[np.ndarray] = field(default_factory=list)
+    _current_cumulative_cutting_error_mask: np.ndarray | None = None
+
     # ---- execution error logging ----
     _planned_actions              : list[int]       = field(default_factory=list)
     _executed_actions             : list[int]       = field(default_factory=list)
@@ -62,6 +68,8 @@ class EpisodeCollector:
             float(step_outcome.env_result.info.oracle_target_shape_vol)
         )
 
+        self._collect_masks(step_outcome)
+
         # New explicit logs.
         self._planned_actions.append(int(planned_candidates.last.global_index))
         self._executed_actions.append(int(executed_candidates.last.global_index))
@@ -74,6 +82,54 @@ class EpisodeCollector:
         )
 
         self._last_info = self._extract_last_info(step_outcome)
+
+
+    def _collect_masks(self, step_outcome: StepOutcome) -> None:
+        env_result = step_outcome.env_result
+
+        if env_result.oracle_target_mask is not None and self._oracle_target_mask is None:
+            self._oracle_target_mask = np.asarray(
+                env_result.oracle_target_mask,
+                dtype=bool,
+            ).copy()
+
+        if env_result.cutting_error_mask is not None:
+            step_mask = np.asarray(env_result.cutting_error_mask, dtype=bool)
+        else:
+            step_mask = self._build_zero_step_mask_if_possible()
+
+        if step_mask is None:
+            return
+
+        self._step_cutting_error_masks.append(step_mask.copy())
+
+        if self._current_cumulative_cutting_error_mask is None:
+            self._current_cumulative_cutting_error_mask = step_mask.copy()
+        else:
+            self._current_cumulative_cutting_error_mask = np.logical_or(
+                self._current_cumulative_cutting_error_mask,
+                step_mask,
+            )
+
+        self._cumulative_cutting_error_masks.append(
+            self._current_cumulative_cutting_error_mask.copy()
+        )
+
+
+    def _build_zero_step_mask_if_possible(self) -> np.ndarray | None:
+        if self._current_cumulative_cutting_error_mask is not None:
+            return np.zeros_like(
+                self._current_cumulative_cutting_error_mask,
+                dtype=bool,
+            )
+
+        if self._oracle_target_mask is not None:
+            return np.zeros_like(
+                self._oracle_target_mask,
+                dtype=bool,
+            )
+
+        return None
 
 
     def _extract_execution_error_info(
@@ -154,6 +210,30 @@ class EpisodeCollector:
     def oracle_target_shape_vols(self) -> np.ndarray:
         return np.asarray(self._oracle_target_shape_vols)
 
+    @property
+    def oracle_target_mask(self) -> np.ndarray | None:
+        if self._oracle_target_mask is None:
+            return None
+        return self._oracle_target_mask.copy()
+
+    @property
+    def step_cutting_error_masks(self) -> np.ndarray | None:
+        if len(self._step_cutting_error_masks) == 0:
+            return None
+        return np.asarray(self._step_cutting_error_masks, dtype=bool)
+
+    @property
+    def cumulative_cutting_error_masks(self) -> np.ndarray | None:
+        if len(self._cumulative_cutting_error_masks) == 0:
+            return None
+        return np.asarray(self._cumulative_cutting_error_masks, dtype=bool)
+
+    @property
+    def final_cutting_error_mask(self) -> np.ndarray | None:
+        if self._current_cumulative_cutting_error_mask is None:
+            return None
+        return self._current_cumulative_cutting_error_mask.copy()
+
 
     def to_rollout_data(self) -> dict[str, Any]:
         return {
@@ -198,6 +278,4 @@ class EpisodeCollector:
         if hasattr(env_result, "info"):
             return env_result.info
         return None
-
-
 
