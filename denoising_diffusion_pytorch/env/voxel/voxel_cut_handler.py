@@ -1,3 +1,5 @@
+import numpy as np
+
 from denoising_diffusion_pytorch.utils.voxel_handlers import pv_box_array_multi_type_obj
 from .index_map import IndexMap
 
@@ -117,6 +119,71 @@ class VoxelCutHandler():
         self.colors     = updated_colors
 
 
+    def cast_slice_mask_to_box_mask(self, mask_2d, config):
+        """Cast one extracted slice mask back to a 3D voxel mask.
+
+        Args:
+            mask_2d (np.ndarray): Boolean mask for the extracted cut surface,
+                typically shape ``(side_length, side_length)``. A 3-channel mask
+                is also accepted and collapsed with ``any(axis=-1)``.
+            config (dict): Action config containing ``axis`` and ``loc``.
+
+        Returns:
+            np.ndarray: Boolean voxel mask with shape
+                ``(side_length, side_length, side_length)`` in the same grid order
+                as ``self.colors.reshape(side_length, side_length, side_length, 3)``.
+        """
+        mask_2d = np.asarray(mask_2d, dtype=bool)
+        if mask_2d.ndim == 3:
+            if mask_2d.shape[-1] != 3:
+                raise ValueError(
+                    "3D mask_2d must have RGB-like channels on the last axis, "
+                    f"but got shape: {mask_2d.shape}"
+                )
+            mask_2d = np.any(mask_2d, axis=-1)
+
+        box_arrays_data = self.voxel_hander.get_box_array_data()
+        grid_2dim = box_arrays_data.grid_2dim_size[0]
+        grid_3dim = box_arrays_data.grid_3dim_size[0]
+        batch_img_len = int(grid_2dim / grid_3dim)
+
+        expected_shape = (grid_3dim, grid_3dim)
+        if mask_2d.shape != expected_shape:
+            raise ValueError(
+                f"mask_2d must have shape {expected_shape}, "
+                f"but got shape: {mask_2d.shape}"
+            )
+
+        tiled_mask = np.zeros((grid_2dim, grid_2dim), dtype=bool)
+        tile_j, tile_i = self.index_map_fn.map_1d_to_2d_loc(config["loc"])
+        tiled_mask[
+            tile_j * grid_3dim:(tile_j + 1) * grid_3dim,
+            tile_i * grid_3dim:(tile_i + 1) * grid_3dim,
+        ] = mask_2d
+
+        batch_mask = np.zeros((grid_3dim, grid_3dim, grid_3dim), dtype=bool)
+        k = 0
+        for j in range(batch_img_len):
+            for i in range(batch_img_len):
+                batch_mask[k] = tiled_mask[
+                    j * grid_3dim:(j + 1) * grid_3dim,
+                    i * grid_3dim:(i + 1) * grid_3dim,
+                ]
+                k += 1
+
+        axis = config["axis"]
+        if axis == "z":
+            box_mask = batch_mask
+        elif axis == "y":
+            box_mask = batch_mask.transpose(1, 0, 2)
+        elif axis == "x":
+            box_mask = batch_mask.transpose(2, 1, 0)
+        else:
+            raise ValueError(f"Unsupported axis: {axis}")
+
+        return box_mask.astype(bool, copy=False)
+
+
     def get_2d_image(self,axis):
         """Returns the 2D image slice along the specified axis.
 
@@ -128,4 +195,3 @@ class VoxelCutHandler():
         """
         imgs            = self.voxel_hander.get_box_color_to_2d_image(box_color=self.colors, permute=axis)
         return imgs
-
