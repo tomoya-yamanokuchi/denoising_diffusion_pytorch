@@ -3,9 +3,11 @@ Diffusion Transformer (DiT) — drop-in replacement for UNet.
 
 Reference: Peebles & Xie, "Scalable Diffusion Models with Transformers" (2023)
 
-Interface matches the existing UNet so it can be used directly with GaussianDiffusion:
-    model = DiT(dim=384, depth=12, channels=3, image_size=64, patch_size=4)
-    diffusion = GaussianDiffusion(model, image_size=64, ...)
+Interface matches the conditional UNet (unet_2d_cond.py):
+    forward(x, time, x_self_cond=None, mask_cond=None, binary_mask=None)
+
+When mask_cond/binary_mask are provided, they are concatenated with x
+before patchifying (same as UNet: x(3ch) + mask_cond(3ch) + binary_mask(1ch) = 7ch).
 """
 
 import math
@@ -111,6 +113,7 @@ class DiT(nn.Module):
         dim_head = 64,
         mlp_ratio = 4.0,
         channels = 3,
+        cond_channels = 4,
         patch_size = 4,
         learned_variance = False,
         self_condition = False,
@@ -118,6 +121,7 @@ class DiT(nn.Module):
         # ignored args for UNet compat
         init_dim = None,
         out_dim = None,
+        mask_dim = None,
         dim_mults = None,
         resnet_block_groups = None,
         learned_sinusoidal_cond = False,
@@ -131,16 +135,18 @@ class DiT(nn.Module):
     ):
         super().__init__()
         self.channels = channels
+        self.cond_channels = cond_channels
         self.self_condition = self_condition
         self.patch_size = patch_size
         self.gradient_checkpointing = gradient_checkpointing
         self.random_or_learned_sinusoidal_cond = False
 
-        input_channels = channels * (2 if self_condition else 1)
+        # input = x(channels) + mask_cond(3) + binary_mask(1) = channels + cond_channels
+        input_channels = (channels + cond_channels) * (2 if self_condition else 1)
         default_out_dim = channels * (1 if not learned_variance else 2)
         self.out_dim = default_out_dim
 
-        # Patch embedding
+        # Patch embedding (input includes conditioning channels)
         patch_dim = input_channels * patch_size * patch_size
         self.patch_embed = nn.Linear(patch_dim, dim)
 
@@ -173,16 +179,25 @@ class DiT(nn.Module):
     def downsample_factor(self):
         return self.patch_size
 
-    def forward(self, x, time, x_self_cond=None):
+    def forward(self, x, time, x_self_cond=None, mask_cond=None, binary_mask=None):
         B, C, H, W = x.shape
         p = self.patch_size
         assert H % p == 0 and W % p == 0, f'Image size ({H}, {W}) must be divisible by patch_size {p}'
 
+        # Concatenate conditioning (same as UNet: x + mask_cond + binary_mask)
+        if mask_cond is not None and binary_mask is not None:
+            x = torch.cat([x, mask_cond, binary_mask], dim=1)
+        else:
+            # Pad with zeros to match expected input channels
+            zeros_mask = torch.zeros(B, 3, H, W, device=x.device, dtype=x.dtype)
+            zeros_binary = torch.zeros(B, 1, H, W, device=x.device, dtype=x.dtype)
+            x = torch.cat([x, zeros_mask, zeros_binary], dim=1)
+
         if self.self_condition:
-            x_self_cond = x_self_cond if x_self_cond is not None else torch.zeros_like(x)
+            x_self_cond = x_self_cond if x_self_cond is not None else torch.zeros(B, C + self.cond_channels, H, W, device=x.device, dtype=x.dtype)
             x = torch.cat((x_self_cond, x), dim=1)
 
-        # Patchify: (B, C, H, W) → (B, N, patch_dim)
+        # Patchify: (B, C_total, H, W) → (B, N, patch_dim)
         x = rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p)
         x = self.patch_embed(x)
         n_patches = x.shape[1]
