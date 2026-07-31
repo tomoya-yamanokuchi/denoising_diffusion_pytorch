@@ -2,9 +2,9 @@
 
 control:
   # mode: epsilon_greedy_00
-  mode: oracle_obs
+  # mode: oracle_obs
   # mode: no_cond
-  # mode: random
+  mode: random
   # ---
   random_seed: null
   random_max_range_length: 3
