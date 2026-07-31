@@ -32,6 +32,55 @@ class SinusoidalPosEmb(nn.Module):
         return torch.cat((emb.sin(), emb.cos()), dim=-1)
 
 
+def get_1d_sincos_pos_embed(
+    embed_dim: int,
+    positions: torch.Tensor,
+    theta: float = 10000.0,
+) -> torch.Tensor:
+    """Create a fixed 1D sin-cos embedding for arbitrary positions."""
+    assert embed_dim % 2 == 0, (
+        f'1D sin-cos embedding requires an even dimension, got {embed_dim}'
+    )
+
+    positions = positions.reshape(-1).float()
+    frequencies = torch.arange(
+        embed_dim // 2,
+        device=positions.device,
+        dtype=torch.float32,
+    )
+    frequencies = torch.exp(
+        -math.log(theta) * frequencies / (embed_dim // 2)
+    )
+    angles = positions[:, None] * frequencies[None, :]
+    return torch.cat([angles.sin(), angles.cos()], dim=-1)
+
+
+def get_2d_sincos_pos_embed(
+    embed_dim: int,
+    grid_height: int,
+    grid_width: int,
+    device: torch.device,
+    theta: float = 10000.0,
+) -> torch.Tensor:
+    """Create a fixed 2D sin-cos embedding for a row-major patch grid."""
+    assert embed_dim % 4 == 0, (
+        f'2D sin-cos embedding requires dim divisible by 4, got {embed_dim}'
+    )
+
+    grid_y, grid_x = torch.meshgrid(
+        torch.arange(grid_height, device=device, dtype=torch.float32),
+        torch.arange(grid_width, device=device, dtype=torch.float32),
+        indexing='ij',
+    )
+    y_embedding = get_1d_sincos_pos_embed(
+        embed_dim // 2, grid_y, theta=theta
+    )
+    x_embedding = get_1d_sincos_pos_embed(
+        embed_dim // 2, grid_x, theta=theta
+    )
+    return torch.cat([y_embedding, x_embedding], dim=-1)
+
+
 class AdaLayerNorm(nn.Module):
     """Adaptive Layer Norm with scale and shift (AdaLN-Zero)."""
     def __init__(self, dim):
@@ -139,6 +188,7 @@ class DiT(nn.Module):
         self.self_condition = self_condition
         self.patch_size = patch_size
         self.gradient_checkpointing = gradient_checkpointing
+        self.pos_emb_theta = sinusoidal_pos_emb_theta
         self.random_or_learned_sinusoidal_cond = False
 
         # input = x(channels) + mask_cond(3) + binary_mask(1) = channels + cond_channels
@@ -200,12 +250,20 @@ class DiT(nn.Module):
         # Patchify: (B, C_total, H, W) → (B, N, patch_dim)
         x = rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p)
         x = self.patch_embed(x)
-        n_patches = x.shape[1]
+        h_patches = H // p
+        w_patches = W // p
+        expected_patches = h_patches * w_patches
+        assert x.shape[1] == expected_patches
 
-        # Add positional embedding (learned via sinusoidal)
-        pos = torch.arange(n_patches, device=x.device).float()
-        pos_emb = SinusoidalPosEmb(x.shape[-1])(pos)  # (N, D)
-        x = x + pos_emb.unsqueeze(0)
+        # Add fixed 2D sin-cos positional embeddings in row-major patch order.
+        pos_emb = get_2d_sincos_pos_embed(
+            embed_dim=x.shape[-1],
+            grid_height=h_patches,
+            grid_width=w_patches,
+            device=x.device,
+            theta=self.pos_emb_theta,
+        )
+        x = x + pos_emb.to(dtype=x.dtype).unsqueeze(0)
 
         # Time conditioning
         t = self.time_mlp(time)  # (B, D)
@@ -221,8 +279,6 @@ class DiT(nn.Module):
         x = self.final_norm(x)
         x = self.final_linear(x)  # (B, N, p*p*out_channels)
 
-        h_patches = H // p
-        w_patches = W // p
         x = rearrange(x, 'b (h w) (p1 p2 c) -> b c (h p1) (w p2)',
                        h=h_patches, w=w_patches, p1=p, p2=p, c=self.out_dim)
         return x
