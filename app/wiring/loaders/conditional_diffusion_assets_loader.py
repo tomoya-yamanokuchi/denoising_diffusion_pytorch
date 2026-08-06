@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from pathlib import Path
 
 from .saved_run_config_loader import SavedRunConfigLoader
 from .checkpoint_path_resolver import CheckpointPathResolver
 from ..types.trained_model_assets import TrainedModelAssets
+
 
 @dataclass
 class ConditionalDiffusionAssetsLoader:
@@ -59,7 +59,7 @@ class ConditionalDiffusionAssetsLoader:
         )
 
 
-    def __build_network(self, cfg, device: str):
+    def __build_unet(self, cfg, device: str):
         from denoising_diffusion_pytorch.models.unet_2d_simple_devel2 import Unet
 
         network = Unet(
@@ -70,6 +70,30 @@ class ConditionalDiffusionAssetsLoader:
             mask_dim       = cfg.dataset.image_size,
         )
         return network.to(device)
+
+    def __build_dit(self, cfg, device: str):
+        from denoising_diffusion_pytorch.models.experimental.dit import DiT
+
+        network = DiT(
+            dim        = cfg.inferencer.network.dim,
+            depth      = cfg.inferencer.network.depth,
+            heads      = cfg.inferencer.network.heads,
+            dim_head   = cfg.inferencer.network.dim_head,
+            patch_size = cfg.inferencer.network.patch_size,
+        )
+        return network.to(device)
+
+    def __build_network(self, cfg, device: str):
+        network_name = str(cfg.inferencer.network.name).lower()
+
+        if "unet" in network_name:
+            return self.__build_unet(cfg, device)
+        if "dit" in network_name:
+            return self.__build_dit(cfg, device)
+
+        raise ValueError(
+            f"Unknown conditional diffusion architecture: {network_name}"
+        )
 
     def _build_inferencer(self, cfg, device: str):
         network = self.__build_network(cfg, device)
