@@ -265,6 +265,7 @@ class DiT(nn.Module):
         )
         x = x + pos_emb.to(dtype=x.dtype).unsqueeze(0)
 
+        # import ipdb; ipdb.set_trace()
         # Time conditioning
         t = self.time_mlp(time)  # (B, D)
 

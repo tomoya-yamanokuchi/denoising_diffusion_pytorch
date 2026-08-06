@@ -8,4 +8,5 @@ defaults:
   - /eval/method/conditional_diffusion/policy@policy
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_2d_20260605_133339
+# train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D64_T1000_S20_simple_2d_20260605_133339
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/dit_D64_T1000_S20_simple_2d_20260731_152250

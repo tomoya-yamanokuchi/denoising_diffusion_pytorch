@@ -74,5 +74,6 @@ allow_existing: false
 
 # tag: "proposed_GT_complex_DEF_error_mask"
 
-tag: "random_DEF_new"
+# tag: "random_DEF_new"
 
+tag: "DiT"
