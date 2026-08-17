@@ -1,7 +1,7 @@
 # config/dataset/complex_2d.yaml
-name: complex_2d
+name: complex_2d_powercutter
 
-path      : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/sheetsander_cast_images_z_49
+path      : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/powercutter_cast_images_z_49
 
 # ---
 min       : -1

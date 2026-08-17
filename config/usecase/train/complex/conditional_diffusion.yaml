@@ -3,7 +3,7 @@
 
 defaults:
   - /inferencer/conditional_diffusion@inferencer: complex
-  - /dataset    : complex_2d
+  - /dataset    : complex_2d_powercutter # complex_2d_polisher # complex_2d
   - /log        : train
   - /path       : local
   - _self_

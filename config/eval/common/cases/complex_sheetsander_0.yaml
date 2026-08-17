@@ -1,0 +1,13 @@
+name: complex_sheetsander_0
+
+cases:
+  - name            : Object_0
+    paper_label     : Object 0
+    legacy_name     :
+    sample_id       : samples_0
+    dataset_format  : product_parts_yaml
+    dataset_dir     : /home/dev/workspace/dataset/nedo_product_dataset/real_models/eval_dataset/sheetsander/samples/samples_0
+    model_config    : SheetSander_type0.yaml
+    initial_global_action_range:
+      start: 48
+      stop : 25

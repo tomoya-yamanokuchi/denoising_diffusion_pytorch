@@ -1,0 +1,14 @@
+# config/dataset/complex_2d.yaml
+name: complex_2d_sheetsander
+
+path      : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/sheetsander_cast_images_z_49
+
+# ---
+min       : -1
+max       : 1
+h         : 32
+type      : pattern
+p         : 0.2
+
+# --- dataset specific ---
+image_size: 344
