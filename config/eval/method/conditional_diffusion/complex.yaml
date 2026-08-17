@@ -3,9 +3,11 @@
 
 defaults:
   - base
-  - /eval/common/cases@cases  : complex_sheetsander_0 # complex_paper
-  - /eval/common/policy@policy: complex
+  - /eval/common/cases@cases  : complex_powercutter_18000 # complex_polisher_18000 # complex_sheetsander_0 # complex_paper
+  - /eval/common/policy@policy: complex_powercutter
   - /eval/method/conditional_diffusion/policy@policy
   - _self_
 
-train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/dit_D128_T1000_S20_complex_2d_20260807_154124
+# train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/dit_D128_T1000_S20_complex_2d_20260807_154124
+# train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/dit_D128_T1000_S20_complex_2d_polisher_20260807_161100
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/dit_D128_T1000_S20_complex_2d_powercutter_20260807_162222

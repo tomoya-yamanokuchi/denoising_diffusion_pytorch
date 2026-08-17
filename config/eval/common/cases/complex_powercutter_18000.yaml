@@ -1,0 +1,13 @@
+name: complex_powercutter_18000
+
+cases:
+  - name           : PowerCutter_18000
+    paper_label    : PowerCutter 18000
+    sample_id      : samples_18000
+    dataset_format : product_parts_yaml
+    dataset_dir    : /home/dev/workspace/dataset/nedo_product_dataset/real_models/eval_dataset/powercutter/samples/samples_18000
+    model_config   : PowerCutter_type18000.yaml
+
+    initial_global_action_range:
+      start: 48
+      stop : 24

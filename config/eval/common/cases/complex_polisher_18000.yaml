@@ -1,0 +1,12 @@
+name: complex_polisher_18000
+
+cases:
+  - name           : Polisher_18000
+    paper_label    : Polisher 18000
+    sample_id      : samples_18000
+    dataset_format : product_parts_yaml
+    dataset_dir    : /home/dev/workspace/dataset/nedo_product_dataset/real_models/eval_dataset/polisher/samples/samples_18000
+    model_config   : Polisher_type18000.yaml
+    initial_global_action_range:
+      start: 0
+      stop : 23
