@@ -182,3 +182,54 @@ class I2SBDiffusion:
             )
 
         return xt.detach()
+
+    def compute_label(
+        self,
+        step,
+        x0,
+        xt,
+    ):
+        """
+        Eq. (12) training target.
+
+        label = (x_t - x_0) / sigma_t
+        """
+
+        std_fwd = self.get_std_fwd(
+            step,
+            xdim=x0.shape[1:],
+        )
+
+        label = (
+            xt - x0
+        ) / std_fwd
+
+        return label.detach()
+
+    def compute_pred_x0(
+        self,
+        step,
+        xt,
+        net_out,
+        clip_denoise=False,
+    ):
+        """
+        Recover x0 from the network output.
+
+        This is the inverse transformation of Eq. (12).
+        """
+
+        std_fwd = self.get_std_fwd(
+            step,
+            xdim=xt.shape[1:],
+        )
+
+        pred_x0 = (
+            xt
+            - std_fwd * net_out
+        )
+
+        if clip_denoise:
+            pred_x0.clamp_(-1., 1.)
+
+        return pred_x0

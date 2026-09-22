@@ -60,3 +60,49 @@ for step in [
         "std_sb =",
         diffusion.std_sb[step].item(),
     )
+
+
+
+
+print("\n--- Step 2 sanity check ---")
+
+x0 = torch.randn(
+    2, 3, 16, 16
+)
+
+x1 = torch.randn(
+    2, 3, 16, 16
+)
+
+step = torch.tensor([
+    250,
+    750,
+])
+
+xt = diffusion.q_sample(
+    step=step,
+    x0=x0,
+    x1=x1,
+    ot_ode=False,
+)
+
+label = diffusion.compute_label(
+    step=step,
+    x0=x0,
+    xt=xt,
+)
+
+pred_x0 = diffusion.compute_pred_x0(
+    step=step,
+    xt=xt,
+    net_out=label,
+)
+
+error = (
+    pred_x0 - x0
+).abs().max()
+
+print(
+    "max reconstruction error =",
+    error.item()
+)

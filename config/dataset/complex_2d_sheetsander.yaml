@@ -1,7 +1,8 @@
 # config/dataset/complex_2d.yaml
 name: complex_2d_sheetsander
 
-path      : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/sheetsander_cast_images_z_49
+path              : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2/sheetsander_cast_images_z_49
+exterior_only_path: /home/dev/workspace/dataset/nedo_product_dataset/real_models/original_structure_samples/sheetsander/SheetSander_geometry_cast_z_axis_49.png
 
 # ---
 min       : -1
