@@ -11,10 +11,13 @@ from app.wiring.method.ConditionalImageDiffusionBuilder import ConditionalImageD
 from app.wiring.method.VAEACBuilder import VAEACBuilder
 from app.wiring.services.run_dir_manager import RunDirManager
 from app.wiring.services.config_validator import ConfigValidator
+from app.wiring.method.I2SBImageDiffusionBuilder \
+    import I2SBImageDiffusionBuilder
 
 
 _METHOD_BUILDERS: Dict[str, Type[TrainMethodBuilder]] = {
     "conditional_diffusion": ConditionalImageDiffusionBuilder,
+    "i2sb"                 : I2SBImageDiffusionBuilder,
     "vaeac"                : VAEACBuilder,
     "diffusion_1d"         : Diffusion1DBuilder,
 }

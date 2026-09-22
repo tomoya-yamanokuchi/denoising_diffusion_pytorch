@@ -152,6 +152,7 @@ def main(cfg: DictConfig):
 
     interval = 1000
     beta_max = 0.3
+    # beta_max = 1.0 # 0.3
 
     betas = make_beta_schedule(
         n_timestep=interval,
@@ -366,7 +367,7 @@ def main(cfg: DictConfig):
     plt.tight_layout()
 
     output_path = Path(
-        "i2sb_dataset_visual_sanity.png"
+        f"i2sb_dataset_visual_sanity(bet_max_{beta_max}).png"
     )
 
     plt.savefig(

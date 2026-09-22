@@ -1,0 +1,20 @@
+# config/inferencer/i2sb/base.yaml
+# @package inferencer
+
+defaults:
+  - /watch/train: i2sb
+  - _self_
+
+name: i2sb
+
+diffusion:
+  interval: 1000
+  beta_max: 1.0
+
+trainer:
+  train_lr                 : 8e-5
+  train_num_steps          : 100000
+  save_and_sample_every    : 5000
+  ema_decay                : 0.995
+  amp                      : true
+  calculate_fid            : false
