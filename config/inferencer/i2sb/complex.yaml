@@ -3,7 +3,7 @@
 
 defaults:
   - base
-  - /inferencer/network@network: dit_D128
+  - /inferencer/network@network: dit_i2sb_D128
   - _self_
 
 trainer:

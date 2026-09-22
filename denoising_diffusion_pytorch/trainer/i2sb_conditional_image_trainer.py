@@ -392,8 +392,8 @@ class Trainer:
             step,
             None,
             cond,
-            mask,
         )
+        # import ipdb; ipdb.set_trace()
 
         if pred.shape != label.shape:
             raise RuntimeError(

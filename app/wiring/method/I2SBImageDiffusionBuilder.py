@@ -87,6 +87,23 @@ class I2SBImageDiffusionBuilder(ConditionalImageDiffusionBuilder):
 
         return self.dataset
 
+
+    def build_dit(self):
+        from denoising_diffusion_pytorch.models.experimental.dit_i2sb import DiT
+
+        model = DiT(
+            dim=self.cfg.inferencer.network.dim,
+            depth=self.cfg.inferencer.network.depth,
+            heads=self.cfg.inferencer.network.heads,
+            dim_head=self.cfg.inferencer.network.dim_head,
+            patch_size=self.cfg.inferencer.network.patch_size,
+        )
+
+        self.model = self._maybe_to_device(model)
+        # import ipdb; ipdb.set_trace()
+        return self.model
+
+
     def build_method(self) -> Any:
         """
         Build the I2SB diffusion process using the same symmetric beta

@@ -1,0 +1,7 @@
+name: dit_i2sb_D128
+
+dim       : 384
+depth     : 12
+heads     : 6
+dim_head  : 64
+patch_size: 4
