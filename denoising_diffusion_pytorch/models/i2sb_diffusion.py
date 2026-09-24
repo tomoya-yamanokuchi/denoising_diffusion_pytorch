@@ -233,3 +233,160 @@ class I2SBDiffusion:
             pred_x0.clamp_(-1., 1.)
 
         return pred_x0
+
+    def p_posterior(
+        self,
+        nprev,
+        n,
+        x_n,
+        x0,
+        ot_ode=False,
+    ):
+        """
+        Sample
+
+            p(x_{nprev} | x_n, x_0)
+
+        following the official I2SB implementation.
+        """
+
+        assert nprev < n
+
+        std_n = self.std_fwd[n]
+        std_nprev = self.std_fwd[nprev]
+
+        std_delta = (
+            std_n**2
+            - std_nprev**2
+        ).sqrt()
+
+        mu_x0, mu_xn, var = \
+            compute_gaussian_product_coef(
+                std_nprev,
+                std_delta,
+            )
+
+        xt_prev = (
+            mu_x0 * x0
+            + mu_xn * x_n
+        )
+
+        if not ot_ode and nprev > 0:
+            xt_prev = (
+                xt_prev
+                + var.sqrt()
+                * torch.randn_like(xt_prev)
+            )
+
+        return xt_prev
+
+    def ddpm_sampling(
+        self,
+        steps,
+        pred_x0_fn,
+        x1,
+        cond=None,
+        mask=None,
+        ot_ode=False,
+        log_steps=None,
+        verbose=True,
+    ):
+        """
+        Reverse I2SB sampling.
+
+        Starts from X1 and recursively moves toward X0.
+        """
+
+        xt = x1.detach().to(
+            self.device
+        )
+
+        xs = []
+        pred_x0s = []
+
+        if log_steps is None:
+            log_steps = steps
+
+        assert steps[0] == 0
+        assert log_steps[0] == 0
+
+        steps = steps[::-1]
+
+        pair_steps = zip(
+            steps[1:],
+            steps[:-1],
+        )
+
+        if verbose:
+            from tqdm import tqdm
+
+            pair_steps = tqdm(
+                pair_steps,
+                desc="I2SB sampling",
+                total=len(steps) - 1,
+            )
+
+        for prev_step, step in pair_steps:
+
+            assert prev_step < step
+
+            pred_x0 = pred_x0_fn(
+                xt,
+                step,
+            )
+
+            xt = self.p_posterior(
+                prev_step,
+                step,
+                xt,
+                pred_x0,
+                ot_ode=ot_ode,
+            )
+
+
+            if cond is not None and mask is not None:
+
+                prev_step_tensor = torch.full(
+                    (xt.shape[0],),
+                    prev_step,
+                    device=self.device,
+                    dtype=torch.long,
+                )
+
+                xt_observed = self.q_sample(
+                    step=prev_step_tensor,
+                    x0=cond,
+                    x1=x1,
+                    ot_ode=ot_ode,
+                )
+
+                xt = (
+                    (1.0 - mask) * xt_observed
+                    + mask * xt
+                )
+
+                # import ipdb; ipdb.set_trace()
+
+
+            if prev_step in log_steps:
+                pred_x0s.append(
+                    pred_x0.detach().cpu()
+                )
+
+                xs.append(
+                    xt.detach().cpu()
+                )
+
+        def stack_bwd_traj(z):
+            return torch.flip(
+                torch.stack(
+                    z,
+                    dim=1,
+                ),
+                dims=(1,),
+            )
+
+        return (
+            stack_bwd_traj(xs),
+            stack_bwd_traj(pred_x0s),
+        )
