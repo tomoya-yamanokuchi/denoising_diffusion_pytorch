@@ -1,24 +1,39 @@
+"""
+I2SB conditional image trainer.
 
-# Suggested replacement for denoising_diffusion_pytorch/trainer/i2sb_conditional_image_trainer.py
-# Core additions:
-# - torchvision.utils import
-# - periodic EMA reverse-sampling at checkpoint time
-# - minimal logging set: target X0, condition C, mask, reconstruction
-# - TensorBoard image logging
-# - configurable sample NFE and number of log samples
+This trainer is intentionally separate from
+`diffusion_conditional_image_trainer.py` so that the existing Conditional DDPM /
+VoxelDiffusionCut training pipeline remains untouched.
+
+Training follows the official NVlabs/I2SB core procedure:
+
+    1. sample paired boundaries (x0, x1)
+    2. sample timestep t
+    3. sample xt ~ q(xt | x0, x1)
+    4. compute Eq. (12) target: (xt - x0) / sigma_t
+    5. predict the target with the existing conditional UNet / DiT
+    6. compute MSE on the hidden region
+    7. backpropagate and update EMA
+
+For this project:
+    x0   = full slice image (exterior + internal structure)
+    x1   = exterior-only slice image
+    cond = partially observed x0
+    mask = binary mask, 0=observed and 1=hidden
+
+Inference / I2SB reverse sampling is intentionally NOT implemented here yet.
+That will be added after the training core is validated.
+"""
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import utils
 
 from accelerate import Accelerator
 from ema_pytorch import EMA
@@ -53,19 +68,25 @@ class Trainer:
         split_batches=True,
         max_grad_norm=1.0,
         num_workers=8,
-        num_samples=4,
-        sample_nfe=20,
+        # Kept for config compatibility with the existing trainer.
+        num_samples=25,
         calculate_fid=False,
         save_best_and_latest_only=False,
         **unused_kwargs,
     ):
         super().__init__()
 
+        # ------------------------------------------------------------
+        # Accelerator
+        # ------------------------------------------------------------
         self.accelerator = Accelerator(
             split_batches=split_batches,
             mixed_precision=mixed_precision_type if amp else "no",
         )
 
+        # ------------------------------------------------------------
+        # Core I2SB components
+        # ------------------------------------------------------------
         self.model = model
         self.diffusion = diffusion
         self.dataset = dataset
@@ -73,38 +94,39 @@ class Trainer:
         self.channels = model.channels
         self.image_size = dataset.image_size
 
+        # ------------------------------------------------------------
+        # Training configuration
+        # ------------------------------------------------------------
         self.batch_size = int(train_batch_size)
         self.gradient_accumulate_every = int(gradient_accumulate_every)
         self.train_num_steps = int(train_num_steps)
         self.save_and_sample_every = int(save_and_sample_every)
         self.max_grad_norm = float(max_grad_norm)
 
-        # Periodic visualization settings
-        self.num_samples = int(num_samples)
-        self.sample_nfe = int(sample_nfe)
-
         if self.batch_size <= 0:
             raise ValueError("train_batch_size must be positive.")
+
         if self.gradient_accumulate_every <= 0:
             raise ValueError("gradient_accumulate_every must be positive.")
+
         if self.train_num_steps <= 0:
             raise ValueError("train_num_steps must be positive.")
-        if self.num_samples <= 0:
-            raise ValueError("num_samples must be positive.")
-        if self.sample_nfe <= 0:
-            raise ValueError("sample_nfe must be positive.")
+
         if len(dataset) < 2:
             raise ValueError(
                 f"I2SB training requires at least 2 samples, got {len(dataset)}."
             )
 
+        # These are currently not used because reverse I2SB sampling / FID
+        # evaluation has not yet been connected.
+        self.num_samples = num_samples
         self.calculate_fid = calculate_fid
         self.save_best_and_latest_only = save_best_and_latest_only
 
         if self.calculate_fid:
             self.accelerator.print(
                 "[I2SB] calculate_fid=True was provided, but FID evaluation "
-                "is not connected in this trainer."
+                "is deferred until the I2SB reverse sampler is implemented."
             )
 
         if unused_kwargs and self.accelerator.is_main_process:
@@ -113,6 +135,11 @@ class Trainer:
                 sorted(unused_kwargs.keys()),
             )
 
+        # ------------------------------------------------------------
+        # Dataset split / dataloaders
+        #
+        # Keep the existing repository convention: random 90/10 split.
+        # ------------------------------------------------------------
         data_samples = len(dataset)
         train_size = int(data_samples * 0.9)
         val_size = data_samples - train_size
@@ -131,7 +158,6 @@ class Trainer:
             pin_memory=True,
         )
 
-        # Keep validation deterministic in ordering, matching current I2SB code.
         val_dl = DataLoader(
             val_dataset,
             batch_size=1,
@@ -140,12 +166,18 @@ class Trainer:
             pin_memory=True,
         )
 
+        # ------------------------------------------------------------
+        # Optimizer
+        # ------------------------------------------------------------
         self.opt = Adam(
             self.model.parameters(),
             lr=train_lr,
             betas=adam_betas,
         )
 
+        # ------------------------------------------------------------
+        # Output directories
+        # ------------------------------------------------------------
         self.results_folder = Path(results_folder)
         self.results_folder.mkdir(
             parents=True,
@@ -160,6 +192,11 @@ class Trainer:
 
         self.step = 0
 
+        # ------------------------------------------------------------
+        # EMA
+        #
+        # Match the existing repository's EMA behavior.
+        # ------------------------------------------------------------
         if self.accelerator.is_main_process:
             self.ema = EMA(
                 self.model,
@@ -168,6 +205,9 @@ class Trainer:
             )
             self.ema.to(self.device)
 
+        # ------------------------------------------------------------
+        # Accelerate preparation
+        # ------------------------------------------------------------
         self.model, self.opt, train_dl, val_dl = self.accelerator.prepare(
             self.model,
             self.opt,
@@ -255,6 +295,36 @@ class Trainer:
         step=None,
         ot_ode=False,
     ):
+        """
+        Compute one I2SB training loss.
+
+        Parameters
+        ----------
+        x0 : Tensor [B, 3, H, W]
+            Full target slice.
+
+        x1 : Tensor [B, 3, H, W]
+            Exterior-only bridge endpoint.
+
+        cond : Tensor [B, 3, H, W]
+            Partial observation supplied to the conditional network.
+
+        mask : Tensor [B, 1, H, W]
+            Binary mask:
+                0 = observed / known
+                1 = hidden / prediction region
+
+        step : Optional Tensor [B]
+            If omitted, timesteps are sampled uniformly.
+
+        ot_ode : bool
+            If False (default), use stochastic I2SB bridge samples.
+            This matches standard I2SB training rather than OT-ODE.
+
+        Returns
+        -------
+        loss, diagnostics
+        """
         if x0.shape != x1.shape:
             raise ValueError(
                 f"x0 and x1 shape mismatch: {x0.shape} vs {x1.shape}"
@@ -287,6 +357,10 @@ class Trainer:
                 dtype=torch.long,
             )
 
+        # ----------------------------------------------------------
+        # Official I2SB:
+        #   xt ~ q(xt | x0, x1)
+        # ----------------------------------------------------------
         xt = self.diffusion.q_sample(
             step=step,
             x0=x0,
@@ -294,18 +368,32 @@ class Trainer:
             ot_ode=ot_ode,
         )
 
+        # ----------------------------------------------------------
+        # Eq. (12):
+        #   target = (xt - x0) / sigma_t
+        # ----------------------------------------------------------
         label = self.diffusion.compute_label(
             step=step,
             x0=x0,
             xt=xt,
         )
 
+        # ----------------------------------------------------------
+        # Existing conditional UNet / DiT interface:
+        #
+        #   x           = xt
+        #   time        = step
+        #   x_self_cond = None
+        #   mask_cond   = cond
+        #   binary_mask = mask
+        # ----------------------------------------------------------
         pred = self.model(
             xt,
             step,
             None,
             cond,
         )
+        # import ipdb; ipdb.set_trace()
 
         if pred.shape != label.shape:
             raise RuntimeError(
@@ -314,6 +402,14 @@ class Trainer:
                 f"label={tuple(label.shape)}."
             )
 
+        # ----------------------------------------------------------
+        # Match the official I2SB inpainting-style masked objective:
+        # optimize only the hidden / prediction region.
+        #
+        # In this repository:
+        #   mask == 1 -> hidden
+        #   mask == 0 -> observed
+        # ----------------------------------------------------------
         pred_masked = mask * pred
         label_masked = mask * label
 
@@ -330,221 +426,6 @@ class Trainer:
         }
 
         return loss, diagnostics
-
-    # ==================================================================
-    # Periodic reverse-sampling log
-    # ==================================================================
-
-    def _make_sampling_steps(self):
-        interval = len(self.diffusion.betas)
-
-        steps = np.linspace(
-            0,
-            interval - 1,
-            self.sample_nfe + 1,
-            dtype=int,
-        )
-
-        steps = np.unique(steps)
-
-        if steps[0] != 0:
-            steps = np.insert(steps, 0, 0)
-
-        if steps[-1] != interval - 1:
-            steps = np.append(
-                steps,
-                interval - 1,
-            )
-
-        return steps.tolist()
-
-    @staticmethod
-    def _to_01(x):
-        """
-        Convert project image range [-1, 1] to torchvision-save range [0, 1].
-        """
-        return ((x + 1.0) / 2.0).clamp(0.0, 1.0)
-
-    @staticmethod
-    def _mask_to_rgb(mask):
-        """
-        mask is [N,1,H,W], with:
-            0 observed
-            1 hidden
-
-        Keep the raw repository convention in the saved mask image:
-            black = observed
-            white = hidden
-        """
-        if mask.shape[1] == 1:
-            return mask.repeat(1, 3, 1, 1)
-        return mask
-
-    @torch.no_grad()
-    def sample_and_log(self, milestone):
-        """
-        Generate a minimal, directly comparable progress log.
-
-        Saved:
-            sample-{milestone}_pred.png
-            sample-{milestone}_mask.png
-            sample-{milestone}_target.png
-            sample-{milestone}_cond.png
-            sample-{milestone}_x1.png
-
-        The first three names intentionally match the existing Conditional
-        Diffusion trainer convention. cond and x1 are I2SB-specific additions.
-        """
-
-        if not self.accelerator.is_main_process:
-            return
-
-        print(f"[I2SB] start eval process: {milestone}")
-
-        self.ema.ema_model.eval()
-
-        steps = self._make_sampling_steps()
-
-        all_pred = []
-        all_mask = []
-        all_target = []
-        all_cond = []
-        all_x1 = []
-
-        for _ in range(self.num_samples):
-            data = next(self.val_dl)
-
-            x0 = data["x0"].to(self.device)
-            x1 = data["x1"].to(self.device)
-            cond = data["cond"].to(self.device)
-            mask = data["mask"].to(self.device)
-
-            def pred_x0_fn(xt, step_value):
-                step = torch.full(
-                    (xt.shape[0],),
-                    int(step_value),
-                    device=self.device,
-                    dtype=torch.long,
-                )
-
-                net_out = self.ema.ema_model(
-                    xt,
-                    step,
-                    None,
-                    cond,
-                )
-
-                return self.diffusion.compute_pred_x0(
-                    step=step,
-                    xt=xt,
-                    net_out=net_out,
-                    clip_denoise=True,
-                )
-
-            xs, _ = self.diffusion.ddpm_sampling(
-                steps=steps,
-                pred_x0_fn=pred_x0_fn,
-                x1=x1,
-                cond=cond,
-                mask=mask,
-                ot_ode=False,
-                log_steps=[0],
-                verbose=False,
-            )
-
-            # ddpm_sampling() returns increasing-time order.
-            recon = xs[:, 0].to(self.device)
-
-            # Exact endpoint data consistency for observed region.
-            recon = (
-                (1.0 - mask) * cond
-                + mask * recon
-            )
-
-            all_pred.append(recon.detach().cpu())
-            all_mask.append(mask.detach().cpu())
-            all_target.append(x0.detach().cpu())
-            all_cond.append(cond.detach().cpu())
-            all_x1.append(x1.detach().cpu())
-
-        all_pred = torch.cat(all_pred, dim=0)
-        all_mask = torch.cat(all_mask, dim=0)
-        all_target = torch.cat(all_target, dim=0)
-        all_cond = torch.cat(all_cond, dim=0)
-        all_x1 = torch.cat(all_x1, dim=0)
-
-        # Existing repository commonly uses square grids, but do not force
-        # num_samples to be a perfect square.
-        nrow = max(1, int(math.sqrt(self.num_samples)))
-
-        pred_vis = self._to_01(all_pred)
-        target_vis = self._to_01(all_target)
-        cond_vis = self._to_01(all_cond)
-        x1_vis = self._to_01(all_x1)
-        mask_vis = self._mask_to_rgb(all_mask).clamp(0.0, 1.0)
-
-        # Match the main Conditional Diffusion filenames first.
-        utils.save_image(
-            pred_vis,
-            str(self.results_folder / f"sample-{milestone}_pred.png"),
-            nrow=nrow,
-        )
-        utils.save_image(
-            mask_vis,
-            str(self.results_folder / f"sample-{milestone}_mask.png"),
-            nrow=nrow,
-        )
-        utils.save_image(
-            target_vis,
-            str(self.results_folder / f"sample-{milestone}_target.png"),
-            nrow=nrow,
-        )
-
-        # I2SB-specific context, useful for debugging bridge behavior.
-        utils.save_image(
-            cond_vis,
-            str(self.results_folder / f"sample-{milestone}_cond.png"),
-            nrow=nrow,
-        )
-        utils.save_image(
-            x1_vis,
-            str(self.results_folder / f"sample-{milestone}_x1.png"),
-            nrow=nrow,
-        )
-
-        # TensorBoard
-        self.writer.add_images(
-            "i2sb/pred",
-            pred_vis,
-            self.step,
-            dataformats="NCHW",
-        )
-        self.writer.add_images(
-            "i2sb/mask",
-            mask_vis,
-            self.step,
-            dataformats="NCHW",
-        )
-        self.writer.add_images(
-            "i2sb/target",
-            target_vis,
-            self.step,
-            dataformats="NCHW",
-        )
-        self.writer.add_images(
-            "i2sb/condition",
-            cond_vis,
-            self.step,
-            dataformats="NCHW",
-        )
-        self.writer.add_images(
-            "i2sb/x1",
-            x1_vis,
-            self.step,
-            dataformats="NCHW",
-        )
-
-        self.ema.ema_model.train()
 
     # ==================================================================
     # Main training loop
@@ -579,14 +460,17 @@ class Trainer:
                         device,
                         non_blocking=True,
                     )
+
                     x1 = data["x1"].to(
                         device,
                         non_blocking=True,
                     )
+
                     cond = data["cond"].to(
                         device,
                         non_blocking=True,
                     )
+
                     mask = data["mask"].to(
                         device,
                         non_blocking=True,
@@ -640,13 +524,9 @@ class Trainer:
                             self.save_and_sample_every,
                         )
                     ):
-                        milestone = self.step
-
-                        # 1) Generate validation images with EMA model.
-                        self.sample_and_log(milestone)
-
-                        # 2) Save checkpoint at the same milestone.
-                        self.save(milestone)
+                        # Reverse I2SB sampling is not connected yet.
+                        # For now, save a training checkpoint only.
+                        self.save(self.step)
 
                 pbar.set_description(
                     f"loss: {total_loss:.4f}"

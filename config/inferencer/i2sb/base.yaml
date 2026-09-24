@@ -18,3 +18,6 @@ trainer:
   ema_decay                : 0.995
   amp                      : true
   calculate_fid            : false
+
+  num_samples: 4
+  sample_nfe: 20
