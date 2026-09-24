@@ -367,6 +367,18 @@ class I2SBDiffusion:
 
                 # import ipdb; ipdb.set_trace()
 
+                obs_error = (
+                    (1.0 - mask)
+                    * (xt - xt_observed)
+                ).abs().max()
+
+                if verbose:
+                    print(
+                        f"[reinjection] prev_step={prev_step:4d} "
+                        f"obs_max_error={obs_error.item():.8e}"
+                    )
+
+
 
             if prev_step in log_steps:
                 pred_x0s.append(

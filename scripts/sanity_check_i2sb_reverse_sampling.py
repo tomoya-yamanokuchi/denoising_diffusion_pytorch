@@ -156,8 +156,8 @@ def main(cfg: DictConfig):
     # Update this path if your run directory differs.
     checkpoint_path = Path(
             # "/path/to/model-500.pt"
-            "/home/dev/workspace/dataset/nedo_dismantling_log/train/i2sb/dit_i2sb_D128_T1000_B1.0_complex_2d_sheetsander_20260922_142732/model-500.pt"
-            # "/home/dev/workspace/dataset/nedo_dismantling_log/train/i2sb/dit_i2sb_D128_T1000_B1.0_complex_2d_sheetsander_20260922_153416/model-20000.pt"
+            # "/home/dev/workspace/dataset/nedo_dismantling_log/train/i2sb/dit_i2sb_D128_T1000_B1.0_complex_2d_sheetsander_20260922_142732/model-500.pt"
+            "/home/dev/workspace/dataset/nedo_dismantling_log/train/i2sb/dit_i2sb_D128_T1000_B1.0_complex_2d_sheetsander_20260922_153416/model-20000.pt"
         )
 
     # output_dir = Path("outputs/i2sb_reverse_sanity")
