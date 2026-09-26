@@ -172,7 +172,7 @@ class I2SBImageDiffusionBuilder(ConditionalImageDiffusionBuilder):
                 **trainer_cfg,
             )
         """
-        from denoising_diffusion_pytorch.trainer.i2sb_conditional_image_trainer import (
+        from denoising_diffusion_pytorch.trainer.i2sb_conditional_image_trainer_product_aware import (
             Trainer,
         )
 
