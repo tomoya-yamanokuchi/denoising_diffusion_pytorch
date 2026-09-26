@@ -1,0 +1,34 @@
+# config/inferencer/i2sb/base_multi_products.yaml
+# @package inferencer
+
+defaults:
+  - /watch/train: i2sb
+  - _self_
+
+name: i2sb
+
+diffusion:
+  interval: 1000
+  beta_max: 1.0
+
+
+trainer:
+  train_lr                 : 8e-5
+  train_num_steps          : 100000
+  save_and_sample_every    : 5000
+  ema_decay                : 0.995
+  amp                      : true
+  calculate_fid            : false
+
+  # I2SB checkpoint-time reverse sampling
+  sample_nfe               : 20
+
+  # Number of fixed validation examples logged for EACH product.
+  # 1 means:
+  #   SheetSander x 1
+  #   Polisher x 1
+  #   PowerCutter x 1
+  samples_per_product      : 1
+
+  # Retained only for compatibility with older configs.
+  num_samples              : 4

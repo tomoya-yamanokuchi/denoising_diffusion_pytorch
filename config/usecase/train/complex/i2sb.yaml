@@ -2,7 +2,7 @@
 # @package usecase
 
 defaults:
-  - /inferencer/i2sb@inferencer: complex
+  - /inferencer/i2sb@inferencer: complex_multi_products
   - /dataset                   : complex_2d_multi_product # complex_2d_sheetsander
   - /log                       : train
   - /path                      : local

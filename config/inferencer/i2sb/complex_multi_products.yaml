@@ -1,0 +1,11 @@
+# config/inferencer/i2sb/complex_multi_products.yaml
+# @package inferencer
+
+defaults:
+  - base_multi_products
+  - /inferencer/network@network: dit_i2sb_D128
+  - _self_
+
+trainer:
+  train_batch_size         : 18
+  gradient_accumulate_every: 5
