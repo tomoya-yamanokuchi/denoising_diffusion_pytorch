@@ -90,10 +90,39 @@ class TrainBuilder:
         self.method     = sub.build_method()
         self.trainer    = sub.build_trainer()
 
-        print("[DEBUG] train inferencer.name:", self.cfg.inferencer.name)
-        print("[DEBUG] train dataset.path:", self.cfg.dataset.path)
-        print("[DEBUG] artifact_static_root:", self.artifact_static_root)
+        # print("[DEBUG] train inferencer.name:", self.cfg.inferencer.name)
+        # print("[DEBUG] train dataset.path:", self.cfg.dataset.path)
+        # print("[DEBUG] artifact_static_root:", self.artifact_static_root)
         # import ipdb; ipdb.set_trace()
+
+        print(
+            "[DEBUG] train inferencer.name:",
+            self.cfg.inferencer.name,
+        )
+
+        if "products" in self.cfg.dataset:
+            print(
+                "[DEBUG] train dataset.products:",
+                [
+                    {
+                        "name": product.name,
+                        "path": product.path,
+                    }
+                    for product in self.cfg.dataset.products
+                ],
+            )
+        else:
+            print(
+                "[DEBUG] train dataset.path:",
+                self.cfg.dataset.path,
+            )
+
+        print(
+            "[DEBUG] artifact_static_root:",
+            self.artifact_static_root,
+        )
+
+
 
     def build_orchestrator(self):
         from app.usecases.train.train_orchestrator import TrianOrchestrator
