@@ -1,0 +1,28 @@
+name: complex_2d_multi_product
+
+root:
+  dataset_v2        : /home/dev/workspace/dataset/nedo_product_dataset/real_models/dataset_v2
+  original_structure: /home/dev/workspace/dataset/nedo_product_dataset/real_models/original_structure_samples
+
+products:
+  - name              : sheetsander
+    path              : ${usecase.dataset.root.dataset_v2}/sheetsander_cast_images_z_49
+    exterior_only_path: ${usecase.dataset.root.original_structure}/sheetsander/SheetSander_geometry_cast_z_axis_49.png
+
+  - name              : polisher
+    path              : ${usecase.dataset.root.dataset_v2}/polisher_cast_images_z_49
+    exterior_only_path: ${usecase.dataset.root.original_structure}/polisher/Polisher_geometry_cast_z_axis_49.png
+
+  - name              : powercutter
+    path              : ${usecase.dataset.root.dataset_v2}/powercutter_cast_images_z_49
+    exterior_only_path: ${usecase.dataset.root.original_structure}/powercutter/PowerCutter_geometry_cast_z_axis_49.png
+
+type: slice
+
+slice_grid_rows: 7
+slice_grid_cols: 7
+slice_num_observed_min: 1
+slice_num_observed_max: 5
+slice_selection: random
+
+image_size: 344

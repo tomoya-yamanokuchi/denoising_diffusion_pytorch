@@ -3,7 +3,7 @@
 
 defaults:
   - /inferencer/i2sb@inferencer: complex
-  - /dataset                   : complex_2d_sheetsander
+  - /dataset                   : complex_2d_multi_product # complex_2d_sheetsander
   - /log                       : train
   - /path                      : local
   - _self_
