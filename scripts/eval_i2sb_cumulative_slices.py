@@ -49,7 +49,7 @@ PRODUCT_SAMPLE_INDEX = 0  # index within the selected product
 K_MAX                = 25
 SLICE_ORDER_SEED     = 12345
 SAMPLING_SEED        = 54321
-NFE                  = 20
+NFE                  = 10 # 20
 
 # ============================================================================
 # I2SB helpers
