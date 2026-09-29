@@ -92,7 +92,9 @@ CHECKPOINT_PATH = Path(
     "/home/dev/workspace/dataset/nedo_dismantling_log/train/i2sb/dit_i2sb_D128_T1000_B1.0_complex_2d_multi_product_20260926_145317/model-50000.pt"
 )
 
-PRODUCT_NAME = "sheetsander"
+# PRODUCT_NAME = "sheetsander"
+# PRODUCT_NAME = "polisher"
+PRODUCT_NAME = "powercutter"
 
 # Index within the selected product.
 PRODUCT_SAMPLE_INDEX = 0
