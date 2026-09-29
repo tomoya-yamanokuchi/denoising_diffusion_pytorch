@@ -15,7 +15,7 @@ class ConditionalImageDiffusionBuilder:
         self.artifact_static_root = artifact_static_root
 
     def build_dataset(self) -> Any:
-        from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
+        from denoising_diffusion_pytorch.data_loader.cond_image_data_loader_multi_product import Cond_image_dataloader
         self.dataset = Cond_image_dataloader(
             cfg        = self.cfg,
             image_size = self.cfg.dataset.image_size,

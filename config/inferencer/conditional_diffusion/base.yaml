@@ -19,3 +19,5 @@ trainer:
   ema_decay                : 0.995
   amp                      : true
   calculate_fid            : false
+
+  samples_per_product: 1
