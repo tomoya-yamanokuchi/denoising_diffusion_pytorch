@@ -17,7 +17,8 @@ products:
     path              : ${usecase.dataset.root.dataset_v2}/powercutter_cast_images_z_49
     exterior_only_path: ${usecase.dataset.root.original_structure}/powercutter/PowerCutter_geometry_cast_z_axis_49.png
 
-type: slice
+# type: slice
+type: pattern
 
 slice_grid_rows: 7
 slice_grid_cols: 7
