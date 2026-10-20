@@ -51,7 +51,8 @@ class ConditionalDiffusionAssetsLoader:
         )
 
     def _build_dataset(self, cfg):
-        from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
+        # from denoising_diffusion_pytorch.data_loader.cond_image_data_loader import Cond_image_dataloader
+        from denoising_diffusion_pytorch.data_loader.cond_image_data_loader_multi_product import Cond_image_dataloader
 
         return Cond_image_dataloader(
             cfg=cfg,

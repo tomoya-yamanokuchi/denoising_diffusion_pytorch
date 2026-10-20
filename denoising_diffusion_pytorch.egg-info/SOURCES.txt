@@ -39,6 +39,7 @@ denoising_diffusion_pytorch/utils/normalization.py
 denoising_diffusion_pytorch/utils/omega_config_util.py
 denoising_diffusion_pytorch/utils/os_utils.py
 denoising_diffusion_pytorch/utils/pil_utils.py
+denoising_diffusion_pytorch/utils/product_aware_logger.py
 denoising_diffusion_pytorch/utils/progress.py
 denoising_diffusion_pytorch/utils/render_parallel.py
 denoising_diffusion_pytorch/utils/serialization.py
