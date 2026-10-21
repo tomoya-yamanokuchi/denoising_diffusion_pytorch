@@ -78,4 +78,6 @@ allow_existing: false
 
 # tag: "DiT"
 # tag: "DiT_TestforDatasePathChange"
-tag: "DiT_Pow24"
+# tag: "DiT_Pow24"
+
+tag: "blind_surface_test"
