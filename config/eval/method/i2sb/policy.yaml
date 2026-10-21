@@ -5,5 +5,8 @@ infer_model: i2sb
 inference:
   model: i2sb
 
+  # I2SBではCFGを使用しない
+  guidance_scale: 1.0
+
   # Conditional Diffusionと同じ設定
   sampling_timesteps: 20

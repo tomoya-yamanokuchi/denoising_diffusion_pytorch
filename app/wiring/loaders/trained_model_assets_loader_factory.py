@@ -7,6 +7,7 @@ from app.wiring.loaders.checkpoint_path_resolver import CheckpointPathResolver
 from app.wiring.loaders.conditional_diffusion_assets_loader import (
     ConditionalDiffusionAssetsLoader,
 )
+from app.wiring.loaders.i2sb_assets_loader import I2SBAssetsLoader
 from app.wiring.loaders.vaeac_assets_loader import VaeacAssetsLoader
 from app.wiring.loaders.diffusion_1d_assets_loader import Diffusion1DAssetsLoader
 
@@ -24,6 +25,12 @@ class TrainedModelAssetsLoaderFactory:
     checkpoint_path_resolver: CheckpointPathResolver
 
     def create(self, infer_model: str):
+        if infer_model == "i2sb":
+            return I2SBAssetsLoader(
+                config_loader=self.config_loader,
+                checkpoint_path_resolver=self.checkpoint_path_resolver,
+            )
+
         if infer_model == "vaeac":
             return VaeacAssetsLoader(
                 config_loader=self.config_loader,

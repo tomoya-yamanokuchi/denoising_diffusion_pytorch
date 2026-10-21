@@ -59,6 +59,8 @@ class cutting_surface_planner():
         self.random_planning_service = RandomPlanningService(
             action_candidates_selector=action_candidates_selector,
         )
+        # ---
+        self.normalized_x1 = None
 
     def reset(self):
         self.visibility_constraints = VisibilityConstraintSet(self.voxel_grid_side_length)

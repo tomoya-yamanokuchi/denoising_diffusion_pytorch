@@ -163,3 +163,4 @@ class PlanningPolicyInput:
     normalized_cond: torch.Tensor | None
     debug_save_dir : str | None = None
     step_idx       : int | None = None
+    normalized_x1  : torch.Tensor | None = None

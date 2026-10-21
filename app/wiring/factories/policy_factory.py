@@ -20,7 +20,7 @@ class PolicyFactory:
         self._assets = assets
 
 
-    def create(self, obs_model: voxel_cut_handler):
+    def create(self, obs_model: voxel_cut_handler, case_spec=None):
         # ---
         side_length = obs_model.voxel_hander.grid_side_len
 

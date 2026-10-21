@@ -37,7 +37,11 @@ class EvalOrchestrator:
             mesh_components = self.mesh_factory.create(case_spec)
 
             case_ctx        = self.case_context_factory.create(case_spec, mesh_components)
-            policy          = self.policy_factory.create(obs_model=case_ctx.obs_model)
+            # policy          = self.policy_factory.create(obs_model=case_ctx.obs_model)
+            policy = self.policy_factory.create(
+                obs_model = case_ctx.obs_model,
+                case_spec = case_spec,
+            )
             action_planner  = self.action_planner_factory.create(policy=policy)
             # ----------
             per_case: List[Any] = []
