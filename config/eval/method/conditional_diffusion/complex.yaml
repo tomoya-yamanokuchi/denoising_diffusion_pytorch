@@ -3,8 +3,12 @@
 
 defaults:
   - base
-  - /eval/common/cases@cases  : complex_powercutter_18000 # complex_polisher_18000 # complex_sheetsander_0 # complex_paper
-  - /eval/common/policy@policy: complex_powercutter
+  # - /eval/common/cases@cases  : complex_polisher_18000 # complex_sheetsander_0 # complex_paper
+  # - /eval/common/policy@policy: complex_polisher
+
+  - /eval/common/cases@cases  : complex_sheetsander_dataset_v2_0
+  - /eval/common/policy@policy: complex_sheetsander
+
   - /eval/method/conditional_diffusion/policy@policy
   - _self_
 

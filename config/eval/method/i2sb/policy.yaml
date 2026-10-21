@@ -1,0 +1,9 @@
+# @package eval.policy
+
+infer_model: i2sb
+
+inference:
+  model: i2sb
+
+  # Conditional Diffusionと同じ設定
+  sampling_timesteps: 20

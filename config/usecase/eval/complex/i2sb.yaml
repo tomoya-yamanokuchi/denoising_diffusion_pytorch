@@ -1,0 +1,12 @@
+# @package usecase
+
+defaults:
+  - /eval/method/i2sb@eval: complex
+  - /env                  : complex
+  - /watch/eval           : i2sb
+  - /path                 : local
+  - /log                  : eval
+  - _self_
+
+name: eval
+device: cuda:0
