@@ -1,3 +1,11 @@
+# policy_factory.py
+
+
+import torch
+from PIL import Image
+from torchvision import transforms as T
+from torchvision.transforms import InterpolationMode
+
 from ..types.policy_assets import PolicyAssets
 from denoising_diffusion_pytorch.policy.cutting_surface_planner import cutting_surface_planner
 from denoising_diffusion_pytorch.env.voxel_cut_sim_v1 import voxel_cut_handler
@@ -18,6 +26,52 @@ from denoising_diffusion_pytorch.policy.planning.candidate_building.full_action_
 class PolicyFactory:
     def __init__(self, assets: PolicyAssets):
         self._assets = assets
+
+
+    def _load_i2sb_x1(self, case_spec):
+        cfg_train = self._assets.trained_assets.cfg_train
+        products = cfg_train.dataset.products
+
+        case_name = str(case_spec.name).lower()
+
+        matches = [
+            product
+            for product in products
+            if case_name.startswith(str(product.name).lower() + "_")
+            or case_name == str(product.name).lower()
+        ]
+
+        if len(matches) != 1:
+            raise ValueError(
+                f"Cannot uniquely identify I2SB product for "
+                f"case={case_spec.name}. "
+                f"Available products: {[p.name for p in products]}"
+            )
+
+        product = matches[0]
+        image_size = int(cfg_train.dataset.image_size)
+
+        transform = T.Compose([
+            T.Resize(
+                image_size,
+                interpolation=InterpolationMode.NEAREST,
+            ),
+            T.ToTensor(),
+        ])
+
+        with Image.open(str(product.exterior_only_path)) as image:
+            x1 = transform(image.convert("RGB"))
+
+        x1 = (x1 * 2.0 - 1.0).float()
+
+        print(
+            f"[PolicyFactory] I2SB X1 loaded: "
+            f"product={product.name}, "
+            f"path={product.exterior_only_path}, "
+            f"shape={tuple(x1.shape)}"
+        )
+
+        return x1
 
 
     def create(self, obs_model: voxel_cut_handler, case_spec=None):
@@ -48,12 +102,23 @@ class PolicyFactory:
             policy_config = self._assets.policy_config,
         )
 
-        return cutting_surface_planner(
-            obs_model                  = obs_model,
-            slice_image_inferencer     = slice_image_inferencer,
-            policy_config              = self._assets.policy_config,
-            action_candidates_selector = action_candidates_selector,
+
+        policy = cutting_surface_planner(
+            obs_model=obs_model,
+            slice_image_inferencer=slice_image_inferencer,
+            policy_config=self._assets.policy_config,
+            action_candidates_selector=action_candidates_selector,
         )
+
+        policy.normalized_x1 = None
+
+        if self._assets.policy_config.inference.model == "i2sb":
+            if case_spec is None:
+                raise ValueError("I2SB evaluation requires case_spec.")
+
+            policy.normalized_x1 = self._load_i2sb_x1(case_spec)
+
+        return policy
 
 
 

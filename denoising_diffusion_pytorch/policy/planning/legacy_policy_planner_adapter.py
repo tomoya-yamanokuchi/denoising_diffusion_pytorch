@@ -121,7 +121,8 @@ class LegacyPolicyPlannerAdapter:
 
         return PlanningPolicyInput(
             normalized_cond = normalized_cond,
-            normalized_x1   = self.policy.normalized_x1,
+            # normalized_x1   = self.policy.normalized_x1,
+            normalized_x1   = getattr(self.policy, "normalized_x1", None),
             debug_save_dir  = artifact_root,
             step_idx        = executed_step_idx,
         )

@@ -1,5 +1,9 @@
+# i2sb_slice_image_inferencer.py
 
 from __future__ import annotations
+
+from pathlib import Path
+from PIL import Image
 
 import numpy as np
 import torch
@@ -77,6 +81,43 @@ class I2SBSliceImageInferencer(SliceImageInferencer):
                 f"cond/x1 shape mismatch: {cond.shape} vs {x1.shape}"
             )
 
+
+
+        # --------------------------------------------------
+        # Debug: save the actual I2SB input X1
+        # --------------------------------------------------
+        if planning_input.debug_save_dir is not None:
+
+            save_dir = (
+                Path(planning_input.debug_save_dir)
+                / "conditions"
+            )
+            save_dir.mkdir(parents=True, exist_ok=True)
+
+            # X1: [3, H, W], normalized to [-1, 1]
+            x1_vis = (
+                ((x1.detach().float().cpu() + 1.0) / 2.0)
+                .clamp(0.0, 1.0)
+                .permute(1, 2, 0)
+                .mul(255.0)
+                .round()
+                .byte()
+                .numpy()
+            )
+
+            step_idx = planning_input.step_idx
+            filename = (
+                f"step_{step_idx:03d}_x1.png"
+                if step_idx is not None
+                else "x1.png"
+            )
+
+            Image.fromarray(x1_vis).save(save_dir / filename)
+
+            print(f"[I2SB] Saved input X1: {save_dir / filename}")
+
+
+
         # -1 denotes unobserved pixels.
         observed = (cond != -1.0).any(dim=0, keepdim=True)
 
@@ -85,6 +126,17 @@ class I2SBSliceImageInferencer(SliceImageInferencer):
 
         # mask = 0 observed, 1 hidden
         mask = (~observed).float().unsqueeze(0).to(device)
+
+
+        # Save I2SB inputs for debugging
+        if planning_input.debug_save_dir is not None:
+            self._save_debug_inputs(
+                x1=x1,
+                cond=cond,
+                mask=mask[0],
+                save_dir=planning_input.debug_save_dir,
+                step_idx=planning_input.step_idx,
+            )
 
         cond = cond.unsqueeze(0).repeat(
             self.sample_image_num, 1, 1, 1
@@ -149,3 +201,65 @@ class I2SBSliceImageInferencer(SliceImageInferencer):
             )
 
         return _crop_images_to_hw(images, original_hw)
+
+
+
+    @staticmethod
+    def _save_debug_inputs(
+        *,
+        x1: torch.Tensor,
+        cond: torch.Tensor,
+        mask: torch.Tensor,
+        save_dir: str,
+        step_idx: int | None,
+    ):
+        save_dir = Path(save_dir) / "conditions"
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        prefix = (
+            f"step_{step_idx:03d}"
+            if step_idx is not None
+            else "step_unknown"
+        )
+
+        def save_rgb(tensor, path):
+            image = (
+                ((tensor.detach().float().cpu() + 1.0) / 2.0)
+                .clamp(0.0, 1.0)
+                .permute(1, 2, 0)
+                .mul(255.0)
+                .round()
+                .byte()
+                .numpy()
+            )
+            Image.fromarray(image).save(path)
+
+        # X1: save only once per episode
+        x1_path = save_dir / "x1.png"
+
+        if not x1_path.exists():
+            save_rgb(x1, x1_path)
+            print(f"[I2SB] Saved X1: {x1_path}")
+
+        # C: save at every step
+        save_rgb(
+            cond,
+            save_dir / f"{prefix}_cond.png",
+        )
+
+        # M: save at every step (0 observed, 1 hidden)
+        mask_image = (
+            mask.detach()
+            .float()
+            .cpu()
+            .squeeze(0)
+            .clamp(0.0, 1.0)
+            .mul(255.0)
+            .round()
+            .byte()
+            .numpy()
+        )
+
+        Image.fromarray(mask_image).save(
+            save_dir / f"{prefix}_mask.png"
+        )
