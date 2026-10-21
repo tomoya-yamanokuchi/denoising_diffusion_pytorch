@@ -5,11 +5,11 @@ defaults:
   # - /eval/common/cases@cases:   complex_polisher_18000
   # - /eval/common/policy@policy: complex_polisher
 
-  - /eval/common/cases@cases:   complex_powercutter_18000
-  - /eval/common/policy@policy: complex_powercutter
+  # - /eval/common/cases@cases:   complex_powercutter_18000
+  # - /eval/common/policy@policy: complex_powercutter
 
-  # - /eval/common/cases@cases:   complex_sheetsander_dataset_v2_0
-  # - /eval/common/policy@policy: complex_sheetsander
+  - /eval/common/cases@cases:   complex_sheetsander_dataset_v2_0
+  - /eval/common/policy@policy: complex_sheetsander
 
   - /eval/method/i2sb/policy@policy
   - _self_
