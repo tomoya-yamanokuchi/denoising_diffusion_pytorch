@@ -22,7 +22,7 @@ def main():
     x = np.arange(len(PRODUCTS))
     width = 0.36
     for key, (ylabel, first_mean, first_std, second_mean, second_std) in METRICS.items():
-        fig, ax = plt.subplots(figsize=(8.3, 4.6))
+        fig, ax = plt.subplots(figsize=(5.3, 4.6))
         for offset, means, stds, label in [(-width / 2, first_mean, first_std, names[0]), (width / 2, second_mean, second_std, names[1])]:
             ax.bar(x + offset, means, width, yerr=stds, capsize=4, label=label, edgecolor='black', linewidth=0.5, error_kw={'elinewidth': 1.1, 'capthick': 1.1})
         ax.set_xticks(x, PRODUCTS)
