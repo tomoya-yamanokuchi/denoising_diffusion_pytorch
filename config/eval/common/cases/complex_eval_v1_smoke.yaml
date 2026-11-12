@@ -1,0 +1,32 @@
+name: complex_eval_v1_smoke
+cases:
+- name: objD_type1_sample_000
+  sample_id: objD_type1/sample_000
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_000
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objE_type5_sample_000
+  sample_id: objE_type5/sample_000
+  distribution_id: c3a5a0b196c0
+  paper_label: Object E
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objE_type5/sample_000
+  model_config: SheetSander_type5.yaml
+  initial_global_action_range:
+    start: 97
+    stop: 73
+- name: objF_type2_sample_000
+  sample_id: objF_type2/sample_000
+  distribution_id: cdb9faad71b0
+  paper_label: Object F
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objF_type2/sample_000
+  model_config: SheetSander_type2.yaml
+  initial_global_action_range:
+    start: 97
+    stop: 72

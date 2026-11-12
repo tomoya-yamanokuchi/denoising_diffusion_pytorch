@@ -1,0 +1,14 @@
+# config/eval/method/conditional_diffusion/complex_sheetsander_v1_common.yaml
+# @package eval
+#
+# Object ごとの設定 (complex_sheetsander_v1_{smoke,D,E,F})
+# はこのファイルを読み込み、評価ケースだけを指定する。
+
+defaults:
+  - base
+  - /eval/common/policy@policy: complex          # SheetSander の部品色 (青=Battery, 赤=Motor)
+  - /eval/method/conditional_diffusion/policy@policy
+  - _self_
+
+# --- APIN revision ----
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/conditional_diffusion/unet_D128_T1000_S20_real_sheetsander_z49_20260504_202728

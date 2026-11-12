@@ -1,0 +1,102 @@
+name: complex_eval_v1_D
+cases:
+- name: objD_type1_sample_000
+  sample_id: objD_type1/sample_000
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_000
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_001
+  sample_id: objD_type1/sample_001
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_001
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_002
+  sample_id: objD_type1/sample_002
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_002
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_003
+  sample_id: objD_type1/sample_003
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_003
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_004
+  sample_id: objD_type1/sample_004
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_004
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_005
+  sample_id: objD_type1/sample_005
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_005
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_006
+  sample_id: objD_type1/sample_006
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_006
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_007
+  sample_id: objD_type1/sample_007
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_007
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_008
+  sample_id: objD_type1/sample_008
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_008
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25
+- name: objD_type1_sample_009
+  sample_id: objD_type1/sample_009
+  distribution_id: 254ff73d1e6d
+  paper_label: Object D
+  dataset_format: product_parts_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/real_models/SheetSander_kwon/random_generation_for_eval_v1/samples/objD_type1/sample_009
+  model_config: SheetSander_type1.yaml
+  initial_global_action_range:
+    start: 48
+    stop: 25

@@ -1,0 +1,10 @@
+# config/eval/method/conditional_diffusion/complex_sheetsander_v1_F.yaml
+# @package eval
+#
+# SheetSander 追加評価: Object F (type2) の10ケース
+# モデル・方策設定は complex_sheetsander_v1_common.yaml を参照。
+
+defaults:
+  - complex_sheetsander_v1_common
+  - /eval/common/cases@cases: complex_eval_v1_F
+  - _self_
