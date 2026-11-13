@@ -1,0 +1,17 @@
+# config/eval/method/conditional_diffusion/complex_sheetsander_v1_random_E.yaml
+# @package eval
+#
+# SheetSander 追加評価 (Random): Object E (type5) の10ケース
+# Proposed (complex_sheetsander_v1_E) との違いは control.mode だけ。
+# random モードでは拡散モデルの推論・コストマップを使わず、切断候補からランダムに選ぶ。
+# 乱数シード (control.random_seed) は論文の評価と同じく null (固定しない)。
+# 結果はランのフォルダの下の random/ に保存される (Proposed は epsilon_greedy_00/)。
+
+defaults:
+  - complex_sheetsander_v1_common
+  - /eval/common/cases@cases: complex_eval_v1_E
+  - _self_
+
+policy:
+  control:
+    mode: random

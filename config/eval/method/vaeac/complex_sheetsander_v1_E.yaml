@@ -1,0 +1,10 @@
+# config/eval/method/vaeac/complex_sheetsander_v1_E.yaml
+# @package eval
+#
+# SheetSander 追加評価 (VAEAC): Object E (type5) の10ケース
+# モデル・方策設定は complex_sheetsander_v1_common.yaml を参照。
+
+defaults:
+  - complex_sheetsander_v1_common
+  - /eval/common/cases@cases: complex_eval_v1_E
+  - _self_

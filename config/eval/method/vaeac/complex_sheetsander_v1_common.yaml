@@ -1,0 +1,19 @@
+# config/eval/method/vaeac/complex_sheetsander_v1_common.yaml
+# @package eval
+#
+# SheetSander (複雑形状) の追加評価 (査読指摘2) — VAEAC の共通設定。
+# 既存の vaeac/complex.yaml (論文の評価設定) から、評価ケースの指定だけを外したもの。
+# Object ごとの設定 (complex_sheetsander_v1_{smoke,D,E,F}) はこのファイルを読み込み、
+# 評価ケースだけを指定する。
+#
+# 補足: policy の guidance_scale (0.0) と sampling_timesteps (1) は VAEAC では使われないダミー値。
+
+defaults:
+  - base
+  - /eval/common/policy@policy: complex          # SheetSander の部品色 (青=Battery, 赤=Motor)
+  - /eval/method/vaeac/policy@policy
+  - _self_
+
+# 論文で使った VAEAC (複雑形状) のモデル。vaeac/complex.yaml と同じ値。
+# 念のため、論文の VAEAC の評価ログの config_resolved.yaml の train_run_dir と一致するか確認すること。
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D344_H96_Z150_E100000_complex_2d_20260604_202119

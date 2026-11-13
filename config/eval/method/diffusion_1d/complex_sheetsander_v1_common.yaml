@@ -1,0 +1,20 @@
+# config/eval/method/diffusion_1d/complex_sheetsander_v1_common.yaml
+# @package eval
+#
+# SheetSander (複雑形状) の追加評価 (査読指摘2) — PCD-DM (diffusion_1d) の共通設定。
+# 既存の diffusion_1d/complex.yaml (論文の評価設定) から、評価ケースの指定だけを外したもの。
+# Object ごとの設定 (complex_sheetsander_v1_{smoke,D,E,F}) はこのファイルを読み込み、
+# 評価ケースだけを指定する。
+#
+# 補足: PCD-DM は既知点を差し込む方式で条件付けしており、CFG を使わない。
+#       policy の guidance_scale (0.2) は推論に使われず、結果フォルダ名 (w0p2) にだけ現れる。
+
+defaults:
+  - base
+  - /eval/common/policy@policy: complex          # SheetSander の部品色 (青=Battery, 赤=Motor)
+  - /eval/method/diffusion_1d/policy@policy
+  - _self_
+
+# 論文で使った PCD-DM (複雑形状) のモデル。diffusion_1d/complex.yaml と同じ値。
+# 念のため、論文の PCD-DM の評価ログの config_resolved.yaml の train_run_dir と一致するか確認すること。
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/diffusion_1d/pointnet1d_D128_T1000_S20_complex_1d_20260605_105814

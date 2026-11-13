@@ -1,0 +1,16 @@
+# config/eval/method/conditional_diffusion/complex_sheetsander_v1_nocond_smoke.yaml
+# @package eval
+#
+# SheetSander 追加評価 (Proposed-Nocond): 動作確認: Object D/E/F の sample_000 の3ケース
+# Proposed (complex_sheetsander_v1_smoke) との違いは control.mode だけ。
+# モデル・方策設定は complex_sheetsander_v1_common.yaml を参照。
+# 結果はランのフォルダの下の no_cond/ に保存される (Proposed は epsilon_greedy_00/)。
+
+defaults:
+  - complex_sheetsander_v1_common
+  - /eval/common/cases@cases: complex_eval_v1_smoke
+  - _self_
+
+policy:
+  control:
+    mode: no_cond   # 観測による条件付けをせずに内部構造を生成する
