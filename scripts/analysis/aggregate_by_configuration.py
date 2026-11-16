@@ -170,6 +170,13 @@ def build_per_configuration(per_episode: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def count_error_episodes(per_episode: pd.DataFrame) -> pd.DataFrame:
+    """手法 × Object ごとに、切断誤差が 0 より大きかったエピソードの数。"""
+    e = per_episode.assign(has_error=per_episode["cutting_error_volume"] > 0)
+    return (e.groupby(["method", "object"])["has_error"].sum().astype(int)
+            .rename("num_episodes_with_cut_error").reset_index())
+
+
 def build_per_distribution(per_config: pd.DataFrame) -> pd.DataFrame:
     """段階2: Object ごとに、配置ごとの平均値の 平均 と 配置間の標準偏差。"""
     rows = []
@@ -181,6 +188,9 @@ def build_per_distribution(per_config: pd.DataFrame) -> pd.DataFrame:
             "num_incomplete_configurations": int((~g["complete"]).sum()),
             "num_episodes_total": int(g["num_episodes"].sum()),
         }
+        # 誤切断の頻度 (平均 ± SD だけでは伝わりにくいため)
+        ce_mean = g["cutting_error_volume_mean"].to_numpy(dtype=float)
+        row["num_configurations_with_cut_error"] = int((ce_mean > 0).sum())
         for m in PAPER_METRIC_COLUMNS:
             cm = g[f"{m}_mean"].to_numpy(dtype=float)
             row[f"{m}_mean"] = float(np.mean(cm))                       # 配置の平均値の平均
@@ -223,30 +233,71 @@ def print_report(per_config: pd.DataFrame, per_dist: pd.DataFrame, digits: int) 
             print(f"  {r['method']} / {r['case']}: {r['num_episodes']} / {r['expected_num_episodes']}")
 
 
+def build_paper_table(per_dist: pd.DataFrame, method_order: list[str] | None, digits: int) -> pd.DataFrame:
+    fmt = f"{{:.{digits}f}} ± {{:.{digits}f}}"
+    rows = []
+    for _, r in per_dist.iterrows():
+        rows.append({
+            "object": r["object"], "method": r["method"],
+            "Cut Err. Vol.": fmt.format(r["cutting_error_volume_mean"], r["cutting_error_volume_std_between"]),
+            "Part Remain. Rate": fmt.format(r["part_remaining_rate_mean"], r["part_remaining_rate_std_between"]),
+            "Part Occ. Rate": fmt.format(r["part_occupancy_rate_mean"], r["part_occupancy_rate_std_between"]),
+            "Configs w/ cut error": f"{r['num_configurations_with_cut_error']}/{r['num_configurations']}",
+            "Episodes w/ cut error": f"{r['num_episodes_with_cut_error']}/{r['num_episodes_total']}",
+        })
+    t = pd.DataFrame(rows)
+    order = method_order or list(dict.fromkeys(t["method"]))
+    t["_m"] = t["method"].map({m: i for i, m in enumerate(order)}).fillna(len(order))
+    return t.sort_values(["object", "_m"]).drop(columns="_m")
+
+
+def apply_label_map(df: pd.DataFrame, label_map: str | None) -> pd.DataFrame:
+    """'conditional_diffusion:no_cond=Proposed-Nocond,...' の形で手法名を置き換える。"""
+    if not label_map:
+        return df
+    mapping = dict(item.split("=", 1) for item in label_map.split(",") if "=" in item)
+    df = df.copy()
+    df["method"] = df["method"].map(lambda m: mapping.get(m, m))
+    return df
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--roots", nargs="+", required=True,
                    help="評価結果のフォルダ (ランのフォルダか epsilon_greedy_00)。Label=path で手法名を付けられる")
     p.add_argument("--out-dir", type=Path, required=True, help="CSV の出力先")
     p.add_argument("--digits", type=int, default=4, help="画面表示の小数点以下の桁数")
+    p.add_argument("--label-map", type=str, default=None,
+                   help="自動で付いた手法名を置き換える: 'conditional_diffusion:no_cond=Proposed-Nocond,...'")
+    p.add_argument("--method-order", type=str, default=None,
+                   help="表の手法の並び順 (カンマ区切り, --label-map 適用後の名前)")
     p.add_argument("--complete-only", action="store_true",
                    help="エピソード数が設定どおりの配置だけを集計に使う")
     args = p.parse_args()
 
-    per_episode = load_per_episode(args.roots)
+    per_episode = apply_label_map(load_per_episode(args.roots), args.label_map)
     per_config = build_per_configuration(per_episode)
     used = per_config[per_config["complete"]] if args.complete_only else per_config
     per_dist = build_per_distribution(used)
+    per_dist = per_dist.merge(count_error_episodes(per_episode), on=["method", "object"], how="left")
+    method_order = [m.strip() for m in args.method_order.split(",")] if args.method_order else None
+    paper = build_paper_table(per_dist, method_order, digits=2)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     per_episode.to_csv(args.out_dir / "per_episode_metrics.csv", index=False)
     per_config.to_csv(args.out_dir / "per_configuration_metrics.csv", index=False)
     per_dist.to_csv(args.out_dir / "per_distribution_summary.csv", index=False)
+    paper.to_csv(args.out_dir / "paper_table.csv", index=False)
 
     print_report(per_config, per_dist, args.digits)
+    print("\n=== 論文の表の形 (配置間の 平均 ± 標準偏差) ===")
+    for obj, g in paper.groupby("object", sort=True):
+        print(f"\n[{obj}]")
+        print(g.drop(columns="object").to_string(index=False))
     print(f"\n[OK] {args.out_dir}/per_episode_metrics.csv")
     print(f"[OK] {args.out_dir}/per_configuration_metrics.csv")
     print(f"[OK] {args.out_dir}/per_distribution_summary.csv")
+    print(f"[OK] {args.out_dir}/paper_table.csv")
 
 
 if __name__ == "__main__":
