@@ -1,0 +1,9 @@
+# config/eval/method/conditional_diffusion/simple_eval_v1_A.yaml
+# @package eval
+#
+# 簡易形状の追加評価 (Proposed): Distribution A の10配置
+
+defaults:
+  - simple_eval_v1_common
+  - /eval/common/cases@cases: simple_eval_v1_A
+  - _self_

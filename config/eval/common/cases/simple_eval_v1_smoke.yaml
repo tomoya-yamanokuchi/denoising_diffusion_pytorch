@@ -1,0 +1,29 @@
+# config/eval/common/cases/simple_eval_v1_smoke.yaml
+# 簡易形状の追加評価: 動作確認用 (各分布の1配置目だけ)
+# 生成: evaldata_gen generate-boxy (seed 0, manifest.yaml に記録)
+name: simple_eval_v1_smoke
+cases:
+- name: distA_dataset5_sample_000
+  paper_label: Object A
+  sample_id: Boxy_0
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_0
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distB_dataset6_sample_000
+  paper_label: Object B
+  sample_id: Boxy_0
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distB_dataset6/Boxy_0
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distC_dataset4_sample_000
+  paper_label: Object C
+  sample_id: Boxy_0
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distC_dataset4/Boxy_0
+  initial_global_action_range:
+    start: 47
+    stop: 41

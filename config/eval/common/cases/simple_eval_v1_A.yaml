@@ -1,0 +1,85 @@
+# config/eval/common/cases/simple_eval_v1_A.yaml
+# 簡易形状の追加評価: Distribution A の10配置
+# 生成: evaldata_gen generate-boxy (seed 0, manifest.yaml に記録)
+name: simple_eval_v1_A
+cases:
+- name: distA_dataset5_sample_000
+  paper_label: Object A
+  sample_id: Boxy_0
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_0
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_001
+  paper_label: Object A
+  sample_id: Boxy_1
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_1
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_002
+  paper_label: Object A
+  sample_id: Boxy_2
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_2
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_003
+  paper_label: Object A
+  sample_id: Boxy_3
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_3
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_004
+  paper_label: Object A
+  sample_id: Boxy_4
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_4
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_005
+  paper_label: Object A
+  sample_id: Boxy_5
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_5
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_006
+  paper_label: Object A
+  sample_id: Boxy_6
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_6
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_007
+  paper_label: Object A
+  sample_id: Boxy_7
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_7
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_008
+  paper_label: Object A
+  sample_id: Boxy_8
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_8
+  initial_global_action_range:
+    start: 0
+    stop: 4
+- name: distA_dataset5_sample_009
+  paper_label: Object A
+  sample_id: Boxy_9
+  dataset_format: boxy_generated_yaml
+  dataset_dir: /home/dev/workspace/dataset/nedo_product_dataset/simple_eval_v1/distA_dataset5/Boxy_9
+  initial_global_action_range:
+    start: 0
+    stop: 4

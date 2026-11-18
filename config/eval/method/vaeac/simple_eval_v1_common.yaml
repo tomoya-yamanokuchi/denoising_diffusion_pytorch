@@ -1,0 +1,15 @@
+# config/eval/method/vaeac/simple_eval_v1_common.yaml
+# @package eval
+#
+# 簡易形状の追加評価 (査読指摘 E.2) の共通設定 (VAEAC)。
+# モデルと方策設定はここに一度だけ書く。分布ごとの設定 (simple_eval_v1*_{smoke,A,B,C})
+# はこのファイルを読み込み、評価ケース (と control.mode) だけを指定する。
+
+defaults:
+  - base
+  - /eval/common/policy@policy: simple             # 簡易形状の部品色 (シアン=目標部品)
+  - /eval/method/vaeac/policy@policy
+  - _self_
+
+# 論文 (Table 2) で使ったモデル。master の simple.yaml は別のモデルを指しているので、ここで明示する。
+train_run_dir: /home/dev/workspace/dataset/nedo_dismantling_log/train/vaeac/EncoderDecoderNet_D64_H32_Z50_E100000_simple_2d_20260605_140804

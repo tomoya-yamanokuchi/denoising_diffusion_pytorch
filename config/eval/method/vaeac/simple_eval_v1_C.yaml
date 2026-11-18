@@ -1,0 +1,9 @@
+# config/eval/method/vaeac/simple_eval_v1_C.yaml
+# @package eval
+#
+# 簡易形状の追加評価 (VAEAC): Distribution C の10配置
+
+defaults:
+  - simple_eval_v1_common
+  - /eval/common/cases@cases: simple_eval_v1_C
+  - _self_

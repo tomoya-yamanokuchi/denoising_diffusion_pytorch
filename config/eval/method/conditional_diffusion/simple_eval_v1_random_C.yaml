@@ -1,0 +1,14 @@
+# config/eval/method/conditional_diffusion/simple_eval_v1_random_C.yaml
+# @package eval
+#
+# 簡易形状の追加評価 (Random): Distribution C の10配置
+# Proposed (simple_eval_v1_C) との違いは control.mode だけ。結果はランのフォルダの下の random/ に保存される。
+
+defaults:
+  - simple_eval_v1_common
+  - /eval/common/cases@cases: simple_eval_v1_C
+  - _self_
+
+policy:
+  control:
+    mode: random

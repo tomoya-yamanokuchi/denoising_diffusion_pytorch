@@ -1,0 +1,9 @@
+# config/eval/method/vaeac/simple_eval_v1_smoke.yaml
+# @package eval
+#
+# 簡易形状の追加評価 (VAEAC): 動作確認用 (各分布の1配置目)
+
+defaults:
+  - simple_eval_v1_common
+  - /eval/common/cases@cases: simple_eval_v1_smoke
+  - _self_

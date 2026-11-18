@@ -1,0 +1,9 @@
+# config/eval/method/diffusion_1d/simple_eval_v1_B.yaml
+# @package eval
+#
+# 簡易形状の追加評価 (PCD-DM): Distribution B の10配置
+
+defaults:
+  - simple_eval_v1_common
+  - /eval/common/cases@cases: simple_eval_v1_B
+  - _self_
