@@ -232,10 +232,19 @@ class EvalBuilder:
     def build_action_planner_factory(self):
         from ..factories.action_planner_factory import ActionPlannerFactory
         from denoising_diffusion_pytorch.policy.planning.initial_action_provider import InitialActionProvider
+        from denoising_diffusion_pytorch.policy.planning.observation_noise import (
+            build_observation_label_noise_config,
+        )
+        observation_noise = build_observation_label_noise_config(
+            getattr(self.cfg.eval, "observation_noise", None)
+        )
+        if observation_noise.enabled:
+            print(f"[observation_noise] label flip rate = {observation_noise.flip_rate}, seed = {observation_noise.seed}")
         self.action_planner_factory = ActionPlannerFactory(
             initial_action_provider = InitialActionProvider(
                 voxel_grid_side_length = self.cfg.env.grid.side_length
             ),
+            observation_noise = observation_noise,
         )
 
     def build_orchestrator(self):

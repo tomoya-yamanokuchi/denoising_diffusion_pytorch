@@ -4,6 +4,7 @@
 defaults:
   - /eval/common/task@task                      : default
   - /eval/common/execution_error@execution_error: default
+  - /eval/common/observation_noise@observation_noise: default
   - _self_
 
 epoch: "100000"

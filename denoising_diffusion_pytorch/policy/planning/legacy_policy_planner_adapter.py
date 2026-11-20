@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 import numpy as np
 from ..types import ActionArtifacts, ActionPlan
 from ..cutting_surface_planner import cutting_surface_planner
@@ -13,6 +13,7 @@ from denoising_diffusion_pytorch.env.types import DismantlingObservation
 from .condition_normalization import (
     normalize_condition_image_to_minus1_plus1,
 )
+from .observation_noise import ObservationLabelFlipper
 
 
 if TYPE_CHECKING:
@@ -26,6 +27,8 @@ class LegacyPolicyPlannerAdapter:
     - ActionPlanner と接続するためのadapter。
     """
     policy: cutting_surface_planner
+    # 観測した切断面の部品ラベルの誤り (E.6 / R1.4)。None または flip_rate = 0 なら何もしない
+    label_flipper: Optional[ObservationLabelFlipper] = None
 
     def reset(self) -> None:
         if hasattr(self.policy, "reset"):
@@ -56,6 +59,8 @@ class LegacyPolicyPlannerAdapter:
             planning_observation = planning_observation,
             artifact_root        = str(episode_ctx.path.artifact_episodic_root),
             executed_step_idx    = executed_step_idx,
+            reference_image      = execution_result.info.oracle_axis_images.z,
+            noise_key            = f"{episode_ctx.case.name}/episode_{episode_ctx.episode_idx}",
         )
 
         selected_candidates, infos = self.policy.get_optimal_act(
@@ -110,8 +115,28 @@ class LegacyPolicyPlannerAdapter:
         planning_observation: DismantlingObservation,
         artifact_root       : str | None = None,
         executed_step_idx   : int | None = None,
+        reference_image     : Any = None,
+        noise_key           : str | None = None,
     ):
         slice_img = planning_observation.axis_images.z # 学習とテストで固定させておく
+
+        # --- 観測した切断面の部品ラベルの誤り (E.6 / R1.4) ---
+        # 拡散モデルに渡す観測にだけ入れる (条件と inpainting の上書きの両方に同じ誤りが入る)。
+        # 評価の正解 (切断誤差の計算に使う内部構造) は変えない。
+        if self.label_flipper is not None and self.label_flipper.config.enabled:
+            if reference_image is None or noise_key is None:
+                raise ValueError("reference_image and noise_key are required for observation label noise.")
+            slice_img, stats = self.label_flipper.apply(slice_img, reference_image, noise_key)
+            if stats is not None:
+                print(f"[observation_noise] step {executed_step_idx}: flipped {stats['flipped']}"
+                      f" / observed {stats['observed']} voxels (classes: {stats['num_classes']})")
+            if artifact_root is not None and executed_step_idx is not None:
+                cond_dir = artifact_root + "/conditions/"
+                create_folder(cond_dir)
+                pil_image_save_from_numpy(
+                    np.asarray(slice_img),
+                    f"{cond_dir}/seq_obs_cast_{executed_step_idx}_axis_z_0_noisy.png",
+                )
 
         normalized_cond = normalize_condition_image_to_minus1_plus1(slice_img).transpose(2, 0, 1)
         normalized_cond = to_torch(normalized_cond)
@@ -124,5 +149,4 @@ class LegacyPolicyPlannerAdapter:
             debug_save_dir  = artifact_root,
             step_idx        = executed_step_idx,
         )
-
 

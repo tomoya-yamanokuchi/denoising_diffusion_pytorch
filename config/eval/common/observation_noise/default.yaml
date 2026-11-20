@@ -1,0 +1,6 @@
+# config/eval/common/observation_noise/default.yaml
+# 観測した切断面の部品ラベルの誤り (査読指摘 E.6 / R1.4)。
+#   flip_rate: 観測したボクセルのうち、部品ラベルを別の部品のラベルに入れ替える割合 (0 で無効)
+#   seed     : 乱数の種。どのボクセルを誤らせるかは (ケース, エピソード) ごとに固定される
+flip_rate: 0.0
+seed     : 0
